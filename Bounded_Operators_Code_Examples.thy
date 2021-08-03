@@ -158,7 +158,7 @@ value "ccspan {ket False, ket True} = top"
 
 value "ccspan {ket False} \<le> ccspan {ket True}"
 
-value "applyOpSpace id_cblinfun (ccspan {ket True})"
+value "cblinfun_image id_cblinfun (ccspan {ket True})"
 
 value "kernel id_cblinfun :: bool ell2 ccsubspace"
 

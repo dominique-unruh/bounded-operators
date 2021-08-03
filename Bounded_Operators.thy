@@ -16,12 +16,58 @@ theory Bounded_Operators
     Complex_Bounded_Linear_Function0
 begin
 
+subsection \<open>Misc basic facts and declarations\<close>
+
+notation cblinfun_apply (infixr "*\<^sub>V" 70)
+
+(* Renamed from apply_id_cblinfun *)
+lemma id_cblinfun_apply[simp]: "id_cblinfun *\<^sub>V \<psi> = \<psi>"
+  apply transfer by simp
+
+(* Renamed from isCont_applyOp *)
+lemma isCont_cblinfun_apply[simp]: "isCont ((*\<^sub>V) A) \<psi>"
+  apply transfer
+  by (simp add: clinear_continuous_at) 
+
+(* Use cblinfun.zero_left instead *)
+(* lemma applyOp0[simp]: "0 *\<^sub>V \<psi> = 0" *)
+
 declare cblinfun.scaleC_left[simp]
 
 lemma cblinfun_apply_clinear[simp]: \<open>clinear (cblinfun_apply A)\<close>
   using bounded_clinear.axioms(1) cblinfun_apply by blast
 
+lemma cblinfun_cinner_eqI:
+  fixes A B :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a\<close>
+  assumes \<open>\<And>\<psi>. cinner \<psi> (A *\<^sub>V \<psi>) = cinner \<psi> (B *\<^sub>V \<psi>)\<close>
+  shows \<open>A = B\<close>
+proof -
+  define C where \<open>C = A - B\<close>
+  have C0[simp]: \<open>cinner \<psi> (C \<psi>) = 0\<close> for \<psi>
+    by (simp add: C_def assms cblinfun.diff_left cinner_diff_right)
+  { fix f g \<alpha>
+    have \<open>0 = cinner (f + \<alpha> *\<^sub>C g) (C *\<^sub>V (f + \<alpha> *\<^sub>C g))\<close>
+      by (simp add: cinner_diff_right minus_cblinfun.rep_eq)
+    also have \<open>\<dots> = \<alpha> *\<^sub>C cinner f (C g) + cnj \<alpha> *\<^sub>C cinner g (C f)\<close>
+      by (smt (z3) C0 add.commute add.right_neutral cblinfun.add_right cblinfun.scaleC_right cblinfun_cinner_right.rep_eq cinner_add_left cinner_scaleC_left complex_scaleC_def)
+    finally have \<open>\<alpha> *\<^sub>C cinner f (C g) = - cnj \<alpha> *\<^sub>C cinner g (C f)\<close>
+      by (simp add: eq_neg_iff_add_eq_0)
+  }
+  then have \<open>cinner f (C g) = 0\<close> for f g
+    by (metis complex_cnj_i complex_cnj_one complex_vector.scale_cancel_right complex_vector.scale_left_imp_eq equation_minus_iff i_squared mult_eq_0_iff one_neq_neg_one)
+  then have \<open>C g = 0\<close> for g
+    using cinner_eq_zero_iff by blast
+  then have \<open>C = 0\<close>
+    by (simp add: cblinfun_eqI)
+  then show \<open>A = B\<close>
+    using C_def by auto
+qed
+
+lemma id_cblinfun_not_0[simp]: \<open>(id_cblinfun :: 'a::{complex_normed_vector, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L _) \<noteq> 0\<close>
+  by (metis (full_types) Extra_General.UNIV_not_singleton cblinfun.zero_left cblinfun_id_cblinfun_apply ex_norm1 norm_zero one_neq_zero)
+
 subsection \<open>Algebraic properties of real cblinfun operators\<close>
+(* TODO rename section *)
 
 instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
 begin
@@ -348,8 +394,6 @@ subsection \<open>Complex cblinfun operators\<close>
       "cblinfun_apply :: ('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector) \<Rightarrow> 'a \<Rightarrow> 'b"]]
  *)
 
-notation cblinfun_apply (infixr "*\<^sub>V" 70)
-
 lift_definition blinfun_of_cblinfun::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector 
   \<Rightarrow> 'a \<Rightarrow>\<^sub>L 'b\<close> is "id"
   apply transfer by (simp add: bounded_clinear.bounded_linear)
@@ -620,268 +664,22 @@ lemma blinfun_of_cblinfun_norm:
 
 
 
-subsection \<open>Adjoint\<close>
-
-lift_definition
-  adj :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner \<Rightarrow> 'b \<Rightarrow>\<^sub>C\<^sub>L 'a" ("_*" [99] 100)
-  is cadjoint by (fact cadjoint_bounded_clinear)
-
-(* Use id_cblinfun instead *)
-(* abbreviation (input) "idOp == id_cblinfun" *)
-
-lemma id_cblinfun_adjoint[simp]: "id_cblinfun* = id_cblinfun"
-  apply transfer using cadjoint_id
-  by (metis eq_id_iff)
-
-lemma scaleC_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
-  apply transfer
-  by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear bounded_clinear_def complex_vector.linear_scale scaleC_cadjoint)
-
-lemma scaleR_adj[simp]: "(a *\<^sub>R A)* = a *\<^sub>R (A*)" 
-  by (simp add: scaleR_scaleC)
-
-lemma adj_plus:
-  (* fixes A B :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close> *)
-  shows \<open>(A + B)* = (A*) + (B*)\<close>
-proof transfer
-  fix A B::\<open>'b \<Rightarrow> 'a\<close>
-  assume a1: \<open>bounded_clinear A\<close> and a2: \<open>bounded_clinear B\<close>
-  define F where \<open>F = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
-  define G where \<open>G = (\<lambda>x. A x + B x)\<close>
-  have \<open>bounded_clinear G\<close>
-    unfolding G_def
-    by (simp add: a1 a2 bounded_clinear_add)
-  moreover have \<open>\<langle>F u,  v\<rangle> = \<langle>u, G v\<rangle>\<close> for u v
-    unfolding F_def G_def
-    using cadjoint_univ_prop a1 a2 cinner_add_left
-    by (simp add: cadjoint_univ_prop cinner_add_left cinner_add_right) 
-  ultimately have \<open>F = G\<^sup>\<dagger> \<close>
-    using cadjoint_eqI by blast
-  thus \<open>(\<lambda>x. A x + B x)\<^sup>\<dagger> = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
-    unfolding F_def G_def
-    by auto
-qed
-
-(* lemma Adj_cblinfun_uminus[simp]:
-  \<open>(- A)* = - (A* )\<close>
-  by (metis (no_types, lifting) Adj_cblinfun_plus  add_cancel_left_right diff_0 ordered_field_class.sign_simps(9))
-
-lemma Adj_cblinfun_minus[simp]:
-  \<open>(A - B)* = (A* ) - (B* )\<close>
-  by (metis Adj_cblinfun_plus add_right_cancel diff_add_cancel)
-
-lemma Adj_cblinfun_zero[simp]:
-  \<open>0* = 0\<close>
-  by (metis Adj_cblinfun_plus add_cancel_right_right) *)
-
-(* TODO move *)
-lemma cinner_sup_norm: \<open>norm \<psi> = (SUP \<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
-proof (rule sym, rule cSup_eq_maximum)
-  have \<open>norm \<psi> = cmod (\<psi> \<bullet>\<^sub>C \<psi>) / norm \<psi>\<close>
-    by (metis norm_eq_sqrt_cinner norm_ge_zero real_div_sqrt)
-  then show \<open>norm \<psi> \<in> range (\<lambda>\<phi>. cmod (\<phi> \<bullet>\<^sub>C \<psi>) / norm \<phi>)\<close>
-    by blast
-next
-  fix n assume \<open>n \<in> range (\<lambda>\<phi>. cmod (\<phi> \<bullet>\<^sub>C \<psi>) / norm \<phi>)\<close>
-  then obtain \<phi> where n\<phi>: \<open>n = cmod (\<phi> \<bullet>\<^sub>C \<psi>) / norm \<phi>\<close>
-    by auto
-  show \<open>n \<le> norm \<psi>\<close>
-    unfolding n\<phi>
-    by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2 divide_le_eq ordered_field_class.sign_simps(33))
-qed
-
-(* TODO move *)
-lemma cSup_eq_cSup:
-  fixes A B :: \<open>'a::conditionally_complete_lattice set\<close>
-  assumes bdd: \<open>bdd_above A\<close>
-  assumes B: \<open>\<And>a. a\<in>A \<Longrightarrow> \<exists>b\<in>B. b \<ge> a\<close>
-  assumes A: \<open>\<And>b. b\<in>B \<Longrightarrow> \<exists>a\<in>A. a \<ge> b\<close>
-  shows \<open>Sup A = Sup B\<close>
-proof (cases \<open>B = {}\<close>)
-  case True
-  with A B have \<open>A = {}\<close>
-    by auto
-  with True show ?thesis by simp
-next
-  case False
-  have \<open>bdd_above B\<close>
-    by (meson A bdd bdd_above_def order_trans)
-  have \<open>A \<noteq> {}\<close>
-    using A False by blast
-  moreover have \<open>a \<le> Sup B\<close> if \<open>a \<in> A\<close> for a
-  proof -
-    obtain b where \<open>b \<in> B\<close> and \<open>b \<ge> a\<close>
-      using B \<open>a \<in> A\<close> by auto
-    then show ?thesis
-      apply (rule cSup_upper2)
-      using \<open>bdd_above B\<close> by simp
-  qed
-  moreover have \<open>Sup B \<le> c\<close> if \<open>\<And>a. a \<in> A \<Longrightarrow> a \<le> c\<close> for c
-    using False apply (rule cSup_least)
-    using A that by fastforce
-  ultimately show ?thesis
-    by (rule cSup_eq_non_empty)
-qed
-
-
-
-
-(* TODO move *)
-lemma cinner_sup_onorm: 
-  fixes A :: \<open>'a::{real_normed_vector,not_singleton} \<Rightarrow> 'b::complex_inner\<close>
-  assumes \<open>bounded_linear A\<close>
-  shows \<open>onorm A = (SUP (\<psi>,\<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
-proof (unfold onorm_def, rule cSup_eq_cSup)
-  show \<open>bdd_above (range (\<lambda>x. norm (A x) / norm x))\<close>
-    by (meson assms bdd_aboveI2 le_onorm)
-next
-  fix a
-  assume \<open>a \<in> range (\<lambda>\<phi>. norm (A \<phi>) / norm \<phi>)\<close>
-  then obtain \<phi> where \<open>a = norm (A \<phi>) / norm \<phi>\<close>
-    by auto
-  then have \<open>a \<le> cmod (A \<phi> \<bullet>\<^sub>C A \<phi>) / (norm (A \<phi>) * norm \<phi>)\<close>
-    apply auto
-    by (smt (verit) divide_divide_eq_left norm_eq_sqrt_cinner norm_imp_pos_and_ge real_div_sqrt)
-  then show \<open>\<exists>b\<in>range (\<lambda>(\<psi>, \<phi>). cmod (\<psi> \<bullet>\<^sub>C A \<phi>) / (norm \<psi> * norm \<phi>)). a \<le> b\<close>
-    by force
-next
-  fix b
-  assume \<open>b \<in> range (\<lambda>(\<psi>, \<phi>). cmod (\<psi> \<bullet>\<^sub>C A \<phi>) / (norm \<psi> * norm \<phi>))\<close>
-  then obtain \<psi> \<phi> where b: \<open>b = cmod (\<psi> \<bullet>\<^sub>C A \<phi>) / (norm \<psi> * norm \<phi>)\<close>
-    by auto
-  then have \<open>b \<le> norm (A \<phi>) / norm \<phi>\<close>
-    apply auto
-    by (smt (verit, ccfv_threshold) complex_inner_class.Cauchy_Schwarz_ineq2 division_ring_divide_zero linordered_field_class.divide_right_mono mult_cancel_left1 nonzero_mult_divide_mult_cancel_left2 norm_imp_pos_and_ge ordered_field_class.sign_simps(33) zero_le_divide_iff) (* > 1s *)
-  then show \<open>\<exists>a\<in>range (\<lambda>x. norm (A x) / norm x). b \<le> a\<close>
-    by auto
-qed
-
-lemma cinner_sup_norm_cblinfun: 
-  fixes A :: \<open>'a::{complex_normed_vector,not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner\<close>
-  shows \<open>norm A = (SUP (\<psi>,\<phi>). cmod (cinner \<psi> (A *\<^sub>V \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
-  apply transfer
-  apply (rule cinner_sup_onorm)
-  by (simp add: bounded_clinear.bounded_linear)
-
-
-(* Renamed from adjoint_I *)
-lemma cinner_adj_left:
-  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::complex_inner"
-  shows \<open>\<langle>G* *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>\<close>
-  apply transfer using cadjoint_univ_prop by blast
-
-(* Renamed from adjoint_I' *)
-lemma cinner_adj_right:
-  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::complex_inner"
-  shows \<open>\<langle>x, G* *\<^sub>V y\<rangle> = \<langle>G *\<^sub>V x, y\<rangle>\<close> 
-  apply transfer using cadjoint_univ_prop' by blast
-
-lemma adj_0[simp]: \<open>0* = 0\<close>
-  by (metis add_cancel_right_left adj_plus)
-
-lemma norm_adj[simp]: \<open>norm (A*) = norm A\<close> 
-  for A :: \<open>'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_inner\<close>
-proof (cases \<open>(\<exists>x y :: 'b. x \<noteq> y) \<and> (\<exists>x y :: 'c. x \<noteq> y)\<close>)
-  case True
-  then have c1: \<open>class.not_singleton TYPE('b)\<close>
-    apply intro_classes by simp
-  from True have c2: \<open>class.not_singleton TYPE('c)\<close>
-    apply intro_classes by simp
-  have normA: \<open>norm A = (SUP (\<psi>, \<phi>). cmod (\<psi> \<bullet>\<^sub>C (A *\<^sub>V \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
-    apply (rule cinner_sup_norm_cblinfun[internalize_sort \<open>'a::{complex_normed_vector,not_singleton}\<close>])
-     apply (rule complex_normed_vector_axioms)
-    by (rule c1)
-  have normAadj: \<open>norm (A*) = (SUP (\<psi>, \<phi>). cmod (\<psi> \<bullet>\<^sub>C (A* *\<^sub>V \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
-    apply (rule cinner_sup_norm_cblinfun[internalize_sort \<open>'a::{complex_normed_vector,not_singleton}\<close>])
-     apply (rule complex_normed_vector_axioms)
-    by (rule c2)
-
-  have \<open>norm (A*) = (SUP (\<psi>, \<phi>). cmod (\<phi> \<bullet>\<^sub>C (A *\<^sub>V \<psi>)) / (norm \<psi> * norm \<phi>))\<close>
-    unfolding normAadj
-    apply (subst cinner_adj_right)
-    apply (subst cinner_commute)
-    apply (subst complex_mod_cnj)
-    by rule
-  also have \<open>\<dots> = Sup ((\<lambda>(\<psi>, \<phi>). cmod (\<phi> \<bullet>\<^sub>C (A *\<^sub>V \<psi>)) / (norm \<psi> * norm \<phi>)) ` prod.swap ` UNIV)\<close>
-    by auto
-  also have \<open>\<dots> = (SUP (\<phi>, \<psi>). cmod (\<phi> \<bullet>\<^sub>C (A *\<^sub>V \<psi>)) / (norm \<psi> * norm \<phi>))\<close>
-    apply (subst image_image)
-    by auto
-  also have \<open>\<dots> = norm A\<close>
-    unfolding normA
-    by (simp add: mult.commute)
-  finally show ?thesis
-    by -
-next
-  case False
-  then consider (b) \<open>\<And>x::'b. x = 0\<close> | (c) \<open>\<And>x::'c. x = 0\<close>
-    by auto
-  then have \<open>A = 0\<close>
-    apply (cases; transfer)
-     apply (metis (full_types) bounded_clinear_def complex_vector.linear_0) 
-    by auto
-  then show \<open>norm (A*) = norm A\<close>
-    by simp
-qed
-
-
-lemma antilinear_adj[simp]: \<open>antilinear adj\<close>
-  apply (rule antilinearI) by (auto simp add: adj_plus)
-
-lemma bounded_antilinear_adj[bounded_antilinear, simp]: \<open>bounded_antilinear adj\<close>
-  by (auto intro!: antilinearI exI[of _ 1] simp: bounded_antilinear_def bounded_antilinear_axioms_def adj_plus)
-
 subsection \<open>Composition\<close>
 
 abbreviation (input) "timesOp == cblinfun_compose"
 
 (* Closure is necessary. See email 47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
 lift_definition cblinfun_image :: \<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector
-\<Rightarrow> 'a ccsubspace \<Rightarrow> 'b ccsubspace\<close> 
+\<Rightarrow> 'a ccsubspace \<Rightarrow> 'b ccsubspace\<close>  (infixr "*\<^sub>S" 70)
   is "\<lambda>A S. closure (A ` S)"
   using  bounded_clinear_def closed_closure  closed_csubspace.intro
   by (simp add: bounded_clinear_def complex_vector.linear_subspace_image closure_is_closed_csubspace) 
 
-(* TODO remove *)
-abbreviation (input) "applyOpSpace == cblinfun_image"
-
-bundle cblinfun_notation begin
-notation cblinfun_compose (infixl "o\<^sub>C\<^sub>L" 55)
-notation cblinfun_apply (infixr "*\<^sub>V" 70)
-notation cblinfun_image (infixr "*\<^sub>S" 70)
-notation adj ("_*" [99] 100)
-end
-
-bundle no_cblinfun_notation begin
-no_notation cblinfun_compose (infixl "o\<^sub>C\<^sub>L" 55)
-no_notation cblinfun_apply (infixr "*\<^sub>V" 70)
-no_notation cblinfun_image (infixr "*\<^sub>S" 70)
-no_notation adj ("_*" [99] 100)
-end
-
-bundle blinfun_notation begin
-notation blinfun_apply (infixr "*\<^sub>V" 70)
-end
-
-bundle no_blinfun_notation begin
-no_notation blinfun_apply (infixr "*\<^sub>V" 70)
-end
-
-
-unbundle cblinfun_notation
-
-(* Renamed from adjoint_D *)
-lemma adjoint_eqI:
-  fixes G:: \<open>'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space\<close>
-    and F:: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
-  assumes \<open>\<And>x y. \<langle>(cblinfun_apply F) x, y\<rangle> = \<langle>x, (cblinfun_apply G) y\<rangle>\<close>
-  shows \<open>F = G*\<close>
-  using assms apply transfer using cadjoint_eqI by auto
-
-(* Renamed from adjoint_twice *)
-lemma double_adj[simp]: "(A*)* = A" 
-  (* for U :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space" *)
-  apply transfer using double_cadjoint by blast
+lemma cblinfun_image_mono:
+  assumes a1: "S \<le> T"
+  shows "A *\<^sub>S S \<le> A *\<^sub>S T"
+  using a1
+  by (simp add: cblinfun_image.rep_eq closure_mono image_mono less_eq_ccsubspace.rep_eq)
 
 lemma blinfun_of_cblinfun_cblinfun_compose:
   fixes f::\<open>'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector\<close>
@@ -910,24 +708,6 @@ lemma cblinfun_compose_assoc:
 (* Use bounded_cbilinear.diff_right bounded_cbilinear_cblinfun_compose instead *)
 (* lemma cblinfun_compose_minus:
   \<open>A o\<^sub>C\<^sub>L (B - C) = (A o\<^sub>C\<^sub>L B) - (A o\<^sub>C\<^sub>L C)\<close> *)
-
-(* Renamed from times_adjoint *)
-lemma adj_cblinfun_compose[simp]:
-  fixes B::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
-    and A::\<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_inner\<close> 
-  shows "(A o\<^sub>C\<^sub>L B)* =  (B*) o\<^sub>C\<^sub>L (A*)"
-proof transfer
-  fix  A :: \<open>'b \<Rightarrow> 'c\<close> and B :: \<open>'a \<Rightarrow> 'b\<close>
-  assume \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
-  hence \<open>bounded_clinear (A \<circ> B)\<close>
-    by (simp add: comp_bounded_clinear)
-  have \<open>\<langle> (A \<circ> B) u, v \<rangle> = \<langle> u, (B\<^sup>\<dagger> \<circ> A\<^sup>\<dagger>) v \<rangle>\<close>
-    for u v
-    by (metis (no_types, lifting) cadjoint_univ_prop \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close> cinner_commute' comp_def)    
-  thus \<open>(A \<circ> B)\<^sup>\<dagger> = B\<^sup>\<dagger> \<circ> A\<^sup>\<dagger>\<close>
-    using \<open>bounded_clinear (A \<circ> B)\<close>
-    by (metis cadjoint_eqI cinner_commute')
-qed
 
 
 (* Renamed from OCL_zero *)
@@ -958,7 +738,6 @@ proof rule
     by (simp add: closure_minimal image_comp)
 qed *)
 
-(* TODO: move *)
 lemma closure_bounded_linear_image_subset_eq:
   assumes f: "bounded_linear f"
   shows "closure (f ` closure S) = closure (f ` S)"
@@ -1100,13 +879,6 @@ proof-
   show ?thesis
     using x1 x2 by blast 
 qed *)
-
-(* TODO move *)
-lemma image_set_plus: 
-  assumes \<open>linear U\<close>
-  shows \<open>U ` (A + B) = U ` A + U ` B\<close>
-  unfolding image_def set_plus_def
-  using assms by (force simp: linear_add)
 
 (* TODO move *)
 lemma closure_image_closed_sum: 
@@ -1269,6 +1041,238 @@ proof (use assms in transfer)
     by (metis Complex_Vector_Spaces0.bounded_clinear.bounded_linear a1 a2 closure_bounded_linear_image_subset_eq)
 qed
 
+(* Renamed from apply_left_neutral *)
+lemma cblinfun_fixes_range:
+  assumes "A o\<^sub>C\<^sub>L B = B" and "\<psi> \<in> space_as_set (B *\<^sub>S top)"
+  shows "A *\<^sub>V \<psi> = \<psi>" 
+proof-
+  define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>S top)" 
+    and "rangeB' = range (cblinfun_apply B)"
+  from assms have "\<psi> \<in> closure rangeB'"
+    by (simp add: cblinfun_image.rep_eq rangeB'_def top_ccsubspace.rep_eq)
+
+  then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
+    using closure_sequential by blast
+  have A_invariant: "A *\<^sub>V \<psi>i i = \<psi>i i" 
+    for i
+  proof-
+    from \<psi>i_B obtain \<phi> where \<phi>: "\<psi>i i = B *\<^sub>V \<phi>"
+      using rangeB'_def by blast      
+    hence "A *\<^sub>V \<psi>i i = (A o\<^sub>C\<^sub>L B) *\<^sub>V \<phi>"
+      by (simp add: cblinfun_compose.rep_eq)
+    also have "\<dots> = B *\<^sub>V \<phi>"
+      by (simp add: assms)
+    also have "\<dots> = \<psi>i i"
+      by (simp add: \<phi>)
+    finally show ?thesis.
+  qed
+  from \<psi>i_lim have "(\<lambda>i. A *\<^sub>V (\<psi>i i)) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
+    by (rule isCont_tendsto_compose[rotated], simp)
+  with A_invariant have "(\<lambda>i. \<psi>i i) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
+    by auto
+  with \<psi>i_lim show "A *\<^sub>V \<psi> = \<psi>"
+    using LIMSEQ_unique by blast
+qed
+
+
+subsection \<open>Adjoint\<close>
+
+lift_definition
+  adj :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner \<Rightarrow> 'b \<Rightarrow>\<^sub>C\<^sub>L 'a" ("_*" [99] 100)
+  is cadjoint by (fact cadjoint_bounded_clinear)
+
+(* Use id_cblinfun instead *)
+(* abbreviation (input) "idOp == id_cblinfun" *)
+
+lemma id_cblinfun_adjoint[simp]: "id_cblinfun* = id_cblinfun"
+  apply transfer using cadjoint_id
+  by (metis eq_id_iff)
+
+(* Renamed from adjoint_twice *)
+lemma double_adj[simp]: "(A*)* = A" 
+  (* for U :: "'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space" *)
+  apply transfer using double_cadjoint by blast
+
+(* Renamed from times_adjoint *)
+lemma adj_cblinfun_compose[simp]:
+  fixes B::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
+    and A::\<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_inner\<close> 
+  shows "(A o\<^sub>C\<^sub>L B)* =  (B*) o\<^sub>C\<^sub>L (A*)"
+proof transfer
+  fix  A :: \<open>'b \<Rightarrow> 'c\<close> and B :: \<open>'a \<Rightarrow> 'b\<close>
+  assume \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close>
+  hence \<open>bounded_clinear (A \<circ> B)\<close>
+    by (simp add: comp_bounded_clinear)
+  have \<open>\<langle> (A \<circ> B) u, v \<rangle> = \<langle> u, (B\<^sup>\<dagger> \<circ> A\<^sup>\<dagger>) v \<rangle>\<close>
+    for u v
+    by (metis (no_types, lifting) cadjoint_univ_prop \<open>bounded_clinear A\<close> \<open>bounded_clinear B\<close> cinner_commute' comp_def)    
+  thus \<open>(A \<circ> B)\<^sup>\<dagger> = B\<^sup>\<dagger> \<circ> A\<^sup>\<dagger>\<close>
+    using \<open>bounded_clinear (A \<circ> B)\<close>
+    by (metis cadjoint_eqI cinner_commute')
+qed
+
+
+lemma scaleC_adj[simp]: "(a *\<^sub>C A)* = (cnj a) *\<^sub>C (A*)" 
+  apply transfer
+  by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear bounded_clinear_def complex_vector.linear_scale scaleC_cadjoint)
+
+lemma scaleR_adj[simp]: "(a *\<^sub>R A)* = a *\<^sub>R (A*)" 
+  by (simp add: scaleR_scaleC)
+
+lemma adj_plus:
+  (* fixes A B :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close> *)
+  shows \<open>(A + B)* = (A*) + (B*)\<close>
+proof transfer
+  fix A B::\<open>'b \<Rightarrow> 'a\<close>
+  assume a1: \<open>bounded_clinear A\<close> and a2: \<open>bounded_clinear B\<close>
+  define F where \<open>F = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
+  define G where \<open>G = (\<lambda>x. A x + B x)\<close>
+  have \<open>bounded_clinear G\<close>
+    unfolding G_def
+    by (simp add: a1 a2 bounded_clinear_add)
+  moreover have \<open>\<langle>F u,  v\<rangle> = \<langle>u, G v\<rangle>\<close> for u v
+    unfolding F_def G_def
+    using cadjoint_univ_prop a1 a2 cinner_add_left
+    by (simp add: cadjoint_univ_prop cinner_add_left cinner_add_right) 
+  ultimately have \<open>F = G\<^sup>\<dagger> \<close>
+    using cadjoint_eqI by blast
+  thus \<open>(\<lambda>x. A x + B x)\<^sup>\<dagger> = (\<lambda>x. (A\<^sup>\<dagger>) x + (B\<^sup>\<dagger>) x)\<close>
+    unfolding F_def G_def
+    by auto
+qed
+
+(* lemma Adj_cblinfun_uminus[simp]:
+  \<open>(- A)* = - (A* )\<close>
+  by (metis (no_types, lifting) Adj_cblinfun_plus  add_cancel_left_right diff_0 ordered_field_class.sign_simps(9))
+
+lemma Adj_cblinfun_minus[simp]:
+  \<open>(A - B)* = (A* ) - (B* )\<close>
+  by (metis Adj_cblinfun_plus add_right_cancel diff_add_cancel)
+
+lemma Adj_cblinfun_zero[simp]:
+  \<open>0* = 0\<close>
+  by (metis Adj_cblinfun_plus add_cancel_right_right) *)
+
+
+lemma cinner_sup_norm_cblinfun: 
+  fixes A :: \<open>'a::{complex_normed_vector,not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner\<close>
+  shows \<open>norm A = (SUP (\<psi>,\<phi>). cmod (cinner \<psi> (A *\<^sub>V \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
+  apply transfer
+  apply (rule cinner_sup_onorm)
+  by (simp add: bounded_clinear.bounded_linear)
+
+
+(* Renamed from adjoint_I *)
+lemma cinner_adj_left:
+  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::complex_inner"
+  shows \<open>\<langle>G* *\<^sub>V x, y\<rangle> = \<langle>x, G *\<^sub>V y\<rangle>\<close>
+  apply transfer using cadjoint_univ_prop by blast
+
+(* Renamed from adjoint_I' *)
+lemma cinner_adj_right:
+  fixes G :: "'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::complex_inner"
+  shows \<open>\<langle>x, G* *\<^sub>V y\<rangle> = \<langle>G *\<^sub>V x, y\<rangle>\<close> 
+  apply transfer using cadjoint_univ_prop' by blast
+
+lemma adj_0[simp]: \<open>0* = 0\<close>
+  by (metis add_cancel_right_left adj_plus)
+
+lemma norm_adj[simp]: \<open>norm (A*) = norm A\<close> 
+  for A :: \<open>'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_inner\<close>
+proof (cases \<open>(\<exists>x y :: 'b. x \<noteq> y) \<and> (\<exists>x y :: 'c. x \<noteq> y)\<close>)
+  case True
+  then have c1: \<open>class.not_singleton TYPE('b)\<close>
+    apply intro_classes by simp
+  from True have c2: \<open>class.not_singleton TYPE('c)\<close>
+    apply intro_classes by simp
+  have normA: \<open>norm A = (SUP (\<psi>, \<phi>). cmod (\<psi> \<bullet>\<^sub>C (A *\<^sub>V \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
+    apply (rule cinner_sup_norm_cblinfun[internalize_sort \<open>'a::{complex_normed_vector,not_singleton}\<close>])
+     apply (rule complex_normed_vector_axioms)
+    by (rule c1)
+  have normAadj: \<open>norm (A*) = (SUP (\<psi>, \<phi>). cmod (\<psi> \<bullet>\<^sub>C (A* *\<^sub>V \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
+    apply (rule cinner_sup_norm_cblinfun[internalize_sort \<open>'a::{complex_normed_vector,not_singleton}\<close>])
+     apply (rule complex_normed_vector_axioms)
+    by (rule c2)
+
+  have \<open>norm (A*) = (SUP (\<psi>, \<phi>). cmod (\<phi> \<bullet>\<^sub>C (A *\<^sub>V \<psi>)) / (norm \<psi> * norm \<phi>))\<close>
+    unfolding normAadj
+    apply (subst cinner_adj_right)
+    apply (subst cinner_commute)
+    apply (subst complex_mod_cnj)
+    by rule
+  also have \<open>\<dots> = Sup ((\<lambda>(\<psi>, \<phi>). cmod (\<phi> \<bullet>\<^sub>C (A *\<^sub>V \<psi>)) / (norm \<psi> * norm \<phi>)) ` prod.swap ` UNIV)\<close>
+    by auto
+  also have \<open>\<dots> = (SUP (\<phi>, \<psi>). cmod (\<phi> \<bullet>\<^sub>C (A *\<^sub>V \<psi>)) / (norm \<psi> * norm \<phi>))\<close>
+    apply (subst image_image)
+    by auto
+  also have \<open>\<dots> = norm A\<close>
+    unfolding normA
+    by (simp add: mult.commute)
+  finally show ?thesis
+    by -
+next
+  case False
+  then consider (b) \<open>\<And>x::'b. x = 0\<close> | (c) \<open>\<And>x::'c. x = 0\<close>
+    by auto
+  then have \<open>A = 0\<close>
+    apply (cases; transfer)
+     apply (metis (full_types) bounded_clinear_def complex_vector.linear_0) 
+    by auto
+  then show \<open>norm (A*) = norm A\<close>
+    by simp
+qed
+
+
+lemma antilinear_adj[simp]: \<open>antilinear adj\<close>
+  apply (rule antilinearI) by (auto simp add: adj_plus)
+
+lemma bounded_antilinear_adj[bounded_antilinear, simp]: \<open>bounded_antilinear adj\<close>
+  by (auto intro!: antilinearI exI[of _ 1] simp: bounded_antilinear_def bounded_antilinear_axioms_def adj_plus)
+
+(* Renamed from adjoint_D *)
+lemma adjoint_eqI:
+  fixes G:: \<open>'b::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a::chilbert_space\<close>
+    and F:: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
+  assumes \<open>\<And>x y. \<langle>(cblinfun_apply F) x, y\<rangle> = \<langle>x, (cblinfun_apply G) y\<rangle>\<close>
+  shows \<open>F = G*\<close>
+  using assms apply transfer using cadjoint_eqI by auto
+
+
+lemma cinner_real_hermiteanI: 
+  \<comment> \<open>Prop. II.2.12 in @{cite conway2013course}\<close>
+  assumes \<open>\<And>\<psi>. cinner \<psi> (A *\<^sub>V \<psi>) \<in> \<real>\<close>
+  shows \<open>A = A*\<close>
+proof -
+  { fix g h :: 'a
+    {
+      fix \<alpha> :: complex
+      have \<open>cinner h (A h) + cnj \<alpha> *\<^sub>C cinner g (A h) + \<alpha> *\<^sub>C cinner h (A g) + (abs \<alpha>)\<^sup>2 * cinner g (A g)
+        = cinner (h + \<alpha> *\<^sub>C g) (A *\<^sub>V (h + \<alpha> *\<^sub>C g))\<close> (is \<open>?sum4 = _\<close>)
+        apply (auto simp: cinner_add_right cinner_add_left cblinfun.add_right cblinfun.scaleC_right ring_class.ring_distribs)
+        by (metis cnj_x_x mult.commute)
+      also have \<open>\<dots> \<in> \<real>\<close>
+        using assms by auto
+      finally have \<open>?sum4 = cnj ?sum4\<close>
+        using Reals_cnj_iff by fastforce
+      then have \<open>cnj \<alpha> *\<^sub>C cinner g (A h) + \<alpha> *\<^sub>C cinner h (A g)
+            = \<alpha> *\<^sub>C cinner (A h) g + cnj \<alpha> *\<^sub>C cinner (A g) h\<close>
+        using Reals_cnj_iff abs_complex_real assms by force
+      also have \<open>\<dots> = \<alpha> *\<^sub>C cinner h (A* *\<^sub>V g) + cnj \<alpha> *\<^sub>C cinner g (A* *\<^sub>V h)\<close>
+        by (simp add: cinner_adj_right)
+      finally have \<open>cnj \<alpha> *\<^sub>C cinner g (A h) + \<alpha> *\<^sub>C cinner h (A g) = \<alpha> *\<^sub>C cinner h (A* *\<^sub>V g) + cnj \<alpha> *\<^sub>C cinner g (A* *\<^sub>V h)\<close>
+        by -
+    }
+    from this[where \<alpha>2=1] this[where \<alpha>2=\<i>]
+    have 1: \<open>cinner g (A h) + cinner h (A g) = cinner h (A* *\<^sub>V g) + cinner g (A* *\<^sub>V h)\<close>
+      and i: \<open>- \<i> * cinner g (A h) + \<i> *\<^sub>C cinner h (A g) =  \<i> *\<^sub>C cinner h (A* *\<^sub>V g) - \<i> *\<^sub>C cinner g (A* *\<^sub>V h)\<close>
+      by auto
+    from arg_cong2[OF 1 arg_cong[OF i, where f=\<open>(*) (-\<i>)\<close>], where f=plus]
+    have \<open>cinner h (A g) = cinner h (A* *\<^sub>V g)\<close>
+      by (auto simp: ring_class.ring_distribs)
+  }
+  then show "A = A*"
+    by (simp add: adjoint_eqI cinner_adj_right)
+qed
 
 subsection \<open>Unitary\<close>
 
@@ -1629,9 +1633,9 @@ proof-
     by blast
 qed
 
-lemma Proj_orthog_ccspan_plus:
+lemma Proj_orthog_ccspan_union:
   assumes "\<And>x y. x \<in> X \<Longrightarrow> y \<in> Y \<Longrightarrow> is_orthogonal x y"
-  shows \<open>Proj (ccspan X) + Proj (ccspan Y) = Proj (ccspan (X \<union> Y))\<close>
+  shows \<open>Proj (ccspan (X \<union> Y)) = Proj (ccspan X) + Proj (ccspan Y)\<close>
 proof -
   have \<open>x \<in> cspan X \<Longrightarrow> y \<in> cspan Y \<Longrightarrow> is_orthogonal x y\<close> for x y
     apply (rule is_orthogonal_closure_cspan[where X=X and Y=Y])
@@ -1661,7 +1665,6 @@ lemma ccspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> cc
 (* lemma projection_scalar_mult[simp]: 
   "a \<noteq> 0 \<Longrightarrow> proj (a *\<^sub>C \<psi>) = proj \<psi>" 
   for a::complex and \<psi>::"'a::chilbert_space" *)
-
 
 (* Renamed from move_plus *)
 lemma ccsubspace_supI_via_Proj:
@@ -1719,6 +1722,38 @@ proof-
   thus ?thesis 
     by (simp add: x1 less_eq_ccsubspace.rep_eq subset_eq sup_ccsubspace.rep_eq)
 qed
+
+(* Renamed from is_Proj_D1 *)
+lemma is_Proj_idempotent:
+  assumes "is_Proj P"
+  shows "P o\<^sub>C\<^sub>L P = P"
+  using assms
+  unfolding is_Proj_def
+  using assms is_Proj_algebraic by auto
+
+(* Renamed from is_Proj_D2 *)
+lemma is_proj_selfadj:
+  assumes "is_Proj P"
+  shows "P* = P"
+  using assms
+  unfolding is_Proj_def
+  by (metis is_Proj_algebraic is_Proj_def) 
+
+(* Renamed from is_Proj_on_own_range' ? *)
+lemma is_Proj_I: 
+  assumes "P o\<^sub>C\<^sub>L P = P" and "P* = P"
+  shows "is_Proj P"
+  using assms is_Proj_algebraic by metis
+
+(* Renamed from is_Proj0 *)
+lemma is_Proj_0[simp]: "is_Proj 0"
+  by (metis add_left_cancel adj_plus bounded_cbilinear.zero_left bounded_cbilinear_cblinfun_compose group_cancel.rule0 is_Proj_I)
+
+(* Renamed from is_ProjidMinus *)
+lemma is_Proj_complement[simp]: 
+  assumes a1: "is_Proj P"
+  shows "is_Proj (id_cblinfun-P)"
+  by (smt (z3) add_diff_cancel_left add_diff_cancel_left' adj_cblinfun_compose adj_plus assms bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose diff_add_cancel id_cblinfun_adjoint is_Proj_algebraic cblinfun_compose_id_left)
 
 
 subsection \<open>Kernel\<close>
@@ -1826,45 +1861,7 @@ qed
 
 subsection \<open>New/restored things\<close>
 
-(* TODO move to proj sec *)
-(* Renamed from is_Proj_D1 *)
-lemma is_Proj_idempotent:
-  assumes "is_Proj P"
-  shows "P o\<^sub>C\<^sub>L P = P"
-  using assms
-  unfolding is_Proj_def
-  using assms is_Proj_algebraic by auto
 
-(* Renamed from is_Proj_D2 *)
-lemma is_proj_selfadj:
-  assumes "is_Proj P"
-  shows "P* = P"
-  using assms
-  unfolding is_Proj_def
-  by (metis is_Proj_algebraic is_Proj_def) 
-
-(* Renamed from is_Proj_on_own_range' ? *)
-lemma is_Proj_I: 
-  assumes "P o\<^sub>C\<^sub>L P = P" and "P* = P"
-  shows "is_Proj P"
-  using assms is_Proj_algebraic by metis
-
-(* Renamed from is_Proj0 *)
-lemma is_Proj_0[simp]: "is_Proj 0"
-  by (metis add_left_cancel adj_plus bounded_cbilinear.zero_left bounded_cbilinear_cblinfun_compose group_cancel.rule0 is_Proj_I)
-
-(* Renamed from is_ProjidMinus *)
-lemma is_Proj_complement[simp]: 
-  assumes a1: "is_Proj P"
-  shows "is_Proj (id_cblinfun-P)"
-  by (smt (z3) add_diff_cancel_left add_diff_cancel_left' adj_cblinfun_compose adj_plus assms bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose diff_add_cancel id_cblinfun_adjoint is_Proj_algebraic cblinfun_compose_id_left)
-
-(* Use cblinfun.zero_left instead *)
-(* lemma applyOp0[simp]: "0 *\<^sub>V \<psi> = 0" *)
-
-(* Renamed from apply_id_cblinfun *)
-lemma id_cblinfun_apply[simp]: "id_cblinfun *\<^sub>V \<psi> = \<psi>"
-  apply transfer by simp
 
 (* lemma rel_interior_sing_generalized:
   fixes a :: "'n::chilbert_space"
@@ -1872,50 +1869,9 @@ lemma id_cblinfun_apply[simp]: "id_cblinfun *\<^sub>V \<psi> = \<psi>"
   apply (auto simp: rel_interior_ball)
   by (metis affine_sing gt_ex le_infI2 subset_hull subset_singleton_iff) *)
 
-(* Renamed from isCont_applyOp *)
-lemma isCont_cblinfun_apply[simp]: "isCont ((*\<^sub>V) A) \<psi>"
-  apply transfer
-  by (simp add: clinear_continuous_at) 
-
-lemma cblinfun_image_mono:
-  assumes a1: "S \<le> T"
-  shows "A *\<^sub>S S \<le> A *\<^sub>S T"
-  using a1
-  by (simp add: cblinfun_image.rep_eq closure_mono image_mono less_eq_ccsubspace.rep_eq)
 
 
-(* Renamed from apply_left_neutral *)
-lemma cblinfun_fixes_range:
-  assumes "A o\<^sub>C\<^sub>L B = B" and "\<psi> \<in> space_as_set (B *\<^sub>S top)"
-  shows "A *\<^sub>V \<psi> = \<psi>" 
-proof-
-  define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>S top)" 
-    and "rangeB' = range (cblinfun_apply B)"
-  from assms have "\<psi> \<in> closure rangeB'"
-    by (simp add: cblinfun_image.rep_eq rangeB'_def top_ccsubspace.rep_eq)
 
-  then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
-    using closure_sequential by blast
-  have A_invariant: "A *\<^sub>V \<psi>i i = \<psi>i i" 
-    for i
-  proof-
-    from \<psi>i_B obtain \<phi> where \<phi>: "\<psi>i i = B *\<^sub>V \<phi>"
-      using rangeB'_def by blast      
-    hence "A *\<^sub>V \<psi>i i = (A o\<^sub>C\<^sub>L B) *\<^sub>V \<phi>"
-      by (simp add: cblinfun_compose.rep_eq)
-    also have "\<dots> = B *\<^sub>V \<phi>"
-      by (simp add: assms)
-    also have "\<dots> = \<psi>i i"
-      by (simp add: \<phi>)
-    finally show ?thesis.
-  qed
-  from \<psi>i_lim have "(\<lambda>i. A *\<^sub>V (\<psi>i i)) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
-    by (rule isCont_tendsto_compose[rotated], simp)
-  with A_invariant have "(\<lambda>i. \<psi>i i) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
-    by auto
-  with \<psi>i_lim show "A *\<^sub>V \<psi> = \<psi>"
-    using LIMSEQ_unique by blast
-qed
 
 lemma range_adjoint_isometry:
   assumes "isometry U"
@@ -2337,6 +2293,159 @@ lemma cblinfun_inv_uniq:
   shows "cblinfun_inv A = B"
   using assms by (metis cblinfun_compose_assoc cblinfun_compose_id_right cblinfun_inv_left iso_cblinfun_def)
 
+subsection \<open>Loewner order\<close>
+
+lift_definition heterogenous_cblinfun_id :: \<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
+  is \<open>if bounded_clinear (heterogenous_identity :: 'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector) then heterogenous_identity else (\<lambda>_. 0)\<close>
+  by auto
+
+lemma heterogenous_cblinfun_id_def'[simp]: "heterogenous_cblinfun_id = id_cblinfun"
+  apply transfer by auto
+
+definition "heterogenous_same_type_cblinfun (x::'a::chilbert_space itself) (y::'b::chilbert_space itself) \<longleftrightarrow>
+  unitary (heterogenous_cblinfun_id :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<and> unitary (heterogenous_cblinfun_id :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
+
+lemma heterogenous_same_type_cblinfun[simp]: \<open>heterogenous_same_type_cblinfun (x::'a::chilbert_space itself) (y::'a::chilbert_space itself)\<close>
+  unfolding heterogenous_same_type_cblinfun_def by auto
+
+instantiation cblinfun :: (chilbert_space, chilbert_space) ord begin
+definition less_eq_cblinfun :: \<open>('a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Rightarrow> ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Rightarrow> bool\<close>
+  where less_eq_cblinfun_def_heterogenous: \<open>less_eq_cblinfun A B = 
+  (if heterogenous_same_type_cblinfun TYPE('a) TYPE('b) then
+    \<forall>\<psi>::'b. cinner \<psi> ((B-A) *\<^sub>V heterogenous_cblinfun_id *\<^sub>V \<psi>) \<ge> 0 else (A=B))\<close>
+definition \<open>less_cblinfun (A :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) B \<longleftrightarrow> A \<le> B \<and> \<not> B \<le> A\<close>
+instance..
+end
+
+lemma less_eq_cblinfun_def: \<open>A \<le> B \<longleftrightarrow>
+    (\<forall>\<psi>. cinner \<psi> (A *\<^sub>V \<psi>) \<le> cinner \<psi> (B *\<^sub>V \<psi>))\<close>
+  unfolding less_eq_cblinfun_def_heterogenous 
+  by (auto simp del: less_eq_complex_def simp: cblinfun.diff_left cinner_diff_right)
+
+instantiation cblinfun :: (chilbert_space, chilbert_space) ordered_complex_vector begin
+instance
+proof intro_classes
+  note less_eq_complex_def[simp del]
+
+  fix x y z :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
+  fix a b :: complex
+
+  define pos where \<open>pos X \<longleftrightarrow> (\<forall>\<psi>. cinner \<psi> (X *\<^sub>V \<psi>) \<ge> 0)\<close> for X :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
+  consider (unitary) \<open>heterogenous_same_type_cblinfun TYPE('a) TYPE('b)\<close>
+      \<open>\<And>A B :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b. A \<le> B = pos ((B-A) o\<^sub>C\<^sub>L (heterogenous_cblinfun_id :: 'b\<Rightarrow>\<^sub>C\<^sub>L'a))\<close>
+    | (trivial) \<open>\<And>A B :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b. A \<le> B \<longleftrightarrow> A = B\<close>
+    apply atomize_elim by (auto simp: pos_def less_eq_cblinfun_def_heterogenous)
+  note cases = this
+  
+  have [simp]: \<open>pos 0\<close>
+    unfolding pos_def by auto
+
+  have pos_nondeg: \<open>X = 0\<close> if \<open>pos X\<close> and \<open>pos (-X)\<close> for X
+    apply (rule cblinfun_cinner_eqI, simp)
+    using that by (metis (no_types, lifting) cblinfun.minus_left cinner_minus_right dual_order.antisym equation_minus_iff neg_le_0_iff_le pos_def)
+
+  have pos_add: \<open>pos (X+Y)\<close> if \<open>pos X\<close> and \<open>pos Y\<close> for X Y
+    by (smt (z3) pos_def cblinfun.diff_left cinner_minus_right cinner_simps(3) diff_ge_0_iff_ge diff_minus_eq_add neg_le_0_iff_le order_trans that(1) that(2) uminus_cblinfun.rep_eq)
+
+  have pos_scaleC: \<open>pos (a *\<^sub>C X)\<close> if \<open>a\<ge>0\<close> and \<open>pos X\<close> for X a
+    using that unfolding pos_def by (auto simp: cblinfun.scaleC_left)
+
+  let ?id = \<open>heterogenous_cblinfun_id :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a\<close>
+
+  show \<open>x \<le> x\<close>
+    apply (cases rule:cases) by auto
+  show \<open>(x < y) \<longleftrightarrow> (x \<le> y \<and> \<not> y \<le> x)\<close>
+    unfolding less_cblinfun_def by simp
+  show \<open>x \<le> z\<close> if \<open>x \<le> y\<close> and \<open>y \<le> z\<close>
+  proof (cases rule:cases)
+    case unitary
+    define a b :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> where \<open>a = (y-x) o\<^sub>C\<^sub>L heterogenous_cblinfun_id\<close>
+      and \<open>b = (z-y) o\<^sub>C\<^sub>L heterogenous_cblinfun_id\<close>
+    with unitary that have \<open>pos a\<close> and \<open>pos b\<close>
+      by auto
+    then have \<open>pos (a + b)\<close>
+      by (rule pos_add)
+    moreover have \<open>a + b = (z - x) o\<^sub>C\<^sub>L heterogenous_cblinfun_id\<close>
+      unfolding a_def b_def
+      by (metis (no_types, lifting) bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose diff_add_cancel ordered_field_class.sign_simps(2) ordered_field_class.sign_simps(8))
+    ultimately show ?thesis 
+      using unitary by auto
+  next
+    case trivial
+    with that show ?thesis by auto
+  qed
+  show \<open>x = y\<close> if \<open>x \<le> y\<close> and \<open>y \<le> x\<close>
+  proof (cases rule:cases)
+    case unitary
+    then have \<open>unitary ?id\<close>
+      by (auto simp: heterogenous_same_type_cblinfun_def)
+    define a b :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> where \<open>a = (y-x) o\<^sub>C\<^sub>L ?id\<close>
+      and \<open>b = (x-y) o\<^sub>C\<^sub>L ?id\<close>
+    with unitary that have \<open>pos a\<close> and \<open>pos b\<close>
+      by auto
+    then have \<open>a = 0\<close>
+      apply (rule_tac pos_nondeg)
+      apply (auto simp: a_def b_def)
+      by (smt (verit, best) add.commute bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose cblinfun_compose_zero_left diff_0 diff_add_cancel group_cancel.rule0 group_cancel.sub1)
+    then show ?thesis
+      unfolding a_def using \<open>unitary ?id\<close>
+      by (metis cblinfun_compose_assoc cblinfun_compose_id_right cblinfun_compose_zero_left eq_iff_diff_eq_0 unitaryD2)
+  next
+    case trivial
+    with that show ?thesis by simp
+  qed
+  show \<open>x + y \<le> x + z\<close> if \<open>y \<le> z\<close>
+  proof (cases rule:cases)
+    case unitary
+    with that show ?thesis 
+      by auto
+  next
+    case trivial
+    with that show ?thesis 
+      by auto
+  qed
+
+  show \<open>a *\<^sub>C x \<le> a *\<^sub>C y\<close> if \<open>x \<le> y\<close> and \<open>0 \<le> a\<close>
+  proof (cases rule:cases)
+    case unitary
+    with that pos_scaleC show ?thesis
+      by (metis cblinfun_compose_scaleC_left complex_vector.scale_right_diff_distrib) 
+  next
+    case trivial
+    with that show ?thesis 
+      by auto
+  qed
+
+  show \<open>a *\<^sub>C x \<le> b *\<^sub>C x\<close> if \<open>a \<le> b\<close> and \<open>0 \<le> x\<close>
+  proof (cases rule:cases)
+    case unitary
+    with that show ?thesis
+      by (auto intro!: pos_scaleC simp flip: scaleC_diff_left)
+  next
+    case trivial
+    with that show ?thesis 
+      by auto
+  qed
+qed
+end
+
+lemma positive_id_cblinfun[simp]: "id_cblinfun \<ge> 0"
+  unfolding less_eq_cblinfun_def using cinner_ge_zero by auto
+
+lemma positive_hermitianI: \<open>A = A*\<close> if \<open>A \<ge> 0\<close>
+  apply (rule cinner_real_hermiteanI)
+  using that by (auto simp del: less_eq_complex_def simp: reals_zero_comparable_iff less_eq_cblinfun_def)
+
+lemma positive_cblinfunI: \<open>A \<ge> 0\<close> if \<open>\<And>x. cinner x (A *\<^sub>V x) \<ge> 0\<close>
+  unfolding less_eq_cblinfun_def using that by auto
+
+(* Note: this does not require B to be a square operator *)
+lemma positive_cblinfun_squareI: \<open>A = B* o\<^sub>C\<^sub>L B \<Longrightarrow> A \<ge> 0\<close>
+  apply (rule positive_cblinfunI)
+  by (metis cblinfun_apply_cblinfun_compose cinner_adj_right cinner_ge_zero)
+
+
+
 subsection \<open>Recovered theorems\<close>
 
 
@@ -2508,7 +2617,6 @@ lemma vector_to_cblinfun_apply_one_dim[simp]:
 
 (* Renamed from vector_to_cblinfun_adj_times_vec *)
 lemma vector_to_cblinfun_adj_apply[simp]:
-  includes cblinfun_notation
   shows "vector_to_cblinfun \<psi>* *\<^sub>V \<phi> = of_complex (cinner \<psi> \<phi>)"
   by (simp add: cinner_adj_right one_dim_iso_def one_dim_iso_inj) 
 
@@ -2656,26 +2764,22 @@ lemma vector_to_cblinfun_comp_one[simp]:
 
 (* Renamed from eigenspace_memberE *)
 lemma eigenspace_memberD:
-  includes cblinfun_notation
   assumes "x \<in> space_as_set (eigenspace e A)"
   shows "A *\<^sub>V x = e *\<^sub>C x"
   using assms unfolding eigenspace_def apply transfer by auto
 
 (* Renamed from kernel_memberE *)
 lemma kernel_memberD:
-  includes cblinfun_notation
   assumes "x \<in> space_as_set (kernel A)"
   shows "A *\<^sub>V x = 0"
   using assms apply transfer by auto
 
 lemma eigenspace_memberI:
-  includes cblinfun_notation
   assumes "A *\<^sub>V x = e *\<^sub>C x"
   shows "x \<in> space_as_set (eigenspace e A)"
   using assms unfolding eigenspace_def apply transfer by auto
 
 lemma kernel_memberI:
-  includes cblinfun_notation
   assumes "A *\<^sub>V x = 0"
   shows "x \<in> space_as_set (kernel A)"
   using assms apply transfer by auto
@@ -2706,226 +2810,10 @@ lemma ccspan_leq_ortho_ccspan:
 (* lemma positive_0[simp]: "positive_op 0"
   unfolding positive_op_def apply (rule exI[of _ 0]) by auto *)
 
-(* We would like to instantiate cblinfun as class order, but we cannot because we would need to force both arguments of cblinfun to have the same type *)
-(* abbreviation "loewner_leq A B == (positive_op (B-A))" *)
 
-(* TODO move to Misc *)
-consts heterogenous_identity :: \<open>'a \<Rightarrow> 'b\<close>
-overloading heterogenous_identity_id \<equiv> "heterogenous_identity :: 'a \<Rightarrow> 'a" begin
-definition heterogenous_identity_def[simp]: \<open>heterogenous_identity_id = id\<close>
-end
 
-lift_definition heterogenous_cblinfun_id :: \<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
-  is \<open>if bounded_clinear (heterogenous_identity :: 'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector) then heterogenous_identity else (\<lambda>_. 0)\<close>
-  by auto
 
-lemma heterogenous_cblinfun_id_def'[simp]: "heterogenous_cblinfun_id = id_cblinfun"
-  apply transfer by auto
 
-definition "kind_of_same_type (x::'a::chilbert_space itself) (y::'b::chilbert_space itself) \<longleftrightarrow>
-  unitary (heterogenous_cblinfun_id :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<and> unitary (heterogenous_cblinfun_id :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a)"
-
-lemma kind_of_same_type[simp]: \<open>kind_of_same_type (x::'a::chilbert_space itself) (y::'a::chilbert_space itself)\<close>
-  unfolding kind_of_same_type_def by auto
-
-instantiation cblinfun :: (chilbert_space, chilbert_space) ord begin
-definition less_eq_cblinfun :: \<open>('a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Rightarrow> ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Rightarrow> bool\<close>
-  where less_eq_cblinfun_def_heterogenous: \<open>less_eq_cblinfun A B = 
-  (if kind_of_same_type TYPE('a) TYPE('b) then
-    \<forall>\<psi>::'b. cinner \<psi> ((B-A) *\<^sub>V heterogenous_cblinfun_id *\<^sub>V \<psi>) \<ge> 0 else (A=B))\<close>
-definition \<open>less_cblinfun (A :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) B \<longleftrightarrow> A \<le> B \<and> \<not> B \<le> A\<close>
-instance..
-end
-
-lemma less_eq_cblinfun_def: \<open>A \<le> B \<longleftrightarrow>
-    (\<forall>\<psi>. cinner \<psi> (A *\<^sub>V \<psi>) \<le> cinner \<psi> (B *\<^sub>V \<psi>))\<close>
-  unfolding less_eq_cblinfun_def_heterogenous 
-  by (auto simp del: less_eq_complex_def simp: cblinfun.diff_left cinner_diff_right)
-
-(* TODO move *)
-lemma cinner_real_hermiteanI: 
-  \<comment> \<open>Prop. II.2.12 in @{cite conway2013course}\<close>
-  assumes \<open>\<And>\<psi>. cinner \<psi> (A *\<^sub>V \<psi>) \<in> \<real>\<close>
-  shows \<open>A = A*\<close>
-proof -
-  { fix g h :: 'a
-    {
-      fix \<alpha> :: complex
-      have \<open>cinner h (A h) + cnj \<alpha> *\<^sub>C cinner g (A h) + \<alpha> *\<^sub>C cinner h (A g) + (abs \<alpha>)\<^sup>2 * cinner g (A g)
-        = cinner (h + \<alpha> *\<^sub>C g) (A *\<^sub>V (h + \<alpha> *\<^sub>C g))\<close> (is \<open>?sum4 = _\<close>)
-        apply (auto simp: cinner_add_right cinner_add_left cblinfun.add_right cblinfun.scaleC_right ring_class.ring_distribs)
-        by (metis cnj_x_x mult.commute)
-      also have \<open>\<dots> \<in> \<real>\<close>
-        using assms by auto
-      finally have \<open>?sum4 = cnj ?sum4\<close>
-        using Reals_cnj_iff by fastforce
-      then have \<open>cnj \<alpha> *\<^sub>C cinner g (A h) + \<alpha> *\<^sub>C cinner h (A g)
-            = \<alpha> *\<^sub>C cinner (A h) g + cnj \<alpha> *\<^sub>C cinner (A g) h\<close>
-        using Reals_cnj_iff abs_complex_real assms by force
-      also have \<open>\<dots> = \<alpha> *\<^sub>C cinner h (A* *\<^sub>V g) + cnj \<alpha> *\<^sub>C cinner g (A* *\<^sub>V h)\<close>
-        by (simp add: cinner_adj_right)
-      finally have \<open>cnj \<alpha> *\<^sub>C cinner g (A h) + \<alpha> *\<^sub>C cinner h (A g) = \<alpha> *\<^sub>C cinner h (A* *\<^sub>V g) + cnj \<alpha> *\<^sub>C cinner g (A* *\<^sub>V h)\<close>
-        by -
-    }
-    from this[where \<alpha>2=1] this[where \<alpha>2=\<i>]
-    have 1: \<open>cinner g (A h) + cinner h (A g) = cinner h (A* *\<^sub>V g) + cinner g (A* *\<^sub>V h)\<close>
-      and i: \<open>- \<i> * cinner g (A h) + \<i> *\<^sub>C cinner h (A g) =  \<i> *\<^sub>C cinner h (A* *\<^sub>V g) - \<i> *\<^sub>C cinner g (A* *\<^sub>V h)\<close>
-      by auto
-    from arg_cong2[OF 1 arg_cong[OF i, where f=\<open>(*) (-\<i>)\<close>], where f=plus]
-    have \<open>cinner h (A g) = cinner h (A* *\<^sub>V g)\<close>
-      by (auto simp: ring_class.ring_distribs)
-  }
-  then show "A = A*"
-    by (simp add: adjoint_eqI cinner_adj_right)
-qed
-
-lemma cblinfun_cinner_eqI:
-  fixes A B :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'a\<close>
-  assumes \<open>\<And>\<psi>. cinner \<psi> (A *\<^sub>V \<psi>) = cinner \<psi> (B *\<^sub>V \<psi>)\<close>
-  shows \<open>A = B\<close>
-proof -
-  define C where \<open>C = A - B\<close>
-  have C0[simp]: \<open>cinner \<psi> (C \<psi>) = 0\<close> for \<psi>
-    by (simp add: C_def assms cblinfun.diff_left cinner_diff_right)
-  { fix f g \<alpha>
-    have \<open>0 = cinner (f + \<alpha> *\<^sub>C g) (C *\<^sub>V (f + \<alpha> *\<^sub>C g))\<close>
-      by (simp add: cinner_diff_right minus_cblinfun.rep_eq)
-    also have \<open>\<dots> = \<alpha> *\<^sub>C cinner f (C g) + cnj \<alpha> *\<^sub>C cinner g (C f)\<close>
-      by (smt (z3) C0 add.commute add.right_neutral cblinfun.add_right cblinfun.scaleC_right cblinfun_cinner_right.rep_eq cinner_add_left cinner_scaleC_left complex_scaleC_def)
-    finally have \<open>\<alpha> *\<^sub>C cinner f (C g) = - cnj \<alpha> *\<^sub>C cinner g (C f)\<close>
-      by (simp add: eq_neg_iff_add_eq_0)
-  }
-  then have \<open>cinner f (C g) = 0\<close> for f g
-    by (metis complex_cnj_i complex_cnj_one complex_vector.scale_cancel_right complex_vector.scale_left_imp_eq equation_minus_iff i_squared mult_eq_0_iff one_neq_neg_one)
-  then have \<open>C g = 0\<close> for g
-    using cinner_eq_zero_iff by blast
-  then have \<open>C = 0\<close>
-    by (simp add: cblinfun_eqI)
-  then show \<open>A = B\<close>
-    using C_def by auto
-qed
-
-instantiation cblinfun :: (chilbert_space, chilbert_space) ordered_complex_vector begin
-instance
-proof intro_classes
-  note less_eq_complex_def[simp del]
-
-  fix x y z :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
-  fix a b :: complex
-
-  define pos where \<open>pos X \<longleftrightarrow> (\<forall>\<psi>. cinner \<psi> (X *\<^sub>V \<psi>) \<ge> 0)\<close> for X :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
-  consider (unitary) \<open>kind_of_same_type TYPE('a) TYPE('b)\<close>
-      \<open>\<And>A B :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b. A \<le> B = pos ((B-A) o\<^sub>C\<^sub>L (heterogenous_cblinfun_id :: 'b\<Rightarrow>\<^sub>C\<^sub>L'a))\<close>
-    | (trivial) \<open>\<And>A B :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b. A \<le> B \<longleftrightarrow> A = B\<close>
-    apply atomize_elim by (auto simp: pos_def less_eq_cblinfun_def_heterogenous)
-  note cases = this
-  
-  have [simp]: \<open>pos 0\<close>
-    unfolding pos_def by auto
-
-  have pos_nondeg: \<open>X = 0\<close> if \<open>pos X\<close> and \<open>pos (-X)\<close> for X
-    apply (rule cblinfun_cinner_eqI, simp)
-    using that by (metis (no_types, lifting) cblinfun.minus_left cinner_minus_right dual_order.antisym equation_minus_iff neg_le_0_iff_le pos_def)
-
-  have pos_add: \<open>pos (X+Y)\<close> if \<open>pos X\<close> and \<open>pos Y\<close> for X Y
-    by (smt (z3) pos_def cblinfun.diff_left cinner_minus_right cinner_simps(3) diff_ge_0_iff_ge diff_minus_eq_add neg_le_0_iff_le order_trans that(1) that(2) uminus_cblinfun.rep_eq)
-
-  have pos_scaleC: \<open>pos (a *\<^sub>C X)\<close> if \<open>a\<ge>0\<close> and \<open>pos X\<close> for X a
-    using that unfolding pos_def by (auto simp: cblinfun.scaleC_left)
-
-  let ?id = \<open>heterogenous_cblinfun_id :: 'b \<Rightarrow>\<^sub>C\<^sub>L 'a\<close>
-
-  show \<open>x \<le> x\<close>
-    apply (cases rule:cases) by auto
-  show \<open>(x < y) \<longleftrightarrow> (x \<le> y \<and> \<not> y \<le> x)\<close>
-    unfolding less_cblinfun_def by simp
-  show \<open>x \<le> z\<close> if \<open>x \<le> y\<close> and \<open>y \<le> z\<close>
-  proof (cases rule:cases)
-    case unitary
-    define a b :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> where \<open>a = (y-x) o\<^sub>C\<^sub>L heterogenous_cblinfun_id\<close>
-      and \<open>b = (z-y) o\<^sub>C\<^sub>L heterogenous_cblinfun_id\<close>
-    with unitary that have \<open>pos a\<close> and \<open>pos b\<close>
-      by auto
-    then have \<open>pos (a + b)\<close>
-      by (rule pos_add)
-    moreover have \<open>a + b = (z - x) o\<^sub>C\<^sub>L heterogenous_cblinfun_id\<close>
-      unfolding a_def b_def
-      by (metis (no_types, lifting) bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose diff_add_cancel ordered_field_class.sign_simps(2) ordered_field_class.sign_simps(8))
-    ultimately show ?thesis 
-      using unitary by auto
-  next
-    case trivial
-    with that show ?thesis by auto
-  qed
-  show \<open>x = y\<close> if \<open>x \<le> y\<close> and \<open>y \<le> x\<close>
-  proof (cases rule:cases)
-    case unitary
-    then have \<open>unitary ?id\<close>
-      by (auto simp: kind_of_same_type_def)
-    define a b :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> where \<open>a = (y-x) o\<^sub>C\<^sub>L ?id\<close>
-      and \<open>b = (x-y) o\<^sub>C\<^sub>L ?id\<close>
-    with unitary that have \<open>pos a\<close> and \<open>pos b\<close>
-      by auto
-    then have \<open>a = 0\<close>
-      apply (rule_tac pos_nondeg)
-      apply (auto simp: a_def b_def)
-      by (smt (verit, best) add.commute bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose cblinfun_compose_zero_left diff_0 diff_add_cancel group_cancel.rule0 group_cancel.sub1)
-    then show ?thesis
-      unfolding a_def using \<open>unitary ?id\<close>
-      by (metis cblinfun_compose_assoc cblinfun_compose_id_right cblinfun_compose_zero_left eq_iff_diff_eq_0 unitaryD2)
-  next
-    case trivial
-    with that show ?thesis by simp
-  qed
-  show \<open>x + y \<le> x + z\<close> if \<open>y \<le> z\<close>
-  proof (cases rule:cases)
-    case unitary
-    with that show ?thesis 
-      by auto
-  next
-    case trivial
-    with that show ?thesis 
-      by auto
-  qed
-
-  show \<open>a *\<^sub>C x \<le> a *\<^sub>C y\<close> if \<open>x \<le> y\<close> and \<open>0 \<le> a\<close>
-  proof (cases rule:cases)
-    case unitary
-    with that pos_scaleC show ?thesis
-      by (metis cblinfun_compose_scaleC_left complex_vector.scale_right_diff_distrib) 
-  next
-    case trivial
-    with that show ?thesis 
-      by auto
-  qed
-
-  show \<open>a *\<^sub>C x \<le> b *\<^sub>C x\<close> if \<open>a \<le> b\<close> and \<open>0 \<le> x\<close>
-  proof (cases rule:cases)
-    case unitary
-    with that show ?thesis
-      by (auto intro!: pos_scaleC simp flip: scaleC_diff_left)
-  next
-    case trivial
-    with that show ?thesis 
-      by auto
-  qed
-qed
-end
-
-lemma positive_id_cblinfun[simp]: "id_cblinfun \<ge> 0"
-  unfolding less_eq_cblinfun_def using cinner_ge_zero by auto
-
-lemma positive_hermitianI: \<open>A = A*\<close> if \<open>A \<ge> 0\<close>
-  apply (rule cinner_real_hermiteanI)
-  using that by (auto simp del: less_eq_complex_def simp: reals_zero_comparable_iff less_eq_cblinfun_def)
-
-lemma positive_cblinfunI: \<open>A \<ge> 0\<close> if \<open>\<And>x. cinner x (A *\<^sub>V x) \<ge> 0\<close>
-  unfolding less_eq_cblinfun_def using that by auto
-
-(* Note: this does not require B to be a square operator *)
-lemma positive_cblinfun_squareI: \<open>A = B* o\<^sub>C\<^sub>L B \<Longrightarrow> A \<ge> 0\<close>
-  apply (rule positive_cblinfunI)
-  by (metis cblinfun_apply_cblinfun_compose cinner_adj_right cinner_ge_zero)
 
 (* Use norm_cblinfun_compose instead *)
 (* lemma norm_mult_ineq_cblinfun:
@@ -3092,7 +2980,6 @@ declare scaleC_conv_of_complex[simp]
 
 (* Renamed from vector_to_cblinfun_adj_applytor_to_cblinfun *)
 lemma vector_to_cblinfun_adj_comp_vector_to_cblinfun[simp]:
-  includes cblinfun_notation
   shows "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi> = cinner \<psi> \<phi> *\<^sub>C id_cblinfun"
 proof -
   have "one_dim_iso \<gamma> *\<^sub>C one_dim_iso (of_complex \<langle>\<psi>, \<phi>\<rangle>) =
@@ -3293,380 +3180,6 @@ proof (rule notI)
     by auto
 qed
 
-(* proof-
-  have inj_scaleC: "inj ((( *\<^sub>C) \<i>) ::'a \<Rightarrow> 'a)"
-    unfolding inj_def
-    by simp
-  have inj_scaleC': "inj ((( *\<^sub>C) (-\<i>)) ::'a \<Rightarrow> 'a)"
-    unfolding inj_def
-    by simp
-  have "f y = 0"
-    if b1:  "finite {x. f x \<noteq> 0}" and
-      b2:  "{x. f x \<noteq> 0} \<subseteq> B \<union> B'" and 
-      b3:  "(\<Sum>x| f x \<noteq> 0. f x *\<^sub>R x) = 0" 
-    for f and y
-  proof-
-    have z0: "B \<inter> B' = {}"
-      unfolding B'_def
-      by (simp add: a1 cindependent_inter_scaleC_cindependent) 
-    have "finite {x\<in>B. f x \<noteq> 0}"
-      using b1 by auto
-    have "finite {x\<in>B'. f x \<noteq> 0}"
-      using b1 by auto
-    moreover have "( *\<^sub>C) \<i> ` {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0} \<subseteq> {x\<in>B'. f x \<noteq> 0}"
-      unfolding B'_def by auto
-    ultimately have "finite (( *\<^sub>C) \<i> ` {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0})"
-      using finite_subset by blast
-    hence "finite {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0}"
-      using inj_scaleC
-      by (metis (mono_tags, lifting) \<open>( *\<^sub>C) \<i> ` {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0} \<subseteq> {x \<in> B'. f x \<noteq> 0}\<close> 
-          \<open>finite {x \<in> B'. f x \<noteq> 0}\<close> inj_def inj_on_def inj_on_finite) 
-    define g where "g x = (if x \<in> B then f x + \<i> *\<^sub>C f (\<i> *\<^sub>C x) else 0)" for x
-    have g0_inter: "{x\<in>B. f x \<noteq> 0} \<inter> {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-      by blast
-    have g0_union: "{x. g x \<noteq> 0} = {x\<in>B. f x \<noteq> 0} \<union> {x\<in>B. f (\<i> *\<^sub>C x) \<noteq> 0}" 
-      unfolding g_def using Complex_eq Complex_eq_0 by force
-    hence g1: "finite {x. g x \<noteq> 0}"
-      by (simp add: \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)        
-    have g2: "{x. g x \<noteq> 0} \<subseteq> B"
-      unfolding g_def by auto
-    have x: "f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0 \<longleftrightarrow> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)"
-      for x
-     by (metis Im_complex_of_real add_cancel_right_right complex.sel(2) i_complex_of_real mult_eq_0_iff of_real_eq_0_iff plus_complex.sel(2))
-    hence x1: "{x\<in>B. f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0} = {x\<in>B. f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0}"
-      by auto
-    have "{x\<in>B. f x \<noteq> 0} \<union> {x\<in>B'. f x \<noteq> 0} 
-                = {x. (x\<in>B \<and> f x \<noteq> 0) \<or> (x\<in>B' \<and> f x \<noteq> 0)}"
-      by blast
-    also have "\<dots> = {x. (x\<in>B \<or> x\<in>B') \<and> f x \<noteq> 0}"
-      by blast
-    also have "\<dots> = {x\<in>B\<union>B'. f x \<noteq> 0}"
-      by blast
-    finally have p2: " {x \<in> B. f x \<noteq> 0} \<union> {x \<in> B'. f x \<noteq> 0} =
-    {x \<in> B \<union> B'. f x \<noteq> 0}" by blast
-    have "finite {x\<in>B. f x \<noteq> 0}"
-      by (simp add: \<open>finite {x \<in> B. f x \<noteq> 0}\<close>)            
-    moreover have "finite {x\<in>B'. f x \<noteq> 0}"
-      unfolding B'_def
-      by (simp add: b1)
-    moreover have "{x\<in>B. f x \<noteq> 0} \<inter> {x\<in>B'. f x \<noteq> 0} = {}"
-      using z0 by auto
-    moreover have "{x\<in>B. f x \<noteq> 0} \<union> {x\<in>B'. f x \<noteq> 0} = {x\<in>B\<union>B'. f x \<noteq> 0}"
-      using p2
-      by simp 
-    ultimately have r1: "(\<Sum>x | x \<in> B \<union> B' \<and> f x \<noteq> 0. f x *\<^sub>R x) =
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
-    (\<Sum>x | x \<in> B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
-      by (metis (mono_tags, lifting) sum.union_disjoint)
-    have "(\<Sum>x\<in>( *\<^sub>C) \<i> ` {x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}. f x *\<^sub>R x)
-        = (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
-      using inj_scaleC Groups_Big.comm_monoid_add_class.sum.reindex
-        [where A = "{x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}" and h = "( *\<^sub>C) \<i>" and g = "\<lambda>x. f x *\<^sub>R x"]
-      unfolding comp_def inj_def inj_on_def by auto            
-    moreover have "{x|x. x\<in>B' \<and> f x \<noteq> 0} = ( *\<^sub>C) \<i> ` {x|x. x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-      unfolding B'_def by auto
-    ultimately have r2: "(\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
-    (\<Sum>x | x \<in> B' \<and> f x \<noteq> 0. f x *\<^sub>R x) =
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
-    (\<Sum>x | x \<in> B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R \<i> *\<^sub>C x)" by simp
-    have "(\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))
-              =  (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      by (metis (no_types, lifting) complex_vector.scale_left_commute scaleC_scaleC 
-          scaleR_scaleC)
-    moreover have "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>C x)"
-      by (simp add: scaleR_scaleC)            
-    ultimately have r3: "(\<Sum>x | x \<in> B \<and> f x \<noteq> 0. f x *\<^sub>R x) +
-    (\<Sum>x | x \<in> B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R \<i> *\<^sub>C x) =
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0. complex_of_real (f x) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)"
-      by simp
-    have "{x\<in>B. (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0}
-                = {x\<in>B. f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<union> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-      by blast
-    moreover have "{x\<in>B. f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-      by blast
-    ultimately have p1: "(\<Sum>x | x \<in> B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) =
-    (\<Sum>x | x \<in> B \<and> f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)"
-      by (metis (no_types, lifting) \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close>
-          finite_Un sum.union_disjoint)
-    have "{x\<in>B. f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)}
-              = {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<union> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-      by blast
-    moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-      by blast
-    moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
-      by (simp add: b1)                        
-    moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-      using \<open>finite {x \<in> B. f x \<noteq> 0}\<close> calculation(1) by auto              
-    ultimately have "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x)
-              = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x)
-              + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)"
-      by (simp add: sum.union_disjoint)
-    moreover have "(\<Sum>x|x\<in>B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-              = (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-              + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      using p1 by simp        
-    ultimately have r4:"(\<Sum>x | x \<in> B \<and>
-           f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0).
-       complex_of_real (f x) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) =
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0.
-       complex_of_real (f x) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       complex_of_real (f x) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)" 
-      by simp
-    have r5: "(\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
-              + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-            = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x + (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      by (metis (mono_tags, lifting) sum.cong sum.distrib)
-    have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<inter> {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-      by blast
-    moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-      by blast
-    moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<inter> {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = {}"
-      by blast
-    moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
-      by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f x \<noteq> 0}\<close> rev_finite_subset)
-    moreover have "finite {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-      by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> rev_finite_subset)
-    moreover have "finite {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-      by (metis (no_types, lifting) Collect_mono \<open>finite {x \<in> B. f (\<i> *\<^sub>C x) \<noteq> 0}\<close> rev_finite_subset)            
-    ultimately have " (\<Sum>x\<in>{x \<in> B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} 
-                               \<union> {x \<in> B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<union>
-                                 {x \<in> B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}.
-       complex_of_real (f x) *\<^sub>C x + (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) =
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0.
-       complex_of_real (f x) *\<^sub>C x + (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       complex_of_real (f x) *\<^sub>C x + (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       complex_of_real (f x) *\<^sub>C x + (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)"
-      using sum_3_sets[where A = "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0}"
-          and B = "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}" and C = "{x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0}"
-          and f = "\<lambda>x. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x"] by auto
-    moreover have "{x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0} \<union>
-                {x\<in>B. f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} \<union>
-                {x\<in>B. f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0} = 
-                {x\<in>B. (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0)}"
-      by auto
-    ultimately have r6: "(\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0.
-       complex_of_real (f x) *\<^sub>C x +
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       complex_of_real (f x) *\<^sub>C x +
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) +
-    (\<Sum>x | x \<in> B \<and> f x = 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0.
-       complex_of_real (f x) *\<^sub>C x +
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x) =
-    (\<Sum>x | x \<in> B \<and> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0).
-       complex_of_real (f x) *\<^sub>C x +
-       (\<i> * complex_of_real (f (\<i> *\<^sub>C x))) *\<^sub>C x)" by auto
-
-    have "(\<Sum>x| f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|x\<in>B\<union>B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
-      by (metis (mono_tags, lifting) UnI1 b2 mem_Collect_eq sup.absorb_iff2)
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x) + (\<Sum>x|x\<in>B' \<and> f x \<noteq> 0. f x *\<^sub>R x)"
-      using r1 by auto
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>R x)
-                      + (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f (\<i> *\<^sub>C x) *\<^sub>R (\<i> *\<^sub>C x))"
-      using r1 r2 by simp
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0. f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      using r3 by simp
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> (f (\<i> *\<^sub>C x) = 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> (f x = 0 \<or> f x \<noteq> 0) \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      by auto
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      using r4 by simp
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      by auto
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) = 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x \<noteq> 0 \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x + (\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)
-                      + (\<Sum>x|x\<in>B \<and> f x = 0  \<and> f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      using r5
-      by simp
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> (f x \<noteq> 0 \<or> f (\<i> *\<^sub>C x) \<noteq> 0). f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      using r6 by simp
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> f x + \<i> * f (\<i> *\<^sub>C x) \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      using x1 by presburger
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. f x *\<^sub>C x+(\<i> * f (\<i> *\<^sub>C x)) *\<^sub>C x)"
-      by (metis complex_scaleC_def g_def)          
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. (f x +(\<i> * f (\<i> *\<^sub>C x))) *\<^sub>C x)"
-      by (metis (no_types, lifting) scaleC_add_left)          
-    also have "\<dots> = (\<Sum>x|x\<in>B \<and> g x \<noteq> 0. g x *\<^sub>C x)"
-      using g_def by auto
-    also have "\<dots> = (\<Sum>x|g x \<noteq> 0. g x *\<^sub>C x)"
-      by (metis (mono_tags, lifting) \<open>{x. g x \<noteq> 0} \<subseteq> B\<close> mem_Collect_eq subsetD)
-    finally have "(\<Sum>x | f x \<noteq> 0. f x *\<^sub>R x) = (\<Sum>x|g x \<noteq> 0. g x *\<^sub>C x)".
-    hence g3: "(\<Sum>x| g x \<noteq> 0. g x *\<^sub>C x) = 0"
-      using b3 by auto
-    show ?thesis
-    proof(cases "y \<in> B")
-      case True     
-      have "g y = 0"
-        using g1 g2 g3 True a1 complex_vector.independent_alt[where B = B]
-        by (smt Collect_cong  sum.cong)
-      thus ?thesis unfolding g_def
-        using True x by auto
-    next
-      case False
-      hence y_notB: "y \<notin> B".
-      show ?thesis 
-      proof(rule classical)
-        assume "f y \<noteq> 0"
-        hence "y \<in> B \<union> B'"
-          using b2 by auto
-        hence "y \<in> B'"
-          using y_notB by auto
-        hence "y \<in> ( *\<^sub>C) \<i> ` B"
-          unfolding B'_def by blast
-        hence v1: "( *\<^sub>C) (-\<i>) y \<in> ( *\<^sub>C) (-\<i>) ` ( *\<^sub>C) \<i> ` B"
-          by simp
-
-        have "( *\<^sub>C) (-\<i>) ` ( *\<^sub>C) \<i> ` B = (( *\<^sub>C) (-\<i>) \<circ> ( *\<^sub>C) \<i>) ` B"
-          by (simp add: image_comp)
-        also have "\<dots> = (( *\<^sub>C) ((-\<i>)*\<i>)) ` B"
-          by auto
-        also have "\<dots> = ( *\<^sub>C) 1 ` B"
-          by simp
-        also have "\<dots> = B" by simp
-        finally have v2: "( *\<^sub>C) (-\<i>) ` ( *\<^sub>C) \<i> ` B = B"
-          by blast
-        have yB: "(-\<i>) *\<^sub>C y \<in> B"
-          using v1 v2 by blast 
-        define h::"'a \<Rightarrow> complex" where "h x = (-\<i>) * g ((-\<i>) *\<^sub>C x)" for x
-        have z1: "cindependent B'"
-          using a1 unfolding B'_def
-          by (simp add: scaleC_cindependent)
-        have f1: "\<And>y. g y \<noteq> 0 \<Longrightarrow> \<exists>x. g (- (\<i> *\<^sub>C x)) \<noteq> 0 \<and> y = - (\<i> *\<^sub>C x)"
-        proof-
-          fix y
-          assume hyp1: "g y \<noteq> 0"
-          define x where "x = \<i> *\<^sub>C y"
-          have "y = - (\<i> *\<^sub>C x)"
-            unfolding x_def by simp
-          moreover have "g (- (\<i> *\<^sub>C x)) \<noteq> 0"
-            unfolding x_def
-            using hyp1 by auto 
-          ultimately show " \<exists>x. g (- (\<i> *\<^sub>C x)) \<noteq> 0 \<and> y = - (\<i> *\<^sub>C x)" by blast
-        qed
-        have "{x. h x \<noteq> 0} = {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
-          unfolding h_def by auto
-        moreover have "bij_betw (( *\<^sub>C) (- \<i>)) {x. g (- \<i> *\<^sub>C x) \<noteq> 0} {x. g x \<noteq> 0}"
-        proof (rule bij_betwI')
-          show "(- \<i> *\<^sub>C x = - \<i> *\<^sub>C y) = (x = y)"
-            if "x \<in> {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
-              and "y \<in> {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
-            for x :: 'a
-              and y :: 'a
-            using that
-            by auto 
-          show "- \<i> *\<^sub>C x \<in> {x. g x \<noteq> 0}"
-            if "x \<in> {x. g (- \<i> *\<^sub>C x) \<noteq> 0}"
-            for x :: 'a
-            using that
-            by simp 
-          show "\<exists>x\<in>{x. g (- \<i> *\<^sub>C x) \<noteq> 0}. y = - \<i> *\<^sub>C x"
-            if "y \<in> {x. g x \<noteq> 0}"
-            for y :: 'a
-            using that
-            by (simp add: f1) 
-        qed           
-        ultimately have z2: "finite {x. h x \<noteq> 0}"
-          by (simp add: bij_betw_finite g1) 
-
-        have z3: "{x. h x \<noteq> 0} \<subseteq> B'"
-        proof auto
-          fix x
-          assume "h x \<noteq> 0"
-          hence "g ((- \<i>) *\<^sub>C x) \<noteq> 0"
-            by (simp add: h_def)
-          hence "(- \<i>) *\<^sub>C x \<in> B"
-            using g2 by blast
-          thus "x \<in> B'"
-            unfolding B'_def
-            using image_iff by fastforce 
-        qed
-
-        have g1: "g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) = 0 \<longleftrightarrow> h (\<i> *\<^sub>C x) = 0"
-          for x
-          unfolding h_def by auto
-
-        have h1: "bij_betw (( *\<^sub>C) \<i>) {x. h (\<i> *\<^sub>C x) \<noteq> 0} {x. h x \<noteq> 0}"
-        proof (rule bij_betwI')
-          show "(\<i> *\<^sub>C x = \<i> *\<^sub>C y) = (x = y)"
-            if "x \<in> {x. h (\<i> *\<^sub>C x) \<noteq> 0}"
-              and "y \<in> {x. h (\<i> *\<^sub>C x) \<noteq> 0}"
-            for x :: 'a
-              and y :: 'a
-            using that
-            by auto 
-          show "\<i> *\<^sub>C x \<in> {x. h x \<noteq> 0}"
-            if "x \<in> {x. h (\<i> *\<^sub>C x) \<noteq> 0}"
-            for x :: 'a
-            using that
-            by simp 
-          show "\<exists>x\<in>{x. h (\<i> *\<^sub>C x) \<noteq> 0}. y = \<i> *\<^sub>C x"
-            if "y \<in> {x. h x \<noteq> 0}"
-            for y :: 'a
-            using that
-          proof transfer
-            fix yb :: 'a and ha :: "'a \<Rightarrow> complex"
-            assume "yb \<in> {x. ha x \<noteq> 0}"
-            hence "ha yb \<noteq> 0"
-              by blast
-            hence "\<exists>a. \<i> *\<^sub>C a = yb \<and> ha (\<i> *\<^sub>C a) \<noteq> 0"
-              by (metis (full_types) ceq_vector_fraction_iff complex_i_not_zero)
-            thus "\<exists>a\<in>{a. ha (\<i> *\<^sub>C a) \<noteq> 0}. yb = \<i> *\<^sub>C a"
-              by blast
-          qed
-        qed
-
-        have "(\<Sum>x| g x \<noteq> 0. g x *\<^sub>C x) 
-              = (\<Sum>x| g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) \<noteq> 0. g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) *\<^sub>C ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)))"
-          by simp
-        also have "\<dots> = (\<Sum>x| g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) \<noteq> 0. ((-\<i>) * g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x))) *\<^sub>C (\<i> *\<^sub>C x))"
-          by (metis (no_types, lifting) complex_vector.scale_left_commute scaleC_scaleC)
-        also have "\<dots> = (\<Sum>x| g ((-\<i>) *\<^sub>C (\<i> *\<^sub>C x)) \<noteq> 0.  h (\<i> *\<^sub>C x) *\<^sub>C (\<i> *\<^sub>C x))"
-          unfolding h_def by auto
-        also have "\<dots> = (\<Sum>x| h (\<i> *\<^sub>C x) \<noteq> 0.  h (\<i> *\<^sub>C x) *\<^sub>C (\<i> *\<^sub>C x))"
-          using g1 by simp
-        also have "\<dots> = (\<Sum>t| h t \<noteq> 0.  h t *\<^sub>C t)"
-          using h1 Groups_Big.comm_monoid_add_class.sum.reindex_bij_betw[where g = h and h = "( *\<^sub>C) \<i>" 
-              and S = "{x. h (\<i> *\<^sub>C x) \<noteq> 0}" and T = "{x. h x \<noteq> 0}"]
-          by (metis (mono_tags, lifting) sum.cong sum.reindex_bij_betw)
-        finally have "(\<Sum>x | g x \<noteq> 0. g x *\<^sub>C x) = (\<Sum>t | h t \<noteq> 0. h t *\<^sub>C t)".
-        hence z4: "(\<Sum>x| h x \<noteq> 0. h x *\<^sub>C x) = 0"
-          using g3 by auto
-
-        have "h y = 0"
-          using z1 z2 z3 z4 complex_vector.independentD
-          by blast 
-        thus ?thesis
-          by (smt (z3) \<open>y \<in> ( *\<^sub>C) \<i> ` B\<close> complex_i_not_zero complex_scaleC_def cvector_fraction_eq_iff g1 g_def i_squared image_iff mult_minus_left neg_equal_0_iff_equal nonzero_mult_div_cancel_left of_real_1 of_real_minus scaleC_one x)
-      qed
-    qed 
-  qed
-  thus ?thesis
-    using Real_Vector_Spaces.real_vector.independent_alt[where B = "B \<union> B'"]
-    by meson
-qed *)
-
 lemma crepresentation_from_representation: 
   assumes a1: "cindependent B" and a2: "b \<in> B" and a3: "finite B"
   shows "crepresentation B \<psi> b = (representation (B \<union> (*\<^sub>C) \<i> ` B) \<psi> b)
@@ -3693,9 +3206,7 @@ proof (cases "\<psi> \<in> cspan B")
     by (simp add: complex_vector.representation_ne_zero)        
   ultimately have rep1: "(\<Sum>v\<in>B. g v *\<^sub>C v) = \<psi>"    
     unfolding g_def
-    using a3
-    by (smt DiffD2 complex_vector.scale_eq_0_iff mem_Collect_eq subset_eq 
-        sum.mono_neutral_cong_left) (* > 1s *)
+    using a3 True a1 complex_vector.sum_representation_eq by blast
   have l0': "inj ((*\<^sub>C) \<i>::'a \<Rightarrow>'a)"
     unfolding inj_def 
     by simp 
@@ -4297,85 +3808,15 @@ subsection \<open>Unsorted\<close>
 
 (* TODO sort this into the right sections *)
 
-lemma id_cblinfun_not_0[simp]: \<open>(id_cblinfun :: 'a::{complex_normed_vector, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L _) \<noteq> 0\<close>
-  by (metis ccsubspace_top_not_bot kernel_0 kernel_id zero_ccsubspace_def)
-
 (* Use cblinfun.zero_right instead *)
 (* lemma cblinfun_apply_to_zero[simp]: "A *\<^sub>V 0 = 0" *)
 
-(* TODO: replace by a more general lemma that shows Proj (A\<union>B) = Proj A + Proj B
-         under orthogonality assumptions (using projection_union (other TODO)) *)
-(* It follows from projection_union *)
-lemma Proj_Span_insert:
+(* Use Proj_orthog_ccspan_union instead *)
+(* lemma Proj_Span_insert:
   fixes S :: "'a::{onb_enum, chilbert_space} list"
     and a::'a 
   assumes a1: "is_ortho_set (set (a#S))" and a2: "distinct (a#S)"
-  shows "Proj (ccspan (set (a#S))) = Proj (ccspan {a}) + Proj (ccspan (set S))"
-proof-
-  define d where "d = canonical_basis_length TYPE('a)"
-  hence IH': "is_ortho_set (set S)"
-    by (meson a1 is_ortho_set_def list.set_intros(2))
-  have IH0: "distinct S"
-    using a2 by auto   
-  have "closure (cspan (set S)) = cspan (set S)"
-    by (simp add: closure_finite_cspan)    
-  have d: "cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
-    using complex_vector.span_insert[where a = a and S = "(set S)"].
-  moreover have "finite (insert a (set S))"
-    by simp    
-  ultimately have "closure (cspan (insert a (set S))) = 
-        cspan {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
-    by (metis complex_vector.span_span closure_finite_cspan)
-  hence s2: "space_as_set (Abs_clinear_space (closure (cspan (insert a (set S))))) 
-        = cspan {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}"
-    by (metis ccspan.rep_eq space_as_set_inverse)
-  have "closure (cspan (set S)) = cspan (set S)"
-    by (simp add: closure_finite_cspan)    
-  have ios: "is_ortho_set (set S)"
-    by (simp add: IH')    
-  have aS: "a \<notin> set S"
-    using a2 by auto
-  have p: "projection (cspan (insert a (set S))) u
-        = projection (cspan {a}) u
-        + projection (cspan (set S)) u"
-    for u   
-  proof (rule projection_insert_finite)
-    show "\<langle>a, s\<rangle> = 0"
-      if "s \<in> set S"
-      for s :: 'a
-      using that
-      by (metis (no_types, lifting) Un_insert_right a1 aS insertI1 insert_is_Un is_ortho_set_def 
-          list.simps(15) mk_disjoint_insert) 
-    show "finite (set S)"
-      by simp    
-  qed
-  have s1: "projection (cspan (insert a (set S))) u
-        = projection (cspan {a}) u + projection (cspan (set S)) u"
-    for u
-    by (simp add: p)    
-  have "Proj (ccspan (set (a#S))) = cBlinfun (projection (cspan (insert a (set S))))"
-    unfolding Proj_def ccspan_def id_def
-    by (metis \<open>cspan (insert a (set S)) = {x. \<exists>k. x - k *\<^sub>C a \<in> cspan (set S)}\<close> 
-        complex_vector.span_span list.simps(15) map_fun_apply s2) 
-
-  also have "\<dots> = (cBlinfun (\<lambda>u. projection (cspan {a}) u
-                   + projection (cspan (set S)) u))"
-    using s1
-    by presburger 
-  also have "\<dots> = cBlinfun (\<lambda>u. projection (cspan {a}) u)
-               +  cBlinfun (\<lambda>u. projection (cspan (set S)) u)"
-    unfolding plus_cblinfun_def apply auto
-    by (metis (no_types, lifting) List.finite_set List.set_insert Proj.rep_eq ccspan.rep_eq
-        cblinfun_apply_inverse finite.emptyI finite_list closure_finite_cspan)
-  also have "\<dots> = Proj (Abs_clinear_space (cspan {a}))
-               +  Proj (Abs_clinear_space (cspan (set S)))"
-    unfolding Proj_def apply auto
-    by (metis ccspan.rep_eq \<open>closure (cspan (set S)) = cspan (set S)\<close> finite.emptyI 
-        finite.insertI space_as_set_inverse closure_finite_cspan)
-  also have "\<dots> = Proj (ccspan {a}) + Proj (ccspan (set S))"
-    by (simp add: ccspan.abs_eq closure_finite_cspan)
-  finally show "Proj (ccspan (set (a#S))) = Proj (ccspan {a}) + Proj (ccspan (set S))".
-qed
+  shows "Proj (ccspan (set (a#S))) = Proj (ccspan {a}) + Proj (ccspan (set S))" *)
 
 (* Renamed from butterfly_def' *)
 definition butterfly_def: "butterfly (s::'a::complex_normed_vector) (t::'b::chilbert_space)
@@ -4950,6 +4391,31 @@ proof intro_classes
   ultimately show \<open>\<exists>S :: ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) set. finite S \<and> cspan S = UNIV\<close>
     by auto
 qed  
+
+section \<open>Notation\<close>
+
+
+bundle cblinfun_notation begin
+notation cblinfun_compose (infixl "o\<^sub>C\<^sub>L" 55)
+notation cblinfun_apply (infixr "*\<^sub>V" 70)
+notation cblinfun_image (infixr "*\<^sub>S" 70)
+notation adj ("_*" [99] 100)
+end
+
+bundle no_cblinfun_notation begin
+no_notation cblinfun_compose (infixl "o\<^sub>C\<^sub>L" 55)
+no_notation cblinfun_apply (infixr "*\<^sub>V" 70)
+no_notation cblinfun_image (infixr "*\<^sub>S" 70)
+no_notation adj ("_*" [99] 100)
+end
+
+bundle blinfun_notation begin
+notation blinfun_apply (infixr "*\<^sub>V" 70)
+end
+
+bundle no_blinfun_notation begin
+no_notation blinfun_apply (infixr "*\<^sub>V" 70)
+end
 
 unbundle no_cblinfun_notation
 

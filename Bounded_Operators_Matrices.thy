@@ -4230,11 +4230,11 @@ proof -
       apply (subst Cons.IH)
       using Cons.prems apply auto
       by (meson Cons.prems(1) is_ortho_set_antimono set_subset_Cons)
-    also have "\<dots> = Proj (ccspan (set (a # Snorm)))"
-      apply (rule Proj_Span_insert[symmetric])
-      using Cons.prems by auto
+    also have "\<dots> = Proj (ccspan ({a} \<union> set Snorm))"
+      apply (rule Proj_orthog_ccspan_union[symmetric])
+      by (metis Cons.prems(1) \<open>a \<notin> set Snorm\<close> is_ortho_set_def list.set_intros(1) list.set_intros(2) singleton_iff)
     finally show ?case
-      by -
+      by simp
   qed
   also have "\<dots> = mat_of_cblinfun (Proj (ccspan (set S)))"
     unfolding Span_Snorm by simp

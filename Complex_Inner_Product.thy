@@ -1334,7 +1334,6 @@ qed
 
 lemma de_morgan_orthogonal_complement_plus:        
   fixes A B::"('a::complex_inner) set"
-  (* assumes a1: \<open>closed_csubspace A\<close> and a2: \<open>closed_csubspace B\<close> *)
   assumes \<open>0 \<in> A\<close> and \<open>0 \<in> B\<close>
   shows \<open>orthogonal_complement (A +\<^sub>M B) = (orthogonal_complement A) \<inter> (orthogonal_complement B)\<close>
 proof-
@@ -2816,5 +2815,51 @@ end
 
 
 instance conjugate_space :: (chilbert_space) chilbert_space..
+
+subsection \<open>Unsorted\<close>
+
+lemma cinner_sup_norm: \<open>norm \<psi> = (SUP \<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
+proof (rule sym, rule cSup_eq_maximum)
+  have \<open>norm \<psi> = cmod (cinner \<psi> \<psi>) / norm \<psi>\<close>
+    by (metis norm_eq_sqrt_cinner norm_ge_zero real_div_sqrt)
+  then show \<open>norm \<psi> \<in> range (\<lambda>\<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
+    by blast
+next
+  fix n assume \<open>n \<in> range (\<lambda>\<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
+  then obtain \<phi> where n\<phi>: \<open>n = cmod (cinner \<phi> \<psi>) / norm \<phi>\<close>
+    by auto
+  show \<open>n \<le> norm \<psi>\<close>
+    unfolding n\<phi>
+    by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2 divide_le_eq ordered_field_class.sign_simps(33))
+qed
+
+lemma cinner_sup_onorm: 
+  fixes A :: \<open>'a::{real_normed_vector,not_singleton} \<Rightarrow> 'b::complex_inner\<close>
+  assumes \<open>bounded_linear A\<close>
+  shows \<open>onorm A = (SUP (\<psi>,\<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
+proof (unfold onorm_def, rule cSup_eq_cSup)
+  show \<open>bdd_above (range (\<lambda>x. norm (A x) / norm x))\<close>
+    by (meson assms bdd_aboveI2 le_onorm)
+next
+  fix a
+  assume \<open>a \<in> range (\<lambda>\<phi>. norm (A \<phi>) / norm \<phi>)\<close>
+  then obtain \<phi> where \<open>a = norm (A \<phi>) / norm \<phi>\<close>
+    by auto
+  then have \<open>a \<le> cmod (cinner (A \<phi>) (A \<phi>)) / (norm (A \<phi>) * norm \<phi>)\<close>
+    apply auto
+    by (smt (verit) divide_divide_eq_left norm_eq_sqrt_cinner norm_imp_pos_and_ge real_div_sqrt)
+  then show \<open>\<exists>b\<in>range (\<lambda>(\<psi>, \<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>)). a \<le> b\<close>
+    by force
+next
+  fix b
+  assume \<open>b \<in> range (\<lambda>(\<psi>, \<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
+  then obtain \<psi> \<phi> where b: \<open>b = cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>)\<close>
+    by auto
+  then have \<open>b \<le> norm (A \<phi>) / norm \<phi>\<close>
+    apply auto
+    by (smt (verit, ccfv_threshold) complex_inner_class.Cauchy_Schwarz_ineq2 division_ring_divide_zero linordered_field_class.divide_right_mono mult_cancel_left1 nonzero_mult_divide_mult_cancel_left2 norm_imp_pos_and_ge ordered_field_class.sign_simps(33) zero_le_divide_iff) (* > 1s *)
+  then show \<open>\<exists>a\<in>range (\<lambda>x. norm (A x) / norm x). b \<le> a\<close>
+    by auto
+qed
 
 end

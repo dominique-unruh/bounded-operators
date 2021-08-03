@@ -419,7 +419,7 @@ proof -
       and "dB = canonical_basis_length TYPE('b)"
       and "S' = filter (\<lambda>v. dim_vec v = dA) S"
 
-  have "applyOpSpace A (SPAN S) = A *\<^sub>S ccspan (set (map onb_enum_of_vec S'))"
+  have "cblinfun_image A (SPAN S) = A *\<^sub>S ccspan (set (map onb_enum_of_vec S'))"
     unfolding SPAN_def dA_def[symmetric] Let_def S'_def filter_set
     by simp
   also have "\<dots> = ccspan ((\<lambda>x. onb_enum_of_vec 

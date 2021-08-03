@@ -1808,6 +1808,7 @@ lemma closed_sum_mono_right:
 
 instantiation ccsubspace :: (complex_normed_vector) sup begin
 lift_definition sup_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" 
+  \<comment> \<open>Note that \<^term>\<open>A+B\<close> would not be a closed subspace, we need the closure. See, e.g., \<^url>\<open>https://math.stackexchange.com/a/1786792/403528\<close>.\<close>
   is "\<lambda>A B::'a set. A +\<^sub>M B"
   by (simp add: closed_subspace_closed_sum) 
 instance .. 

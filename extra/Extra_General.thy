@@ -5,6 +5,7 @@ theory Extra_General
     "HOL-Analysis.Elementary_Topology"
     Jordan_Normal_Form.Conjugate
     "HOL-Analysis.Uniform_Limit"
+    "HOL-Library.Set_Algebras"
 begin
 
 subsection \<open>Misc\<close>
@@ -374,5 +375,48 @@ lemma sum_single:
   shows "sum f A = (if i\<in>A then f i else 0)"
   apply (subst sum.mono_neutral_cong_right[where S=\<open>A \<inter> {i}\<close> and h=f])
   using assms by auto
+
+lemma cSup_eq_cSup:
+  fixes A B :: \<open>'a::conditionally_complete_lattice set\<close>
+  assumes bdd: \<open>bdd_above A\<close>
+  assumes B: \<open>\<And>a. a\<in>A \<Longrightarrow> \<exists>b\<in>B. b \<ge> a\<close>
+  assumes A: \<open>\<And>b. b\<in>B \<Longrightarrow> \<exists>a\<in>A. a \<ge> b\<close>
+  shows \<open>Sup A = Sup B\<close>
+proof (cases \<open>B = {}\<close>)
+  case True
+  with A B have \<open>A = {}\<close>
+    by auto
+  with True show ?thesis by simp
+next
+  case False
+  have \<open>bdd_above B\<close>
+    by (meson A bdd bdd_above_def order_trans)
+  have \<open>A \<noteq> {}\<close>
+    using A False by blast
+  moreover have \<open>a \<le> Sup B\<close> if \<open>a \<in> A\<close> for a
+  proof -
+    obtain b where \<open>b \<in> B\<close> and \<open>b \<ge> a\<close>
+      using B \<open>a \<in> A\<close> by auto
+    then show ?thesis
+      apply (rule cSup_upper2)
+      using \<open>bdd_above B\<close> by simp
+  qed
+  moreover have \<open>Sup B \<le> c\<close> if \<open>\<And>a. a \<in> A \<Longrightarrow> a \<le> c\<close> for c
+    using False apply (rule cSup_least)
+    using A that by fastforce
+  ultimately show ?thesis
+    by (rule cSup_eq_non_empty)
+qed
+
+lemma image_set_plus: 
+  assumes \<open>linear U\<close>
+  shows \<open>U ` (A + B) = U ` A + U ` B\<close>
+  unfolding image_def set_plus_def
+  using assms by (force simp: linear_add)
+
+consts heterogenous_identity :: \<open>'a \<Rightarrow> 'b\<close>
+overloading heterogenous_identity_id \<equiv> "heterogenous_identity :: 'a \<Rightarrow> 'a" begin
+definition heterogenous_identity_def[simp]: \<open>heterogenous_identity_id = id\<close>
+end
 
 end
