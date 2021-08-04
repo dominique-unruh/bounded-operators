@@ -4099,37 +4099,147 @@ qed
 lemma sandwich_apply: \<open>sandwich A *\<^sub>V B = A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*\<close>
   apply (transfer fixing: A B) by auto
 
-lemma cblinfun_norm_witness:
-  fixes A :: \<open>'a::{complex_normed_vector,not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
-  shows \<open>\<exists>\<psi>. norm (A *\<^sub>V \<psi>) = norm A \<and> norm \<psi> = 1\<close>
-  sorry
-
 (* TODO move *)
 subclass (in perfect_space) not_singleton
   apply intro_classes
   by (metis (mono_tags) Collect_cong Collect_mem_eq UNIV_I local.UNIV_not_singleton local.not_open_singleton local.open_subopen)
 
-lemma norm_AAadj[simp]: \<open>norm (A o\<^sub>C\<^sub>L A*) = (norm A)\<^sup>2\<close> for A :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::{complex_inner,not_singleton}\<close>
-(* TODO: remove perfect_space *)
+(* TODO move *)
+lemma Sup_real_close:
+  fixes e :: real
+  assumes "0 < e"
+    and S: "bdd_above S" "S \<noteq> {}"
+  shows "\<exists>x\<in>S. Sup S - e < x"
 proof -
-  have 1: \<open>(norm A)\<^sup>2 \<le> norm (A o\<^sub>C\<^sub>L A*)\<close>
+  have \<open>\<Squnion> (ereal ` S) \<noteq> \<infinity>\<close>
+    by (metis assms(2) bdd_above_def ereal_less_eq(3) less_SUP_iff less_ereal.simps(4) not_le)
+  moreover have \<open>\<Squnion> (ereal ` S) \<noteq> -\<infinity>\<close>
+    by (simp add: SUP_eq_iff assms(3))
+  ultimately have Sup_bdd: \<open>\<bar>\<Squnion> (ereal ` S)\<bar> \<noteq> \<infinity>\<close>
+    by auto
+  then have \<open>\<exists>x'\<in>ereal ` S. Sup (ereal ` S) - ereal e < x'\<close>
+    apply (rule_tac Sup_ereal_close)
+    using assms by auto
+  then obtain x where \<open>x \<in> S\<close> and Sup_x: \<open>Sup (ereal ` S) - ereal e < ereal x\<close>
+    by auto
+  have \<open>Sup (ereal ` S) = ereal (Sup S)\<close>
+    using Sup_bdd by (rule ereal_Sup[symmetric])
+  with Sup_x have \<open>ereal (Sup S - e) < ereal x\<close>
+    by auto
+  then have \<open>Sup S - e < x\<close>
+    by auto
+  with \<open>x \<in> S\<close> show ?thesis
+    by auto
+qed
+
+lemma cblinfun_norm_approx_witness:
+  fixes A :: \<open>'a::{not_singleton,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
+  assumes \<open>\<epsilon> > 0\<close>
+  shows \<open>\<exists>\<psi>. norm (A *\<^sub>V \<psi>) \<ge> norm A - \<epsilon> \<and> norm \<psi> = 1\<close>
+proof (transfer fixing: \<epsilon>)
+  fix A :: \<open>'a \<Rightarrow> 'b\<close> assume [simp]: \<open>bounded_clinear A\<close>
+  have \<open>\<exists>y\<in>{norm (A x) |x. norm x = 1}. y > \<Squnion> {norm (A x) |x. norm x = 1} - \<epsilon>\<close>
+    apply (rule Sup_real_close)
+    using assms by (auto simp: ex_norm1 bounded_clinear.bounded_linear bdd_above_norm_f)
+  also have \<open>\<Squnion> {norm (A x) |x. norm x = 1} = onorm A\<close>
+    by (simp add: Complex_Vector_Spaces0.bounded_clinear.bounded_linear onorm_sphere)
+  finally 
+  show \<open>\<exists>\<psi>. onorm A - \<epsilon> \<le> norm (A \<psi>) \<and> norm \<psi> = 1\<close>
+    by force
+qed
+
+lemma cblinfun_norm_approx_witness_mult:
+  fixes A :: \<open>'a::{not_singleton,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
+  assumes \<open>\<epsilon> < 1\<close>
+  shows \<open>\<exists>\<psi>. norm (A *\<^sub>V \<psi>) \<ge> norm A * \<epsilon> \<and> norm \<psi> = 1\<close>
+proof (cases \<open>norm A = 0\<close>)
+  case True
+  then show ?thesis
+    apply auto
+    by (simp add: ex_norm1)
+next
+  case False
+  then have \<open>(1 - \<epsilon>) * norm A > 0\<close>
+    using assms by fastforce
+  then obtain \<psi> where geq: \<open>norm (A *\<^sub>V \<psi>) \<ge> norm A - ((1 - \<epsilon>) * norm A)\<close> and \<open>norm \<psi> = 1\<close>
+    using cblinfun_norm_approx_witness by blast
+  have \<open>norm A * \<epsilon> = norm A - (1 - \<epsilon>) * norm A\<close>
+    by (simp add: mult.commute right_diff_distrib')
+  also have \<open>\<dots> \<le> norm (A *\<^sub>V \<psi>)\<close>
+    by (rule geq)
+  finally show ?thesis
+    using \<open>norm \<psi> = 1\<close> by auto
+qed
+
+(* TODO move *)
+attribute_setup internalize_sort = \<open>let
+fun find_tvar thm v = let
+  val tvars = Term.add_tvars (Thm.prop_of thm) []
+  val tv = case find_first (fn (n,sort) => n=v) tvars of
+              SOME tv => tv | NONE => raise THM ("Type variable " ^ string_of_indexname v ^ " not found", 0, [thm])
+in 
+TVar tv
+end
+
+fun internalize_sort_attr (tvar:indexname) =
+  Thm.rule_attribute [] (fn context => fn thm =>
+    (snd (Internalize_Sort.internalize_sort (Thm.ctyp_of (Context.proof_of context) (find_tvar thm tvar)) thm)));
+in
+  Scan.lift Args.var >> internalize_sort_attr
+end\<close>
+  "internalize a sort"
+
+(* TODO move *)
+lemma CARD_1_vec_0[simp]: \<open>(\<psi> :: _ ::{complex_vector,CARD_1}) = 0\<close>
+  by auto
+
+lemma cblinfun_to_CARD_1_0[simp]: \<open>(A :: _ \<Rightarrow>\<^sub>C\<^sub>L _::CARD_1) = 0\<close>
+  apply (rule cblinfun_eqI)
+  by auto
+
+lemma cblinfun_from_CARD_1_0[simp]: \<open>(A :: _::CARD_1 \<Rightarrow>\<^sub>C\<^sub>L _) = 0\<close>
+  apply (rule cblinfun_eqI)
+  apply (subst CARD_1_vec_0)
+  by auto
+
+(* TODO move *)
+lemma not_singleton_vs_CARD_1:
+  assumes \<open>\<not> class.not_singleton TYPE('a)\<close>
+  shows \<open>class.CARD_1 TYPE('a)\<close>
+  using assms unfolding class.not_singleton_def class.CARD_1_def
+  by (metis (full_types) One_nat_def UNIV_I card.empty card.insert empty_iff equalityI finite.intros(1) insert_iff subsetI)
+
+lemma norm_AAadj[simp]: \<open>norm (A o\<^sub>C\<^sub>L A*) = (norm A)\<^sup>2\<close> for A :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::{complex_inner}\<close>
+proof (cases \<open>class.not_singleton TYPE('b)\<close>)
+  case True
+  then have [simp]: \<open>class.not_singleton TYPE('b)\<close>
+    by -
+  have 1: \<open>(norm A)\<^sup>2 * \<epsilon> \<le> norm (A o\<^sub>C\<^sub>L A*)\<close> if \<open>\<epsilon> < 1\<close> and \<open>\<epsilon> \<ge> 0\<close> for \<epsilon>
   proof -
-    obtain \<psi> where [simp]: \<open>norm ((A*) *\<^sub>V \<psi>) = norm (A*)\<close> and [simp]: \<open>norm \<psi> = 1\<close>
-      apply atomize_elim by (rule cblinfun_norm_witness)
-    have \<open>(norm A)\<^sup>2 = (norm (A*))\<^sup>2\<close>
-      by auto
-    also have \<open>(norm (A*))\<^sup>2 = cinner (A* *\<^sub>V \<psi>) (A* *\<^sub>V \<psi>)\<close>
+    obtain \<psi> where \<psi>: \<open>norm ((A*) *\<^sub>V \<psi>) \<ge> norm (A*) * sqrt \<epsilon>\<close> and [simp]: \<open>norm \<psi> = 1\<close>
+      apply atomize_elim
+      apply (rule cblinfun_norm_approx_witness_mult[internalize_sort 'a])
+      using \<open>\<epsilon> < 1\<close> by (auto intro: complex_normed_vector_class.complex_normed_vector_axioms)
+    have \<open>complex_of_real ((norm A)\<^sup>2 * \<epsilon>) = (norm (A*) * sqrt \<epsilon>)\<^sup>2\<close>
+      by (simp add: ordered_field_class.sign_simps(23) that(2))
+    also have \<open>\<dots> \<le> (norm ((A* *\<^sub>V \<psi>)))\<^sup>2\<close>
+      apply (rule complex_of_real_mono)
+      using \<psi> apply (rule power_mono)
+      using \<open>\<epsilon> \<ge> 0\<close> by auto
+    also have \<open>\<dots> \<le> cinner (A* *\<^sub>V \<psi>) (A* *\<^sub>V \<psi>)\<close>
       by (auto simp flip: power2_norm_eq_cinner)
     also have \<open>\<dots> = cinner \<psi> (A *\<^sub>V A* *\<^sub>V \<psi>)\<close>
       by (simp add: cinner_adj_left)
     also have \<open>\<dots> = cinner \<psi> ((A o\<^sub>C\<^sub>L A*) *\<^sub>V \<psi>)\<close>
       by auto
     also have \<open>\<dots> \<le> norm (A o\<^sub>C\<^sub>L A*)\<close>
-      using \<open>norm \<psi> = 1\<close> 
-      by (smt (verit, del_insts) calculation complex_inner_class.Cauchy_Schwarz_ineq2 complex_of_real_mono mult.commute mult_cancel_left1 norm_cblinfun norm_of_real)
+      using \<open>norm \<psi> = 1\<close>
+      by (smt (verit, best) Im_complex_of_real Re_complex_of_real \<open>(A* *\<^sub>V \<psi>) \<bullet>\<^sub>C (A* *\<^sub>V \<psi>) = \<psi> \<bullet>\<^sub>C (A *\<^sub>V A* *\<^sub>V \<psi>)\<close> \<open>\<psi> \<bullet>\<^sub>C (A *\<^sub>V A* *\<^sub>V \<psi>) = \<psi> \<bullet>\<^sub>C ((A o\<^sub>C\<^sub>L A*) *\<^sub>V \<psi>)\<close> cdot_square_norm cinner_ge_zero cmod_Re complex_inner_class.Cauchy_Schwarz_ineq2 less_eq_complex_def mult_cancel_left1 mult_cancel_right1 norm_cblinfun) 
     finally show ?thesis
       by auto
   qed
+  then have 1: \<open>(norm A)\<^sup>2 \<le> norm (A o\<^sub>C\<^sub>L A*)\<close>
+    by (metis field_le_mult_one_interval less_eq_real_def ordered_field_class.sign_simps(5))
 
   have 2: \<open>norm (A o\<^sub>C\<^sub>L A*) \<le> (norm A)\<^sup>2\<close>
   proof (rule norm_cblinfun_bound)
@@ -4148,10 +4258,19 @@ proof -
   qed
 
   from 1 2 show ?thesis by simp
+next
+  case False
+  then have [simp]: \<open>class.CARD_1 TYPE('b)\<close>
+    by (rule not_singleton_vs_CARD_1)
+  have \<open>A = 0\<close>
+    apply (rule cblinfun_to_CARD_1_0[internalize_sort 'b])
+    by (auto intro: complex_normed_vector_class.complex_normed_vector_axioms)
+  then show ?thesis
+    by auto
 qed
 
 lemma norm_sandwich: \<open>norm (sandwich A) = (norm A)\<^sup>2\<close> for A :: \<open>'a::{chilbert_space,perfect_space} \<Rightarrow>\<^sub>C\<^sub>L 'b::{complex_inner,perfect_space}\<close>
-    (* TODO remove not_singleton *)
+    (* TODO remove perfect_space *)
 proof (rule norm_cblinfun_eqI)
   show \<open>(norm A)\<^sup>2 \<le> norm (sandwich A *\<^sub>V id_cblinfun) / norm (id_cblinfun :: 'a \<Rightarrow>\<^sub>C\<^sub>L _)\<close>
     apply (auto simp: sandwich_apply)
