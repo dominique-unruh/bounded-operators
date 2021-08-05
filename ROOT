@@ -14,6 +14,7 @@ session "Bounded_Operators-Extra" in extra = "Bounded_Operators-Prerequisites" +
   options [document = pdf, document_output = "output", 
            document_variants = "document:outline=/proof,/ML"]
   theories Extra_General Extra_Vector_Spaces Extra_Nonstandard_Analysis Extra_Ordered_Fields
+    Extra_Pretty_Code_Examples
 
 session Bounded_Operators = "Bounded_Operators-Extra" +
   options [record_proofs=1, document = pdf, document_output = "output", 
