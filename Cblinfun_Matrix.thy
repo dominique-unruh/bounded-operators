@@ -1,10 +1,10 @@
-theory Bounded_Operators_Matrices
-  imports Jordan_Normal_Form.Gram_Schmidt 
-          "HOL-Analysis.Starlike"
+theory Cblinfun_Matrix
+  imports
+    Complex_L2
 
-          "Bounded_Operators-Extra.Extra_Jordan_Normal_Form"
-
-          Complex_L2
+    "Jordan_Normal_Form.Gram_Schmidt"
+    "HOL-Analysis.Starlike"
+    "Bounded_Operators-Extra.Extra_Jordan_Normal_Form"
 begin
 
 hide_const (open) Order.bottom Order.top
@@ -3622,7 +3622,7 @@ proof(cases "a = 0")
         cblinfun_of_mat_minusOp minus_r_inv_mat)
   moreover have "norm2 = 0"
     unfolding norm2_def
-    by (metis Bounded_Operators_Matrices.cscalar_prod_cinner True cinner_zero_left) 
+    by (metis cscalar_prod_cinner True cinner_zero_left) 
   ultimately show ?thesis by auto
 next
   case False
@@ -3661,15 +3661,15 @@ next
   proof-
     have norm2a: "norm2 = \<langle>a, a\<rangle>"
       unfolding norm2_def
-      by (simp add: Bounded_Operators_Matrices.cscalar_prod_cinner)
+      by (simp add: cscalar_prod_cinner)
 
     have "\<langle>a, basis ! j\<rangle> * cnj \<langle>a, basis ! i\<rangle>
         = (unit_vec d j \<bullet>c vec_of_onb_enum a) * cnj (unit_vec d i \<bullet>c vec_of_onb_enum a)"
     proof-
       have "\<langle>a, basis ! j\<rangle> = unit_vec d j \<bullet>c vec_of_onb_enum a"
-        by (metis basis_def Bounded_Operators_Matrices.cscalar_prod_cinner d_def that(2) vec_of_basis_vector)
+        by (metis basis_def cscalar_prod_cinner d_def that(2) vec_of_basis_vector)
       moreover have "\<langle>a, basis ! i\<rangle> = unit_vec d i \<bullet>c vec_of_onb_enum a"
-        by (metis basis_def Bounded_Operators_Matrices.cscalar_prod_cinner d_def that(1) vec_of_basis_vector)
+        by (metis basis_def cscalar_prod_cinner d_def that(1) vec_of_basis_vector)
       ultimately show ?thesis by simp
     qed
     have "\<dots> = (vec_of_onb_enum a $ i) * cnj (vec_of_onb_enum a $ j)"
@@ -3901,7 +3901,7 @@ proof-
     if b1: "i < length R"
       and b2: "j < length R"
     for i j
-    by (metis Bounded_Operators_Matrices.cscalar_prod_cinner R_def b1 b2 length_map nth_map)     
+    by (metis cscalar_prod_cinner R_def b1 b2 length_map nth_map)     
   have "R ! i \<bullet>c R ! j = 0"
     if b1: "i < length R"
       and b2: "j < length R"

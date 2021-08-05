@@ -1,8 +1,8 @@
-theory Bounded_Operators_Code_Examples
+theory Cblinfun_Code_Examples
   imports
     Real_Impl.Real_Impl "HOL-Library.Code_Target_Numeral" Jordan_Normal_Form.Matrix_Impl
   "HOL-ex.Sqrt"
-    Bounded_Operators_Code 
+    Cblinfun_Code
 begin
 
 hide_const (open) Order.bottom Order.top

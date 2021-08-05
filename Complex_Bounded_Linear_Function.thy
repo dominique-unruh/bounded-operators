@@ -8,7 +8,7 @@ Authors:
 
 (* TODO: Rename \<rightarrow> Complex_Bounded_Linear_Function *)
 
-theory Bounded_Operators
+theory Complex_Bounded_Linear_Function
   imports 
     Complex_Inner_Product One_Dimensional_Spaces
     Banach_Steinhaus.Banach_Steinhaus
@@ -134,7 +134,7 @@ proof
     by auto
   thus "1 *\<^sub>C x = x"
     for x :: "'a \<Rightarrow>\<^sub>L 'b"
-    by (simp add: Bounded_Operators.scaleC_blinfun.rep_eq blinfun_eqI)   
+    by (simp add: scaleC_blinfun.rep_eq blinfun_eqI)   
 
   have \<open>onorm (\<lambda>x. a *\<^sub>C f x) = cmod a * onorm f\<close>
     if \<open>bounded_linear f\<close>
@@ -4001,7 +4001,7 @@ lemma butterfly_is_Proj:
   by (subst butterfly_eq_proj, simp_all)
 
 lemma Proj_bot[simp]: "Proj bot = 0"
-  by (metis Bounded_Operators.zero_scaleC_ccsubspace Proj_on_own_range' is_Proj_0 is_Proj_algebraic 
+  by (metis zero_scaleC_ccsubspace Proj_on_own_range' is_Proj_0 is_Proj_algebraic 
       zero_ccsubspace_def)
 
 lemma Proj_ortho_compl:

@@ -10,12 +10,11 @@ Authors:
 
 theory Complex_L2
   imports 
+    Complex_Bounded_Linear_Function
+
     "HOL-Analysis.L2_Norm"
     "HOL-Library.Rewrite"
     "HOL-Analysis.Infinite_Set_Sum"
-    Complex_Inner_Product
-    Bounded_Operators
-
     "Bounded_Operators-Extra.Extra_Infinite_Set_Sum"
 begin
 
