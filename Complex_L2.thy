@@ -488,34 +488,17 @@ typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
 setup_lifting type_definition_ell2
 
+
+
 instantiation ell2 :: (type)complex_vector begin
 lift_definition zero_ell2 :: "'a ell2" is "\<lambda>_. 0" by (auto simp: has_ell2_norm_def)
 lift_definition uminus_ell2 :: "'a ell2 \<Rightarrow> 'a ell2" is uminus by (simp add: has_ell2_norm_def)
 lift_definition plus_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>f g x. f x + g x"
   by (rule ell2_norm_triangle) 
 lift_definition minus_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>f g x. f x - g x"
-proof-
-  have "has_ell2_norm (\<lambda>x::'a. f x + - g x)"
-    if "has_ell2_norm f" and "has_ell2_norm g"
-    for f g ::"'a \<Rightarrow> complex"
-  proof (rule ell2_norm_triangle)
-    show "has_ell2_norm f"
-      by (simp add: that(1))
-    have "bdd_above (sum (\<lambda>i. (cmod (g i))\<^sup>2) ` Collect finite)"
-      using that(2)
-      unfolding has_ell2_norm_def
-      by auto
-    thus "has_ell2_norm (\<lambda>i. - g i)"
-      unfolding has_ell2_norm_def
-      by auto
-  qed 
-  thus "has_ell2_norm (\<lambda>x. f x - g x)"
-    if "has_ell2_norm f" and "has_ell2_norm g"
-    for f g::"'a \<Rightarrow> complex"
-    using that
-    by auto
-qed
-
+  apply (subst add_uminus_conv_diff[symmetric])
+  apply (rule ell2_norm_triangle)
+  by (auto simp add: ell2_norm_uminus)
 lift_definition scaleR_ell2 :: "real \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>r f x. complex_of_real r * f x"
   by (rule ell2_norm_smult)
 lift_definition scaleC_ell2 :: "complex \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2" is "\<lambda>c f x. c * f x"
@@ -523,70 +506,30 @@ lift_definition scaleC_ell2 :: "complex \<Rightarrow> 'a ell2 \<Rightarrow> 'a e
 
 instance
 proof
-  show "((*\<^sub>R) r::'a ell2 \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)"
-    for r :: real
-  proof (transfer ; rule ext ; simp)
-    show "r *\<^sub>R (x::'a ell2) = complex_of_real r *\<^sub>C x"
-      for r :: real
-        and x :: "'a ell2"
-      apply transfer
-      by simp
-  qed
+  fix a b c :: "'a ell2"
 
+  show "((*\<^sub>R) r::'a ell2 \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)" for r
+    apply (rule ext) apply transfer by auto
   show "a + b + c = a + (b + c)"
-    for a :: "'a ell2"
-      and b :: "'a ell2"
-      and c :: "'a ell2"
-    by (transfer ; rule ext ; simp)
-
+    by (transfer; rule ext; simp)
   show "a + b = b + a"
-    for a :: "'a ell2"
-      and b :: "'a ell2"
-    by (transfer ; rule ext ; simp)
+    by (transfer; rule ext; simp)
   show "0 + a = a"
-    for a :: "'a ell2"
-    by (transfer ; rule ext ; simp)
+    by (transfer; rule ext; simp)
   show "- a + a = 0"
-    for a :: "'a ell2"
-    by (transfer ; rule ext ; simp)
+    by (transfer; rule ext; simp)
   show "a - b = a + - b"
-    for a :: "'a ell2"
-      and b :: "'a ell2"
-    by (transfer ; rule ext ; simp)
-  show "a *\<^sub>C (x + y) = a *\<^sub>C x + a *\<^sub>C y"
-    for a :: complex
-      and x :: "'a ell2"
-      and y :: "'a ell2"
-  proof (transfer ; rule ext ; simp)
-    show "a * (x t + y t) = a * x t + a * y t"
-      if "has_ell2_norm x"
-        and "has_ell2_norm y"
-      for a :: complex
-        and x y:: "'a \<Rightarrow> complex"
-        and t :: 'a
-      using that
-      by (simp add: ring_class.ring_distribs(1)) 
-  qed
-
-  show "(a + b) *\<^sub>C x = a *\<^sub>C x + b *\<^sub>C x"
-    for a b :: complex
-      and x :: "'a ell2"
-  proof (transfer ; rule ext ; simp)
-    show "(a + b) * x t = a * x t + b * x t"
-      if "has_ell2_norm x"
-      for a b:: complex
-        and x :: "'a \<Rightarrow> complex"
-        and t :: 'a
-      using that
-      by (simp add: ring_class.ring_distribs(2)) 
-  qed
-  show "a *\<^sub>C b *\<^sub>C x = (a * b) *\<^sub>C x"
-    for a b :: complex
-      and x :: "'a ell2"
-    by (transfer ; rule ext ; simp)
-  show "1 *\<^sub>C x = x"
-    for x :: "'a ell2"
-    by (transfer ; rule ext ; simp)
+    by (transfer; rule ext; simp)
+  show "r *\<^sub>C (a + b) = r *\<^sub>C a + r *\<^sub>C b" for r
+    apply (transfer; rule ext)
+    by (simp add: vector_space_over_itself.scale_right_distrib)
+  show "(r + r') *\<^sub>C a = r *\<^sub>C a + r' *\<^sub>C a" for r r'
+    apply (transfer; rule ext)
+    by (simp add: ring_class.ring_distribs(2)) 
+  show "r *\<^sub>C r' *\<^sub>C a = (r * r') *\<^sub>C a" for r r'
+    by (transfer; rule ext; simp)
+  show "1 *\<^sub>C a = a"
+    by (transfer; rule ext; simp)
 qed
 end
 
@@ -599,48 +542,33 @@ definition [code del]: "uniformity = (INF e\<in>{0<..}. principal {(x::'a ell2, 
 definition [code del]: "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in INF e\<in>{0<..}. principal {(x, y). norm (x - y) < e}. x' = x \<longrightarrow> y \<in> U)" for U :: "'a ell2 set"
 instance
 proof
-  show "dist x y = norm (x - y)"
-    for x y :: "'a ell2"
+  fix a b :: "'a ell2"
+  show "dist a b = norm (a - b)"
     by (simp add: dist_ell2_def)    
-  show "sgn x = x /\<^sub>R norm x"
-    for x :: "'a ell2"
+  show "sgn a = a /\<^sub>R norm a"
     by (simp add: sgn_ell2_def)    
   show "uniformity = (INF e\<in>{0<..}. principal {(x, y). dist (x::'a ell2) y < e})"
     unfolding dist_ell2_def  uniformity_ell2_def by simp
-  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a ell2) = x \<longrightarrow> y \<in> U)"
-    for U :: "'a ell2 set"
+  show "open U = (\<forall>x\<in>U. \<forall>\<^sub>F (x', y) in uniformity. (x'::'a ell2) = x \<longrightarrow> y \<in> U)" for U :: "'a ell2 set"
     unfolding uniformity_ell2_def open_ell2_def by simp_all        
-  show "(norm x = 0) = (x = 0)"
-    for x :: "'a ell2"
+  show "(norm a = 0) = (a = 0)"
     apply transfer by (fact ell2_norm_0)    
-  show "norm (x + y) \<le> norm x + norm y"
-    for x :: "'a ell2"
-      and y :: "'a ell2"
+  show "norm (a + b) \<le> norm a + norm b"
     apply transfer by (fact ell2_norm_triangle)
-  show "norm (a *\<^sub>R (x::'a ell2)) = \<bar>a\<bar> * norm x"
-    for a :: real
-      and x :: "'a ell2"
-  proof transfer
-    show "ell2_norm (\<lambda>x. complex_of_real a * f (x::'a)) = \<bar>a\<bar> * ell2_norm f"
-      if "has_ell2_norm (f::'a \<Rightarrow> complex)"
-      for a :: real
-        and f :: "'a \<Rightarrow> complex"
-      using that
-      by (simp add: ell2_norm_smult(2)) 
-  qed
-  show "norm (a *\<^sub>C x) = cmod a * norm x"
-    for a :: complex
-      and x :: "'a ell2"
-  proof transfer
-    show "ell2_norm (\<lambda>x. a * f x) = cmod a * ell2_norm f"
-      if "has_ell2_norm f"
-      for a :: complex
-        and f :: "'a \<Rightarrow> complex"
-      using that
-      by (simp add: ell2_norm_smult(2)) 
-  qed
+  show "norm (r *\<^sub>R (a::'a ell2)) = \<bar>r\<bar> * norm a" for r
+      and a :: "'a ell2"
+    apply transfer
+    by (simp add: ell2_norm_smult(2)) 
+  show "norm (r *\<^sub>C a) = cmod r * norm a" for r
+    apply transfer
+    by (simp add: ell2_norm_smult(2)) 
 qed  
 end
+
+(* Renamed from norm_ell2_component *)
+lemma norm_point_bound_ell2: "norm (Rep_ell2 x i) \<le> norm x"
+  apply transfer
+  by (simp add: ell2_norm_point_bound)
 
 instantiation ell2 :: (type) complex_inner begin
 lift_definition cinner_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> complex" is 
@@ -813,74 +741,6 @@ proof standard
 qed
 end
 
-subsection \<open>Kets and bras\<close>
-
-lift_definition ket :: "'a \<Rightarrow> 'a ell2" is "\<lambda>x y. if x=y then 1 else 0"
-  by (rule has_ell2_norm_ket)
-
-abbreviation bra :: "'a \<Rightarrow> (_,complex) cblinfun" where "bra i \<equiv> vector_to_cblinfun (ket i)*" for i
-
-lemma cinner_ket_left: \<open>\<langle>ket i, \<psi>\<rangle> = Rep_ell2 \<psi> i\<close>
-  apply (transfer fixing: i)
-  apply (subst infsetsum_cong_neutral[where B=\<open>{i}\<close>])
-  by auto
-
-lemma cinner_ket_right: \<open>\<langle>\<psi>, ket i\<rangle> = cnj (Rep_ell2 \<psi> i)\<close>
-  apply (transfer fixing: i)
-  apply (subst infsetsum_cong_neutral[where B=\<open>{i}\<close>])
-  by auto
-
-lemma cinner_ket_eqI:
-  assumes \<open>\<And>i. cinner (ket i) \<psi> = cinner (ket i) \<phi>\<close>
-  shows \<open>\<psi> = \<phi>\<close>
-  by (metis Rep_ell2_inject assms cinner_ket_left ext)
-
-(* Renamed from ell2_ket *)
-lemma norm_ket[simp]: "norm (ket i) = 1"
-  apply transfer by (rule ell2_norm_ket)
-
-
-(* ******************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-TODO rename from here *)
-
-(* Renamed from norm_ell2_component *)
-lemma norm_point_bound_ell2: "norm (Rep_ell2 x i) \<le> norm x"
-  apply transfer
-  by (simp add: ell2_norm_point_bound)
-
-(* TODO remove? *)
-lemma Cauchy_ell2_component: 
-  fixes X
-  defines "x i == Rep_ell2 (X i)"
-  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
-proof -
-  assume "Cauchy X"
-  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
-  proof -
-    have "dist (X i) (X i') = norm (X i - X i')"
-      unfolding dist_norm by simp
-    also have "norm (X i - X i') \<ge> norm (Rep_ell2 (X i - X i') j)"
-      by (rule norm_point_bound_ell2)
-    also have "Rep_ell2 (X i - X i') j = x i j - x i' j"
-      unfolding x_def
-      by (metis add_implies_diff diff_add_cancel plus_ell2.rep_eq) 
-    also have "norm (x i j - x i' j) = dist (x i j) (x i' j)"
-      unfolding dist_norm by simp
-    finally show ?thesis by assumption
-  qed
-  thus ?thesis
-    unfolding Cauchy_def
-    using \<open>Cauchy X\<close> unfolding Cauchy_def
-    by (meson le_less_trans) 
-qed
-
 instance ell2 :: (type) chilbert_space
 proof
   fix X :: \<open>nat \<Rightarrow> 'a ell2\<close>
@@ -889,8 +749,10 @@ proof
     using Rep_ell2 x_def[abs_def] by simp
 
   assume \<open>Cauchy X\<close>
-  then have \<open>Cauchy (\<lambda>n. x n a)\<close> for a
-    by (simp add: x_def Cauchy_ell2_component)
+  moreover have "dist (x n a) (x m a) \<le> dist (X n) (X m)" for n m a
+    by (metis Rep_ell2 x_def dist_norm ell2_norm_point_bound mem_Collect_eq minus_ell2.rep_eq norm_ell2.rep_eq)
+  ultimately have \<open>Cauchy (\<lambda>n. x n a)\<close> for a
+    by (meson Cauchy_def le_less_trans)
   then obtain l where x_lim: \<open>(\<lambda>n. x n a) \<longlonglongrightarrow> l a\<close> for a
     apply atomize_elim apply (rule choice)
     by (simp add: convergent_eq_Cauchy)
@@ -980,9 +842,13 @@ proof
     by (rule convergentI)
 qed
 
-lemma subspace_zero_not_top[simp]: 
-  "(0::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
-  by simp
+
+subsection \<open>Kets and bras\<close>
+
+lift_definition ket :: "'a \<Rightarrow> 'a ell2" is "\<lambda>x y. if x=y then 1 else 0"
+  by (rule has_ell2_norm_ket)
+
+abbreviation bra :: "'a \<Rightarrow> (_,complex) cblinfun" where "bra i \<equiv> vector_to_cblinfun (ket i)*" for i
 
 instance ell2 :: (type) not_singleton
 proof standard
@@ -994,6 +860,56 @@ proof standard
   thus \<open>\<exists>x y::'a ell2. x \<noteq> y\<close>
     by blast    
 qed
+
+lemma cinner_ket_left: \<open>\<langle>ket i, \<psi>\<rangle> = Rep_ell2 \<psi> i\<close>
+  apply (transfer fixing: i)
+  apply (subst infsetsum_cong_neutral[where B=\<open>{i}\<close>])
+  by auto
+
+lemma cinner_ket_right: \<open>\<langle>\<psi>, ket i\<rangle> = cnj (Rep_ell2 \<psi> i)\<close>
+  apply (transfer fixing: i)
+  apply (subst infsetsum_cong_neutral[where B=\<open>{i}\<close>])
+  by auto
+
+lemma cinner_ket_eqI:
+  assumes \<open>\<And>i. cinner (ket i) \<psi> = cinner (ket i) \<phi>\<close>
+  shows \<open>\<psi> = \<phi>\<close>
+  by (metis Rep_ell2_inject assms cinner_ket_left ext)
+
+(* Renamed from ell2_ket *)
+lemma norm_ket[simp]: "norm (ket i) = 1"
+  apply transfer by (rule ell2_norm_ket)
+
+
+
+(* ******************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+TODO rename from here *)
+
+(* (* TODO remove? *)
+lemma Cauchy_ell2_component: 
+  fixes X
+  defines "x i == Rep_ell2 (X i)"
+  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
+  by (smt (verit, best) Cauchy_def Rep_ell2 assms dist_norm ell2_norm_point_bound le_less_trans mem_Collect_eq minus_ell2.rep_eq norm_ell2.rep_eq)
+proof -
+  assume "Cauchy X"
+  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
+    by (metis Rep_ell2 assms dist_norm ell2_norm_point_bound mem_Collect_eq minus_ell2.rep_eq norm_ell2.rep_eq)
+  thus ?thesis
+    by (meson Cauchy_def \<open>Cauchy X\<close> le_less_trans)
+qed *)
+
+(* TODO remove? *)
+lemma subspace_zero_not_top[simp]: 
+  "(0::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
+  by simp
 
 lemma ell2_norm_explicit_finite_support:
   assumes \<open>finite S\<close> \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 x i = 0\<close>
