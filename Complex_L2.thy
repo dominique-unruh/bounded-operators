@@ -478,17 +478,11 @@ lemma ell2_norm_uminus:
   shows \<open>has_ell2_norm (\<lambda>i. - x i)\<close> and \<open>ell2_norm (\<lambda>i. - x i) = ell2_norm x\<close>
   using assms by (auto simp: has_ell2_norm_def ell2_norm_def)
 
-subsection \<open>The type of square-summable functions\<close>
-
-(* notation
-  inf (infixl "\<sqinter>" 70) and
-  sup (infixl "\<squnion>" 65)  *)
+subsection \<open>The type \<open>ell2\<close> of square-summable functions\<close>
 
 typedef 'a ell2 = "{x::'a\<Rightarrow>complex. has_ell2_norm x}"
   unfolding has_ell2_norm_def by (rule exI[of _ "\<lambda>_.0"], auto)
 setup_lifting type_definition_ell2
-
-
 
 instantiation ell2 :: (type)complex_vector begin
 lift_definition zero_ell2 :: "'a ell2" is "\<lambda>_. 0" by (auto simp: has_ell2_norm_def)
@@ -569,6 +563,77 @@ end
 lemma norm_point_bound_ell2: "norm (Rep_ell2 x i) \<le> norm x"
   apply transfer
   by (simp add: ell2_norm_point_bound)
+
+
+(* Renamed from ell2_norm_explicit_finite_support *)
+lemma ell2_norm_finite_support:
+  assumes \<open>finite S\<close> \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 x i = 0\<close>
+  shows \<open>norm x = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
+proof -
+  have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<le> (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
+  proof-
+    have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<in>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      using \<open>finite S\<close>
+      by simp
+    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      using Rep_ell2 unfolding has_ell2_norm_def
+      by auto
+    ultimately show ?thesis using cSup_upper by simp
+  qed
+  moreover have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+  proof-
+    have \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<Longrightarrow> t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+      for t
+    proof-
+      assume \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
+      hence \<open>\<exists> R \<in> (Collect finite). t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> 
+        by blast
+      then obtain R where \<open>R \<in> (Collect finite)\<close> and \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close>
+        by blast
+      from \<open>R \<in> (Collect finite)\<close>
+      have \<open>finite R\<close>
+        by blast
+      have \<open>R = (R - S) \<union> (R \<inter> S)\<close>
+        by (simp add: Un_Diff_Int)
+      moreover have \<open>(R - S) \<inter> (R \<inter> S) = {}\<close>
+        by auto
+      ultimately have  \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S)
+         + (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
+        using \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> and \<open>finite R\<close>
+        by (smt sum.Int_Diff)
+      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S) = 0\<close>
+      proof-
+        have \<open>r \<in> R - S \<Longrightarrow> (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) r = 0\<close>
+          for r
+          by (simp add: assms(2))        
+        thus ?thesis
+          by simp 
+      qed
+      ultimately have \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
+        by simp
+      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+      proof-
+        have \<open>R \<inter> S \<subseteq> S\<close>
+          by simp        
+        moreover have \<open>(\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) i \<ge> 0\<close>
+          for i
+          by auto        
+        ultimately show ?thesis
+          by (simp add: assms(1) sum_mono2) 
+      qed
+      ultimately show \<open>t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close> by simp
+    qed
+    moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<noteq> {}\<close>
+      by auto      
+    ultimately show ?thesis
+      by (simp add: cSup_least) 
+  qed
+  ultimately have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
+    by simp
+  thus ?thesis
+    by (metis ell2_norm_def norm_ell2.rep_eq) 
+qed
+
 
 instantiation ell2 :: (type) complex_inner begin
 lift_definition cinner_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> complex" is 
@@ -842,6 +907,13 @@ proof
     by (rule convergentI)
 qed
 
+subsection \<open>Orthogonality\<close>
+
+lemma ell2_pointwise_ortho:
+  assumes \<open>\<And> i. Rep_ell2 x i = 0 \<or> Rep_ell2 y i = 0\<close>
+  shows \<open>is_orthogonal x y\<close>
+  using assms apply transfer
+  by (simp add: infsetsum_all_0)
 
 subsection \<open>Kets and bras\<close>
 
@@ -880,107 +952,8 @@ lemma cinner_ket_eqI:
 lemma norm_ket[simp]: "norm (ket i) = 1"
   apply transfer by (rule ell2_norm_ket)
 
-
-
-(* ******************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-TODO rename from here *)
-
-(* (* TODO remove? *)
-lemma Cauchy_ell2_component: 
-  fixes X
-  defines "x i == Rep_ell2 (X i)"
-  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
-  by (smt (verit, best) Cauchy_def Rep_ell2 assms dist_norm ell2_norm_point_bound le_less_trans mem_Collect_eq minus_ell2.rep_eq norm_ell2.rep_eq)
-proof -
-  assume "Cauchy X"
-  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
-    by (metis Rep_ell2 assms dist_norm ell2_norm_point_bound mem_Collect_eq minus_ell2.rep_eq norm_ell2.rep_eq)
-  thus ?thesis
-    by (meson Cauchy_def \<open>Cauchy X\<close> le_less_trans)
-qed *)
-
-(* TODO remove? *)
-lemma subspace_zero_not_top[simp]: 
-  "(0::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
-  by simp
-
-lemma ell2_norm_explicit_finite_support:
-  assumes \<open>finite S\<close> \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 x i = 0\<close>
-  shows \<open>norm x = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
-proof-
-  have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<le> (Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite))\<close>
-  proof-
-    have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S \<in>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
-      using \<open>finite S\<close>
-      by simp
-    moreover have \<open>bdd_above (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
-      using Rep_ell2 unfolding has_ell2_norm_def
-      by auto
-    ultimately show ?thesis using cSup_upper by simp
-  qed
-  moreover have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
-  proof-
-    have \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<Longrightarrow> t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
-      for t
-    proof-
-      assume \<open>t \<in> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)\<close>
-      hence \<open>\<exists> R \<in> (Collect finite). t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> 
-        by blast
-      then obtain R where \<open>R \<in> (Collect finite)\<close> and \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close>
-        by blast
-      from \<open>R \<in> (Collect finite)\<close>
-      have \<open>finite R\<close>
-        by blast
-      have \<open>R = (R - S) \<union> (R \<inter> S)\<close>
-        by (simp add: Un_Diff_Int)
-      moreover have \<open>(R - S) \<inter> (R \<inter> S) = {}\<close>
-        by auto
-      ultimately have  \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S)
-         + (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
-        using \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) R\<close> and \<open>finite R\<close>
-        by (smt sum.Int_Diff)
-      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R - S) = 0\<close>
-      proof-
-        have \<open>r \<in> R - S \<Longrightarrow> (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) r = 0\<close>
-          for r
-          by (simp add: assms(2))        
-        thus ?thesis
-          by simp 
-      qed
-      ultimately have \<open>t = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S)\<close>
-        by simp
-      moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) (R \<inter> S) \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
-      proof-
-        have \<open>R \<inter> S \<subseteq> S\<close>
-          by simp        
-        moreover have \<open>(\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) i \<ge> 0\<close>
-          for i
-          by auto        
-        ultimately show ?thesis
-          by (simp add: assms(1) sum_mono2) 
-      qed
-      ultimately show \<open>t \<le> (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close> by simp
-    qed
-    moreover have \<open>(sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite) \<noteq> {}\<close>
-      by auto      
-    ultimately show ?thesis
-      by (simp add: cSup_least) 
-  qed
-  ultimately have \<open>(Sup (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2) ` Collect finite)) = (sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S\<close>
-    by simp
-  thus ?thesis
-    by (metis ell2_norm_def norm_ell2.rep_eq) 
-qed
-
-
-lemma ket_Kronecker_delta_eq[simp]:
+(* Renamed from cinner_ket_eq *)
+lemma cinner_ket_same[simp]:
   \<open>\<langle>ket i, ket i\<rangle> = 1\<close>
 proof-
   have \<open>norm (ket i) = 1\<close>
@@ -999,27 +972,22 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-(* TODO: remove? ket_Kronecker_delta enough I think *)
-lemma ket_Kronecker_delta_neq:
-  \<open>i \<noteq> j \<Longrightarrow> \<langle>ket i, ket j\<rangle> = 0\<close>
-proof-
-  assume \<open>i \<noteq> j\<close>
-  have \<open>\<langle>ket i, ket j\<rangle> = (\<Sum>\<^sub>ak. cnj (if i = k then 1 else 0) * (if j = k then 1 else 0))\<close>
-    apply transfer
-    by blast
-  moreover have \<open>cnj (if i = k then 1 else 0) * (if j = k then 1 else 0) = 0\<close>
-    for k
-    using \<open>i \<noteq> j\<close> by auto    
-  ultimately show ?thesis
-    by simp 
-qed
+lemma orthogonal_ket[simp]:
+  \<open>is_orthogonal (ket i) (ket j) \<longleftrightarrow> i \<noteq> j\<close>
+  by (simp add: cinner_ket_left ket.rep_eq)
 
-lemma ket_Kronecker_delta: \<open>\<langle>ket i, ket j\<rangle> = (if i=j then 1 else 0)\<close>
-  by (simp add: ket_Kronecker_delta_eq ket_Kronecker_delta_neq)
+(* Renamed from ket_Kronecker_delta *)
+lemma cinner_ket: \<open>\<langle>ket i, ket j\<rangle> = (if i=j then 1 else 0)\<close>
+  by (simp add: cinner_ket_left ket.rep_eq)
 
-lemma ket_distinct:
-  \<open>i \<noteq> j \<Longrightarrow> ket i \<noteq> ket j\<close>
-  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one)
+lemma ket_injective[simp]: \<open>ket i = ket j \<longleftrightarrow> i = j\<close>
+  by (metis cinner_ket one_neq_zero)
+
+lemma inj_ket[simp]: \<open>inj ket\<close>
+  by (simp add: inj_on_def)
+
+subsection \<open>Truncated vectors\<close>
+
 
 lift_definition trunc_ell2:: \<open>'a set \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2\<close>
   is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then (Rep_ell2 x) i else 0))\<close>
@@ -1077,7 +1045,49 @@ proof transfer
   qed
 qed
 
-lemma truc_ell2_insert:
+
+(* ******************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+TODO rename from here *)
+
+subsection \<open>Sort me...\<close>
+
+(* (* TODO remove? *)
+lemma Cauchy_ell2_component: 
+  fixes X
+  defines "x i == Rep_ell2 (X i)"
+  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
+  by (smt (verit, best) Cauchy_def Rep_ell2 assms dist_norm ell2_norm_point_bound le_less_trans mem_Collect_eq minus_ell2.rep_eq norm_ell2.rep_eq)
+proof -
+  assume "Cauchy X"
+  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
+    by (metis Rep_ell2 assms dist_norm ell2_norm_point_bound mem_Collect_eq minus_ell2.rep_eq norm_ell2.rep_eq)
+  thus ?thesis
+    by (meson Cauchy_def \<open>Cauchy X\<close> le_less_trans)
+qed *)
+
+(* (* TODO remove? *)
+lemma subspace_zero_not_top[simp]: 
+  "(0::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
+  by simp *)
+
+
+
+(* lemma cinner_ket: \<open>\<langle>ket i, ket j\<rangle> = (if i=j then 1 else 0)\<close>
+  by (simp add: cinner_ket) *)
+
+(* Use ket_injective instead *)
+(* lemma ket_distinct:
+  \<open>i \<noteq> j \<Longrightarrow> ket i \<noteq> ket j\<close>
+  by (metis cinner_ket one_neq_zero) *)
+
+lemma trunc_ell2_insert:
   \<open>k \<notin> R \<Longrightarrow> trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
 proof-
   assume \<open>k \<notin> R\<close>  
@@ -1131,12 +1141,6 @@ proof-
 qed
 
 
-lemma ell2_ortho:
-  assumes \<open>\<And> i. Rep_ell2 x i = 0 \<or> Rep_ell2 y i = 0\<close>
-  shows \<open>\<langle>x, y\<rangle> = 0\<close>
-  using assms apply transfer
-  by (simp add: infsetsum_all_0)
-
 lemma trunc_ell2_norm_diff:
   \<open>(norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
 proof-
@@ -1153,7 +1157,7 @@ proof-
       by (simp add: trunc_ell2.rep_eq) 
   qed
   hence \<open>\<langle> (trunc_ell2 S x), (x - trunc_ell2 S x) \<rangle> = 0\<close>
-    using ell2_ortho by blast
+    using ell2_pointwise_ortho by blast
   hence \<open>(norm x)^2 = (norm (trunc_ell2 S x))^2 + (norm (x - trunc_ell2 S x))^2\<close>
     using pythagorean_theorem by fastforce    
   thus ?thesis by simp
@@ -1167,7 +1171,7 @@ proof-
   moreover have \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 ((trunc_ell2 S x)) i = 0\<close>
     by (simp add: trunc_ell2.rep_eq)    
   ultimately have \<open>(norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 ((trunc_ell2 S x)) i))\<^sup>2)) S)\<close>
-    using ell2_norm_explicit_finite_support
+    using ell2_norm_finite_support
     by blast 
   moreover have \<open>\<And> i. i \<in> S \<Longrightarrow> Rep_ell2 ((trunc_ell2 S x)) i = Rep_ell2 x i\<close>
     by (simp add: trunc_ell2.rep_eq)
@@ -1219,8 +1223,8 @@ proof (induction n)
       have \<open>k \<notin> R\<close>
         using \<open>S = insert k R\<close> \<open>card R = n\<close> \<open>card S = Suc n\<close> insert_absorb by fastforce
       hence \<open>trunc_ell2 S x = trunc_ell2 R x + (Rep_ell2 x k) *\<^sub>C ket k\<close>
-        using \<open>S = insert k R\<close> truc_ell2_insert
-        by (simp add: truc_ell2_insert) 
+        using \<open>S = insert k R\<close> 
+        by (simp add: trunc_ell2_insert) 
       moreover have \<open>trunc_ell2 R x \<in> complex_vector.span (range ket)\<close>
         by (simp add: \<open>card R = n\<close> \<open>finite R\<close> that)
       ultimately show \<open>trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
@@ -1327,7 +1331,7 @@ proof
     have \<open>distinct (enum_class.enum::'a list)\<close>
       using enum_distinct by blast
     moreover have \<open>inj_on ket (set enum_class.enum)\<close>
-      by (meson inj_onI ket_distinct)         
+      by (meson inj_onI ket_injective)         
     ultimately show ?thesis
       unfolding canonical_basis_ell2_def
       using distinct_map
@@ -1336,11 +1340,11 @@ proof
 
   show "is_ortho_set (set (canonical_basis::'a ell2 list))"
     apply (auto simp: canonical_basis_ell2_def enum_UNIV)
-    by (smt (z3) norm_ket f_inv_into_f is_ortho_set_def ket_Kronecker_delta_neq norm_zero)
+    by (smt (z3) norm_ket f_inv_into_f is_ortho_set_def orthogonal_ket norm_zero)
 
   show "cindependent (set (canonical_basis::'a ell2 list))"
     apply (auto simp: canonical_basis_ell2_def enum_UNIV)
-    by (smt (verit, best) norm_ket f_inv_into_f is_ortho_set_def is_ortho_set_cindependent ket_Kronecker_delta_neq norm_zero)
+    by (smt (verit, best) norm_ket f_inv_into_f is_ortho_set_def is_ortho_set_cindependent orthogonal_ket norm_zero)
 
   show "cspan (set (canonical_basis::'a ell2 list)) = UNIV"
     by (auto simp: canonical_basis_ell2_def enum_UNIV)
@@ -1365,38 +1369,22 @@ lift_definition times_ell2 :: "'a ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'a el
   by simp   
 instance 
 proof
-  show "(a::'a ell2) * b * c = a * (b * c)"
-    for a :: "'a ell2"
-      and b :: "'a ell2"
-      and c :: "'a ell2"
+  fix a b c :: "'a ell2" and r :: complex
+  show "a * b * c = a * (b * c)"
     by (transfer, auto)
-  show "((a::'a ell2) + b) * c = a * c + b * c"
-    for a :: "'a ell2"
-      and b :: "'a ell2"
-      and c :: "'a ell2"
-    apply (transfer, rule ext, auto)
+  show "(a + b) * c = a * c + b * c"
+    apply (transfer, rule ext)
     by (simp add: distrib_left mult.commute)
-  show "(a::'a ell2) * (b + c) = a * b + a * c"
-    for a :: "'a ell2"
-      and b :: "'a ell2"
-      and c :: "'a ell2"
-    apply transfer apply (rule ext) apply auto
-    using distrib_left by blast
-  show "a *\<^sub>C (x::'a ell2) * y = a *\<^sub>C (x * y)"
-    for a :: complex
-      and x :: "'a ell2"
-      and y :: "'a ell2"
+  show "a * (b + c) = a * b + a * c"
+    apply transfer
+    by (simp add: ring_class.ring_distribs(1))
+  show "r *\<^sub>C a * b = r *\<^sub>C (a * b)"
     by (transfer, auto)
-  show "(x::'a ell2) * a *\<^sub>C y = a *\<^sub>C (x * y)"
-    for x :: "'a ell2"
-      and a :: complex
-      and y :: "'a ell2"
+  show "(a::'a ell2) * r *\<^sub>C b = r *\<^sub>C (a * b)"
     by (transfer, auto)
-  show "(1::'a ell2) * a = a"
-    for a :: "'a ell2"
+  show "1 * a = a"
     by (transfer, rule ext, auto)
-  show "(a::'a ell2) * 1 = a"
-    for a :: "'a ell2"
+  show "a * 1 = a"
     by (transfer, rule ext, auto)
   show "(0::'a ell2) \<noteq> 1"
     apply transfer
@@ -1492,11 +1480,11 @@ qed
 
 subsection \<open>Recovered theorems\<close>
 
-lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
+(* lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
   using norm_point_bound_ell2
-  by (simp add: norm_point_bound_ell2) 
+  by (simp add: norm_point_bound_ell2)  *)
 
-lemma Cauchy_vector_component: 
+(* lemma Cauchy_vector_component: 
   fixes X
   defines "x i == Rep_ell2 (X i)"
   shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
@@ -1519,7 +1507,7 @@ proof -
     unfolding Cauchy_def
     using \<open>Cauchy X\<close> unfolding Cauchy_def
     by (meson le_less_trans) 
-qed
+qed *)
 
 lemma closed_csubspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> csubspace x) \<Longrightarrow> csubspace (\<Inter>AA)"
   by (simp add: complex_vector.subspace_Inter)
@@ -1555,9 +1543,10 @@ lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a ell2 ccsubspace"
 lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a ell2 ccsubspace"
   by (simp add: add_increasing)
 
-lemma ket_is_orthogonal[simp]:
+(* Use orthogonal_ket instead *)
+(* lemma ket_is_orthogonal[simp]:
   "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
-  by (metis ket_Kronecker_delta_eq ket_Kronecker_delta_neq zero_neq_one) 
+  by (metis cinner_ket_same orthogonal_ket)  *)
 
 lemma Span_range_ket[simp]: "ccspan (range ket) = (top::('a ell2 ccsubspace))"
 proof-
@@ -1567,6 +1556,7 @@ proof-
     by (simp add: ccspan.abs_eq top_ccsubspace.abs_eq)
 qed
 
+(* TODO: name *)
 lemma [simp]: "ket i \<noteq> 0"
   using norm_ket[of i] by force
 
@@ -1585,8 +1575,8 @@ proof -
 qed
 
 instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
-text \<open>Note: enum is not really needed, but without it this instantiation
-clashes with \<open>instantiation ell2 :: (enum) onb_enum\<close>\<close>
+text \<open>Note: enum is not needed logically, but without it this instantiation
+            clashes with \<open>instantiation ell2 :: (enum) onb_enum\<close>\<close>
 instance
 proof
   show "canonical_basis = [1::'a ell2]"
@@ -1605,7 +1595,6 @@ end
 lemma ket_nonzero: "(ket::'a\<Rightarrow>_) i \<noteq> 0"
   apply transfer
   by (metis zero_neq_one)
-
 
 lemma cindependent_ket:
   "cindependent (range (ket::'a\<Rightarrow>_))"
@@ -1626,7 +1615,7 @@ qed
 lemma sum_butter[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = id_cblinfun\<close>
   apply (rule equal_ket)
   apply (subst complex_vector.linear_sum[where f=\<open>\<lambda>y. y *\<^sub>V ket _\<close>])
-  apply (auto simp add: scaleC_cblinfun.rep_eq cblinfun.add_left clinearI butterfly_def cblinfun_compose_image ket_Kronecker_delta)
+  apply (auto simp add: scaleC_cblinfun.rep_eq cblinfun.add_left clinearI butterfly_def cblinfun_compose_image cinner_ket)
   apply (subst sum.mono_neutral_cong_right[where S=\<open>{_}\<close>])
   by auto
 
@@ -1647,8 +1636,8 @@ definition "classical_operator_exists \<pi> \<longleftrightarrow>
   cblinfun_extension_exists (range ket)
     (\<lambda>t. case \<pi> (inv ket t) of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
 
-lemma inj_ket: "inj ket"
-  by (meson injI ket_distinct)
+(* lemma inj_ket: "inj ket"
+  by (meson injI ket_injective) *)
 
 lemma classical_operator_existsI:
   assumes "\<And>x. B *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
@@ -1994,7 +1983,7 @@ lemma classical_operator_basis:
   assumes "classical_operator_exists \<pi>"
   shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
   unfolding classical_operator_def 
-  using f_inv_into_f ket_distinct rangeI
+  using f_inv_into_f ket_injective rangeI
   by (metis assms cblinfun_extension_apply classical_operator_exists_def)
 
 lemma classical_operator_finite:
@@ -2065,7 +2054,7 @@ proof-
           ultimately show ?thesis by simp
         qed
         thus ?thesis
-          by (metis None.hyps Some.hyps cinner_zero_left ket_Kronecker_delta_neq option.simps(4) 
+          by (metis None.hyps Some.hyps cinner_zero_left orthogonal_ket option.simps(4) 
               option.simps(5)) 
       qed       
     next
@@ -2096,7 +2085,7 @@ proof-
             by simp
         qed
         thus ?case
-          by (metis None.hyps Some.hyps cinner_zero_right ket_Kronecker_delta_neq option.case_eq_if 
+          by (metis None.hyps Some.hyps cinner_zero_right orthogonal_ket option.case_eq_if 
               option.simps(5)) 
       next
         case (Some c)
@@ -2113,7 +2102,7 @@ proof-
           moreover have "j = d"
             by (metis option.inject s1 ij)
           ultimately show ?thesis
-            by (simp add: ket_Kronecker_delta_eq) 
+            by (simp add: cinner_ket_same) 
         next
           case False
           moreover have "\<pi> d = Some i"
@@ -2124,7 +2113,7 @@ proof-
           moreover have "i \<noteq> c"
             using False s2 by auto            
           ultimately show ?thesis
-            by (metis ket_Kronecker_delta_neq) 
+            by (metis orthogonal_ket) 
         qed
         hence "\<langle>case Some d of None \<Rightarrow> 0
         | Some a \<Rightarrow> ket a, ket j\<rangle> =
@@ -2279,7 +2268,7 @@ proof-
   proof-
     have "s\<in>X-{t} \<Longrightarrow> (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle> = 0"
       for s t
-      by (metis DiffD2 ket_Kronecker_delta_neq mult_not_zero singletonI) 
+      by (metis DiffD2 orthogonal_ket mult_not_zero singletonI) 
     hence "(\<Sum>s\<in>X-{t}. (cnj (a t)) * b s * \<langle>ket t, ket s\<rangle>) = 0" for t
       by (simp add: \<open>\<And>t s. s \<in> X - {t} \<Longrightarrow> cnj (a t) * b s * \<langle>ket t, ket s\<rangle> = 0\<close>)      
     thus ?thesis by simp
@@ -2287,7 +2276,7 @@ proof-
   also have "\<dots> = (\<Sum>t\<in>X. (cnj (a t)) * b t)"
   proof-
     have "\<langle>ket t, ket t\<rangle> = 1" for t::'a
-      by (simp add: ket_Kronecker_delta_eq)      
+      by (simp add: cinner_ket_same)      
     thus ?thesis
       by auto 
   qed

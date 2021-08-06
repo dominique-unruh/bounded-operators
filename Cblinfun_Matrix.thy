@@ -2358,7 +2358,7 @@ proof-
       unfolding BasisB_def using a1 canonical_basis_ell2_def 
         nth_map[where n = r and xs = "Enum.enum::'b list" and f = ket] by metis
     have "inj (map (ket::'b \<Rightarrow>_))"
-      by (meson injI ket_distinct list.inj_map)      
+      by (meson injI ket_injective list.inj_map)      
     hence "length (Enum.enum::'b list) = length (map (ket::'b \<Rightarrow>_) (Enum.enum::'b list))"
       by simp      
     hence lengthBasisB: "CARD('b) = length BasisB"
