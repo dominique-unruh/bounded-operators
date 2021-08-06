@@ -6,8 +6,6 @@ Authors:
 
 *)
 
-(* TODO: Rename \<rightarrow> Complex_Bounded_Linear_Function *)
-
 theory Complex_Bounded_Linear_Function
   imports 
     Complex_Inner_Product One_Dimensional_Spaces
