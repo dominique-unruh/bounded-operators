@@ -58,6 +58,16 @@ lemma (in clinear) linear:
   shows \<open>linear f\<close>
   by (simp add: add linearI scaleC scaleR_scaleC)
 
+lemma bounded_clinearI:
+  assumes \<open>\<And>b1 b2. f (b1 + b2) = f b1 + f b2\<close>
+  assumes \<open>\<And>r b. f (r *\<^sub>C b) = r *\<^sub>C f b\<close>
+  assumes \<open>\<forall>x. norm (f x) \<le> norm x * K\<close>
+  shows "bounded_clinear f"
+  using assms by (auto intro!: exI bounded_clinear.intro clinearI simp: bounded_clinear_axioms_def)
+
+lemma bounded_clinear_id[simp]: \<open>bounded_clinear id\<close>
+  by (simp add: id_def)
+
 subsection \<open>Antilinear maps and friends\<close>
 
 locale antilinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
@@ -120,6 +130,13 @@ lemma antilinear_o_clinear: "clinear f \<Longrightarrow> antilinear g \<Longrigh
 
 locale bounded_antilinear = antilinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
   assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
+
+lemma bounded_antilinearI:
+  assumes \<open>\<And>b1 b2. f (b1 + b2) = f b1 + f b2\<close>
+  assumes \<open>\<And>r b. f (r *\<^sub>C b) = cnj r *\<^sub>C f b\<close>
+  assumes \<open>\<forall>x. norm (f x) \<le> norm x * K\<close>
+  shows "bounded_antilinear f"
+  using assms by (auto intro!: exI bounded_antilinear.intro antilinearI simp: bounded_antilinear_axioms_def)
 
 sublocale bounded_antilinear \<subseteq> bounded_linear
   apply standard by (fact bounded)
@@ -1000,8 +1017,11 @@ lemma ccspan_leqI:
   using assms apply transfer
   by (simp add: closed_csubspace.closed closure_minimal complex_vector.span_minimal)
 
-lemma bounded_clinear_id[simp]: \<open>bounded_clinear id\<close>
-  by (simp add: id_def)
+lemma ccspan_mono:
+  assumes \<open>A \<subseteq> B\<close>
+  shows \<open>ccspan A \<le> ccspan B\<close>
+  apply (transfer fixing: A B)
+  by (simp add: assms closure_mono complex_vector.span_mono)
 
 lemma bounded_sesquilinear_add:
   \<open>bounded_sesquilinear (\<lambda> x y. A x y + B x y)\<close> if \<open>bounded_sesquilinear A\<close> and \<open>bounded_sesquilinear B\<close>
@@ -1121,6 +1141,16 @@ qed *)
 
 definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
   where \<open>cbilinear = (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
+
+lemma cbilinear_add_left:
+  assumes \<open>cbilinear f\<close>
+  shows \<open>f (a + b) c = f a c + f b c\<close>
+  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
+
+lemma cbilinear_add_right:
+  assumes \<open>cbilinear f\<close>
+  shows \<open>f a (b + c) = f a b + f a c\<close>
+  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
 
 lemma cbilinear_times:
   fixes g' :: \<open>'a::complex_vector \<Rightarrow> complex\<close> and g :: \<open>'b::complex_vector \<Rightarrow> complex\<close>

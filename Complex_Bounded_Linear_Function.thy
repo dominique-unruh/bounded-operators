@@ -1072,6 +1072,11 @@ proof-
     using LIMSEQ_unique by blast
 qed
 
+lemma cblinfun_compose_add_left: \<open>(a + b) o\<^sub>C\<^sub>L c = (a o\<^sub>C\<^sub>L c) + (b o\<^sub>C\<^sub>L c)\<close>
+  by (simp add: bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose)
+
+lemma cblinfun_compose_add_right: \<open>a o\<^sub>C\<^sub>L (b + c) = (a o\<^sub>C\<^sub>L b) + (a o\<^sub>C\<^sub>L c)\<close>
+  by (simp add: bounded_cbilinear.add_right bounded_cbilinear_cblinfun_compose)
 
 subsection \<open>Adjoint\<close>
 
@@ -2461,6 +2466,7 @@ lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightar
   \<open>\<lambda>\<psi> \<phi>. one_dim_iso \<phi> *\<^sub>C \<psi>\<close>
   by (simp add: bounded_clinear_scaleC_const)
 
+(* TODO: rename *)
 lemma vector_to_cblinfun_applyOp: 
   "vector_to_cblinfun (A *\<^sub>V \<psi>) = A  o\<^sub>C\<^sub>L (vector_to_cblinfun \<psi>)" 
   apply transfer 
@@ -2468,13 +2474,9 @@ lemma vector_to_cblinfun_applyOp:
     module_hom_def module_hom_axioms_def
   by simp
 
-(* TODO move *)
-lemma bounded_clinearI:
-  assumes \<open>\<And>b1 b2. f (b1 + b2) = f b1 + f b2\<close>
-  assumes \<open>\<And>r b. f (r *\<^sub>C b) = r *\<^sub>C f b\<close>
-  assumes \<open>\<forall>x. norm (f x) \<le> norm x * K\<close>
-  shows "bounded_clinear f"
-  using assms by (auto intro!: exI bounded_clinear.intro clinearI simp: bounded_clinear_axioms_def)
+lemma vector_to_cblinfun_add: \<open>vector_to_cblinfun (x + y) = vector_to_cblinfun x + vector_to_cblinfun y\<close>
+  apply transfer
+  by (simp add: scaleC_add_right)
 
 lemma norm_vector_to_cblinfun[simp]: "norm (vector_to_cblinfun x) = norm x"
 proof transfer
@@ -3822,6 +3824,12 @@ definition butterfly_def: "butterfly (s::'a::complex_normed_vector) (t::'b::chil
 
 abbreviation "selfbutter s \<equiv> butterfly s s"
 
+lemma butterfly_add_left: \<open>butterfly (a + a') b = butterfly a b + butterfly a' b\<close>
+  by (simp add: butterfly_def vector_to_cblinfun_add cbilinear_add_left bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose)
+
+lemma butterfly_add_right: \<open>butterfly a (b + b') = butterfly a b + butterfly a b'\<close>
+  by (simp add: butterfly_def adj_plus vector_to_cblinfun_add cblinfun_compose_add_right)
+
 (* Renamed from butterfly_def *)
 lemma butterfly_def_one_dim: "butterfly s t = (vector_to_cblinfun s :: 'c::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)
                                           o\<^sub>C\<^sub>L (vector_to_cblinfun t :: 'c \<Rightarrow>\<^sub>C\<^sub>L _)*"
@@ -3845,6 +3853,10 @@ qed
 
 (* Renamed from butterfly_comp_butterfly_right *)
 lemma butterfly_comp_cblinfun: "butterfly \<psi> \<phi> o\<^sub>C\<^sub>L a = butterfly \<psi> (a* *\<^sub>V \<phi>)"
+  unfolding butterfly_def
+  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_applyOp)  
+
+lemma cblinfun_comp_butterfly: "a o\<^sub>C\<^sub>L butterfly \<psi> \<phi> = butterfly (a *\<^sub>V \<psi>) \<phi>"
   unfolding butterfly_def
   by (simp add: cblinfun_compose_assoc vector_to_cblinfun_applyOp)  
 
@@ -3907,6 +3919,22 @@ next
     show "norm (butterfly \<psi> \<phi> *\<^sub>V \<phi>) = norm \<psi> * norm \<phi> * norm \<phi>"
       by (smt (z3) ab_semigroup_mult_class.mult_ac(1) butterfly_apply mult.commute norm_eq_sqrt_cinner norm_ge_zero norm_scaleC power2_eq_square real_sqrt_abs real_sqrt_eq_iff)
   qed
+qed
+
+lemma bounded_sesquilinear_butterfly[bounded_sesquilinear]: \<open>bounded_sesquilinear (\<lambda>(b::'b::chilbert_space) (a::'a::chilbert_space). butterfly a b)\<close>
+proof standard
+  fix a a' :: 'a and b b' :: 'b and r :: complex
+  show \<open>butterfly (a + a') b = butterfly a b + butterfly a' b\<close>
+    by (rule butterfly_add_left)
+  show \<open>butterfly a (b + b') = butterfly a b + butterfly a b'\<close>  
+    by (rule butterfly_add_right)
+  show \<open>butterfly (r *\<^sub>C a) b = r *\<^sub>C butterfly a b\<close>
+    by simp
+  show \<open>butterfly a (r *\<^sub>C b) = cnj r *\<^sub>C butterfly a b\<close>
+    by simp
+  show \<open>\<exists>K. \<forall>b a. norm (butterfly a b) \<le> norm b * norm a * K \<close>
+    apply (rule exI[of _ 1])
+    by (simp add: norm_butterfly)
 qed
 
 (* Renamed from inj_selfbutter *)
@@ -4061,17 +4089,6 @@ qed
 
 lemma one_dim_positive: \<open>A \<ge> 0 \<longleftrightarrow> one_dim_iso A \<ge> (0::complex)\<close> for A :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'a::{chilbert_space, one_dim}\<close>
   using one_dim_loewner_order[where B=0] by auto
-
-(* TODO move *)
-lemma cbilinear_add_left:
-  assumes \<open>cbilinear f\<close>
-  shows \<open>f (a + b) c = f a c + f b c\<close>
-  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
-
-lemma cbilinear_add_right:
-  assumes \<open>cbilinear f\<close>
-  shows \<open>f a (b + c) = f a b + f a c\<close>
-  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
 
 
 lift_definition sandwich :: \<open>('a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner) \<Rightarrow> (('a \<Rightarrow>\<^sub>C\<^sub>L 'a) \<Rightarrow>\<^sub>C\<^sub>L ('b \<Rightarrow>\<^sub>C\<^sub>L 'b))\<close> is

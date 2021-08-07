@@ -1085,7 +1085,6 @@ lemma clinear_times_of_complex: "clinear (\<lambda>x. a * of_complex x)"
   by (auto intro!: clinearI simp: distrib_left)
     (metis mult_scaleC_right scaleC_conv_of_complex)
 
-(* TODO rename \<rightarrow> bounded_clinear *)
 locale bounded_clinear = clinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +
   assumes bounded: "\<exists>K. \<forall>x. norm (f x) \<le> norm x * K"
 begin
