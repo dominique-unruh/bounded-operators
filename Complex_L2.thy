@@ -974,13 +974,6 @@ lemma ell2_pointwise_ortho:
 
 subsection \<open>Truncated vectors\<close>
 
-(* TODO move *)
-lemma bdd_above_image_mono:
-  assumes \<open>\<And>x. x\<in>S \<Longrightarrow> f x \<le> g x\<close>
-  assumes \<open>bdd_above (g ` S)\<close>
-  shows \<open>bdd_above (f ` S)\<close>
-  by (smt (verit, ccfv_threshold) assms(1) assms(2) bdd_aboveI2 bdd_above_def order_trans rev_image_eqI)
-
 lift_definition trunc_ell2:: \<open>'a set \<Rightarrow> 'a ell2 \<Rightarrow> 'a ell2\<close>
   is \<open>\<lambda> S x. (\<lambda> i. (if i \<in> S then x i else 0))\<close>
   unfolding has_ell2_norm_def
@@ -1297,200 +1290,26 @@ proof -
     by (rule adjoint_eqI)
 qed
 
-(* ******************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-****************************************
-TODO rename from here *)
-
-(* lemma trunc_ell2_insert:
-  \<open>k \<notin> R \<Longrightarrow> trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
-  apply (transfer fixing: R k)
-  by auto *)
-
-
-(* 
-lemma trunc_ell2_ket_cspan_induct:
-  \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
-proof (induction n)
-  show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
-  proof
-    show "finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
-      for S :: "'a set"
-    proof
-      show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
-        if "finite S \<and> card S = 0"
-        using that proof
-        show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
-          if "finite S"
-            and "card S = 0"
-        proof-
-          have \<open>S = {}\<close>
-            using card_0_eq that(1) that(2) by blast
-          hence \<open>trunc_ell2 S x = 0\<close>
-            apply transfer
-            by simp
-          thus ?thesis
-            by (simp add: complex_vector.span_zero) 
-        qed
-      qed
-    qed
-  qed
-  show "\<forall>S. finite S \<and> card S = Suc n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
-    if "\<forall>S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
-    for n :: nat
-  proof-
-    have \<open>finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
-      for S
-    proof-
-      assume \<open>finite S\<close> and \<open>card S = Suc n\<close>
-      hence \<open>\<exists> R k. S = insert k R \<and> card R = n\<close>
-        by (meson card_Suc_eq)
-      then obtain R k where \<open>S = insert k R\<close> and \<open>card R = n\<close>
-        by blast
-      hence \<open>finite R\<close>
-        using \<open>finite S\<close>
-        by simp
-      have \<open>k \<notin> R\<close>
-        using \<open>S = insert k R\<close> \<open>card R = n\<close> \<open>card S = Suc n\<close> insert_absorb by fastforce
-      hence \<open>trunc_ell2 S x = trunc_ell2 R x + (Rep_ell2 x k) *\<^sub>C ket k\<close>
-        using \<open>S = insert k R\<close> 
-        by (simp add: trunc_ell2_insert) 
-      moreover have \<open>trunc_ell2 R x \<in> complex_vector.span (range ket)\<close>
-        by (simp add: \<open>card R = n\<close> \<open>finite R\<close> that)
-      ultimately show \<open>trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
-        by (simp add: complex_vector.span_add complex_vector.span_base complex_vector.span_scale)        
-    qed
-    thus ?thesis by blast
-  qed
-qed
- *)
-
-
-(*lemma trunc_ell2_norm_lim:
-  \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
-proof -
-  define f where \<open>f i = (cmod (Rep_ell2 \<psi> i))\<^sup>2\<close> for i
-
-  have has: \<open>has_ell2_norm (Rep_ell2 \<psi>)\<close>
-    using Rep_ell2 by blast
-  then have summable: "f abs_summable_on UNIV"
-    using f_def has_ell2_norm_infsetsum by fastforce
-  
-  have \<open>norm \<psi> = (ell2_norm (Rep_ell2 \<psi>))\<close>
-    apply transfer by simp
-  also have \<open>\<dots> = sqrt (infsetsum' f UNIV)\<close>
-    unfolding ell2_norm_infsetsum[OF has] f_def[symmetric]
-    using summable by (simp add: infsetsum_infsetsum')
-  finally have norm\<psi>: \<open>norm \<psi> = sqrt (infsetsum' f UNIV)\<close>
-    by -
-
-  have norm_trunc: \<open>norm (trunc_ell2 S \<psi>) = sqrt (sum f S)\<close> if \<open>finite S\<close> for S
-    using f_def that norm_trunc_ell2_finite by fastforce
-
-  have \<open>(sum f \<longlongrightarrow> infsetsum' f UNIV) (finite_subsets_at_top UNIV)\<close>
-    by (simp add: abs_summable_infsetsum'_converges infsetsum'_tendsto summable)
-  then have \<open>((\<lambda>S. sqrt (sum f S)) \<longlongrightarrow> sqrt (infsetsum' f UNIV)) (finite_subsets_at_top UNIV)\<close>
-    using tendsto_real_sqrt by blast
-  then show \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
-    apply (subst tendsto_cong[where g=\<open>\<lambda>S. sqrt (sum f S)\<close>])
-    by (auto simp add: eventually_finite_subsets_at_top_weakI norm_trunc norm\<psi>)
-qed*)
-
-
-
-subsection \<open>Sort me...\<close>
-
-
-
-subsection \<open>Recovered theorems\<close>
-
-(* lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
-  using norm_point_bound_ell2
-  by (simp add: norm_point_bound_ell2)  *)
-
-(* lemma Cauchy_vector_component: 
-  fixes X
-  defines "x i == Rep_ell2 (X i)"
-  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
-proof -
-  assume "Cauchy X"
-  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
-  proof -
-    have "dist (X i) (X i') = norm (X i - X i')"
-      unfolding dist_norm by simp
-    also have "norm (X i - X i') \<ge> norm (Rep_ell2 (X i - X i') j)"
-      by (rule norm_vector_component)
-    also have "Rep_ell2 (X i - X i') j = x i j - x i' j"
-      unfolding x_def
-      by (simp add: minus_ell2.rep_eq)       
-    also have "norm (x i j - x i' j) = dist (x i j) (x i' j)"
-      unfolding dist_norm by simp
-    finally show ?thesis by assumption
-  qed
-  thus ?thesis
-    unfolding Cauchy_def
-    using \<open>Cauchy X\<close> unfolding Cauchy_def
-    by (meson le_less_trans) 
-qed *)
-
-lemma closed_csubspace_INF[simp]: "(\<And>x. x \<in> AA \<Longrightarrow> csubspace x) \<Longrightarrow> csubspace (\<Inter>AA)"
-  by (simp add: complex_vector.subspace_Inter)
-
-(* Use plus_ccsubspace_def instead *)
-(* lemma subspace_sup_plus: "(sup :: 'a ell2 ccsubspace \<Rightarrow> _ \<Rightarrow> _) = (+)" *)
-
-lemma subspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
-  for x y z :: "'a ell2 ccsubspace"
-  unfolding plus_ccsubspace_def by auto
-
-lemma subspace_empty_Sup: "Sup {} = (0::'a ell2 ccsubspace)"
-  unfolding zero_ccsubspace_def by auto
-
-(* Use inf_assoc instead *)
-(* lemma inf_assoc_subspace[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" 
-  for A B C :: "_ ell2 ccsubspace" *)
-
-(* Use inf_left_commute instead *)
-(* lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \<sqinter> C)" for A B C :: "_ ell2 ccsubspace" *)
-
-(* lemma bot_plus[simp]: "bot + x = x" for x :: "'a ell2 ccsubspace" *)
-
-(* lemma plus_bot[simp]: "x + bot = x" for x :: "'a ell2 ccsubspace" by simp
-lemma top_plus[simp]: "top + x = top" for x :: "'a ell2 ccsubspace" by simp
-lemma plus_top[simp]: "x + top = top" for x :: "'a ell2 ccsubspace" by simp *)
-
-lemma leq_plus_subspace[simp]: "a \<le> a + c" for a::"'a ell2 ccsubspace"
-  by (simp add: add_increasing2)
-lemma leq_plus_subspace2[simp]: "a \<le> c + a" for a::"'a ell2 ccsubspace"
-  by (simp add: add_increasing)
-
-(* Use orthogonal_ket instead *)
-(* lemma ket_is_orthogonal[simp]:
-  "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
-  by (metis cinner_ket_same orthogonal_ket)  *)
-
-
 lemma ket_nonzero[simp]: "ket i \<noteq> 0"
   using norm_ket[of i] by force
 
-lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
-proof -
-  let ?enum = "Enum.enum :: 'a::{CARD_1,enum} list"
-  have "length ?enum = 1"
-    apply (subst card_UNIV_length_enum[symmetric])
-    by (rule CARD_1)
-  then obtain b where "?enum = [b]"
-    apply atomize_elim
-    apply (cases ?enum, auto)
-    by (metis length_0_conv length_Cons nat.inject)
-  thus "?enum = [a]"
-    by (subst everything_the_same[of _ b], simp)
+
+lemma cindependent_ket:
+  "cindependent (range (ket::'a\<Rightarrow>_))"
+proof-
+  define S where "S = range (ket::'a\<Rightarrow>_)"
+  have "is_ortho_set S"
+    unfolding S_def is_ortho_set_def by auto
+  moreover have "0 \<notin> S"
+    unfolding S_def
+    using ket_nonzero
+    by (simp add: image_iff)
+  ultimately show ?thesis
+    using is_ortho_set_cindependent[where A = S] unfolding S_def 
+    by blast
 qed
+
+subsection \<open>One-dimensional spaces\<close>
 
 instantiation ell2 :: ("{enum,CARD_1}") one_dim begin
 text \<open>Note: enum is not needed logically, but without it this instantiation
@@ -1510,31 +1329,13 @@ proof
 qed
 end
 
-lemma cindependent_ket:
-  "cindependent (range (ket::'a\<Rightarrow>_))"
-proof-
-  define S where "S = range (ket::'a\<Rightarrow>_)"
-  have "is_ortho_set S"
-    unfolding S_def is_ortho_set_def by auto
-  moreover have "0 \<notin> S"
-    unfolding S_def
-    using ket_nonzero
-    by (simp add: image_iff)
-  ultimately show ?thesis
-    using is_ortho_set_cindependent[where A = S] unfolding S_def 
-    by blast
-qed
-
-(* TODO rename \<rightarrow> sum_butterfly_ket *)
-lemma sum_butter[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = id_cblinfun\<close>
-  apply (rule equal_ket)
-  apply (subst complex_vector.linear_sum[where f=\<open>\<lambda>y. y *\<^sub>V ket _\<close>])
-  apply (auto simp add: scaleC_cblinfun.rep_eq cblinfun.add_left clinearI butterfly_def cblinfun_compose_image cinner_ket)
-  apply (subst sum.mono_neutral_cong_right[where S=\<open>{_}\<close>])
-  by auto
-
 
 subsection \<open>Classical operators\<close>
+
+text \<open>We call an operator mapping \<^term>\<open>ket x\<close> to \<^term>\<open>ket (\<pi> x)\<close> or \<^term>\<open>0\<close> "classical".
+(The meaning is inspired by the fact that in quantum mechanics, such operators usually correspond
+to operations with classical interpretation (such as Pauli-X, CNOT, measurement in the computational
+basis, etc.))\<close>
 
 definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a ell2 \<Rightarrow>\<^sub>C\<^sub>L'b ell2" where
   "classical_operator \<pi> = 
@@ -1542,16 +1343,12 @@ definition classical_operator :: "('a\<Rightarrow>'b option) \<Rightarrow> 'a el
                            of None \<Rightarrow> (0::'b ell2) 
                           | Some i \<Rightarrow> ket i))
      in
-      cblinfun_extension (range (ket::'a\<Rightarrow>_)) f
-    )"
+      cblinfun_extension (range (ket::'a\<Rightarrow>_)) f)"
 
 
 definition "classical_operator_exists \<pi> \<longleftrightarrow>
   cblinfun_extension_exists (range ket)
     (\<lambda>t. case \<pi> (inv ket t) of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
-
-(* lemma inj_ket: "inj ket"
-  by (meson injI ket_injective) *)
 
 lemma classical_operator_existsI:
   assumes "\<And>x. B *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
@@ -1564,6 +1361,7 @@ lemma classical_operator_existsI:
 lemma classical_operator_exists_inj:
   assumes "inj_map \<pi>"
   shows "classical_operator_exists \<pi>"
+  (* Maybe a shorter proof is possible using cblinfun_extension_exists_bounded_dense *)
 proof -
   define C0 where "C0 \<psi> = (\<lambda>b. case inv_map \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)" for \<psi> :: "'a\<Rightarrow>complex"
 
@@ -1893,17 +1691,17 @@ lemma classical_operator_exists_finite[simp]: "classical_operator_exists (\<pi> 
   using cindependent_ket apply blast
   using finite_class.finite_UNIV finite_imageI closed_cspan_range_ket closure_finite_cspan by blast
 
-lemma classical_operator_basis:
+(* Renamed from classical_operator_basis *)
+lemma classical_operator_ket:
   assumes "classical_operator_exists \<pi>"
   shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
   unfolding classical_operator_def 
   using f_inv_into_f ket_injective rangeI
   by (metis assms cblinfun_extension_apply classical_operator_exists_def)
 
-lemma classical_operator_finite:
+lemma classical_operator_ket_finite:
   "(classical_operator \<pi>) *\<^sub>V (ket (x::'a::finite)) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
-  by (rule classical_operator_basis, simp)
-
+  by (rule classical_operator_ket, simp)
 
 lemma classical_operator_adjoint[simp]:
   fixes \<pi> :: "'a \<Rightarrow> 'b option"
@@ -1916,10 +1714,10 @@ proof-
   proof-
     have w1: "(classical_operator (inv_map \<pi>)) *\<^sub>V (ket i)
      = (case inv_map \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
-      by (simp add: classical_operator_basis classical_operator_exists_inj)
+      by (simp add: classical_operator_ket classical_operator_exists_inj)
     have w2: "(classical_operator \<pi>) *\<^sub>V (ket j)
      = (case \<pi> j of Some k \<Rightarrow> ket k | None \<Rightarrow> 0)"
-      by (simp add: assms classical_operator_basis classical_operator_exists_inj)
+      by (simp add: assms classical_operator_ket classical_operator_exists_inj)
     have "\<langle>F *\<^sub>V ket i, ket j\<rangle> = \<langle>classical_operator (inv_map \<pi>) *\<^sub>V ket i, ket j\<rangle>"
       unfolding F_def by blast
     also have "\<dots> = \<langle>(case inv_map \<pi> i of Some k \<Rightarrow> ket k | None \<Rightarrow> 0), ket j\<rangle>"
@@ -2044,9 +1842,9 @@ proof -
   define C\<pi> C\<rho> C\<pi>\<rho> where "C\<pi> = classical_operator \<pi>" and "C\<rho> = classical_operator \<rho>" 
     and "C\<pi>\<rho> = classical_operator (\<pi> \<circ>\<^sub>m \<rho>)"
   have C\<pi>x: "C\<pi> *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
-    unfolding C\<pi>_def using \<open>classical_operator_exists \<pi>\<close> by (rule classical_operator_basis)
+    unfolding C\<pi>_def using \<open>classical_operator_exists \<pi>\<close> by (rule classical_operator_ket)
   have C\<rho>x: "C\<rho> *\<^sub>V (ket x) = (case \<rho> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
-    unfolding C\<rho>_def using \<open>classical_operator_exists \<rho>\<close> by (rule classical_operator_basis)
+    unfolding C\<rho>_def using \<open>classical_operator_exists \<rho>\<close> by (rule classical_operator_ket)
   have C\<pi>\<rho>x': "(C\<pi> o\<^sub>C\<^sub>L C\<rho>) *\<^sub>V (ket x) = (case (\<pi> \<circ>\<^sub>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
     apply (simp add: scaleC_cblinfun.rep_eq C\<rho>x)
     apply (cases "\<rho> x")
@@ -2055,7 +1853,7 @@ proof -
     by (rule classical_operator_existsI)
   hence "C\<pi>\<rho> *\<^sub>V (ket x) = (case (\<pi> \<circ>\<^sub>m \<rho>) x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x
     unfolding C\<pi>\<rho>_def
-    by (rule classical_operator_basis)
+    by (rule classical_operator_ket)
   with C\<pi>\<rho>x' have "(C\<pi> o\<^sub>C\<^sub>L C\<rho>) *\<^sub>V (ket x) = C\<pi>\<rho> *\<^sub>V (ket x)" for x
     by simp
   thus "C\<pi> o\<^sub>C\<^sub>L C\<rho> = C\<pi>\<rho>"
@@ -2063,14 +1861,14 @@ proof -
 qed
 
 lemma classical_operator_Some[simp]: 
-  defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
+(*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
                            of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)"
+                          | Some i \<Rightarrow> ket i)" *)
   shows "classical_operator (Some::'a\<Rightarrow>_) = id_cblinfun"
 proof-
   have "(classical_operator Some) *\<^sub>V (ket i)  = id_cblinfun *\<^sub>V (ket i)"
     for i::'a
-    apply (subst classical_operator_basis)
+    apply (subst classical_operator_ket)
     apply (rule classical_operator_exists_inj)
     by auto
   thus ?thesis
@@ -2136,6 +1934,178 @@ next
     by simp
   finally show "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)* = id_cblinfun".
 qed
+
+
+(* ******************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+****************************************
+TODO rename from here *)
+
+(* lemma trunc_ell2_insert:
+  \<open>k \<notin> R \<Longrightarrow> trunc_ell2 (insert k R) w = trunc_ell2 R w + (Rep_ell2 w k) *\<^sub>C (ket k)\<close>
+  apply (transfer fixing: R k)
+  by auto *)
+
+
+(* 
+lemma trunc_ell2_ket_cspan_induct:
+  \<open>\<forall> S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> (complex_vector.span (range (ket::('a \<Rightarrow>'a ell2))))\<close>
+proof (induction n)
+  show "\<forall>S. finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+  proof
+    show "finite S \<and> card S = 0 \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+      for S :: "'a set"
+    proof
+      show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
+        if "finite S \<and> card S = 0"
+        using that proof
+        show "trunc_ell2 S x \<in> complex_vector.span (range ket)"
+          if "finite S"
+            and "card S = 0"
+        proof-
+          have \<open>S = {}\<close>
+            using card_0_eq that(1) that(2) by blast
+          hence \<open>trunc_ell2 S x = 0\<close>
+            apply transfer
+            by simp
+          thus ?thesis
+            by (simp add: complex_vector.span_zero) 
+        qed
+      qed
+    qed
+  qed
+  show "\<forall>S. finite S \<and> card S = Suc n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+    if "\<forall>S. finite S \<and> card S = n \<longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)"
+    for n :: nat
+  proof-
+    have \<open>finite S \<Longrightarrow> card S = Suc n \<Longrightarrow> trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
+      for S
+    proof-
+      assume \<open>finite S\<close> and \<open>card S = Suc n\<close>
+      hence \<open>\<exists> R k. S = insert k R \<and> card R = n\<close>
+        by (meson card_Suc_eq)
+      then obtain R k where \<open>S = insert k R\<close> and \<open>card R = n\<close>
+        by blast
+      hence \<open>finite R\<close>
+        using \<open>finite S\<close>
+        by simp
+      have \<open>k \<notin> R\<close>
+        using \<open>S = insert k R\<close> \<open>card R = n\<close> \<open>card S = Suc n\<close> insert_absorb by fastforce
+      hence \<open>trunc_ell2 S x = trunc_ell2 R x + (Rep_ell2 x k) *\<^sub>C ket k\<close>
+        using \<open>S = insert k R\<close> 
+        by (simp add: trunc_ell2_insert) 
+      moreover have \<open>trunc_ell2 R x \<in> complex_vector.span (range ket)\<close>
+        by (simp add: \<open>card R = n\<close> \<open>finite R\<close> that)
+      ultimately show \<open>trunc_ell2 S x \<in> complex_vector.span (range ket)\<close>
+        by (simp add: complex_vector.span_add complex_vector.span_base complex_vector.span_scale)        
+    qed
+    thus ?thesis by blast
+  qed
+qed
+ *)
+
+
+(*lemma trunc_ell2_norm_lim:
+  \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
+proof -
+  define f where \<open>f i = (cmod (Rep_ell2 \<psi> i))\<^sup>2\<close> for i
+
+  have has: \<open>has_ell2_norm (Rep_ell2 \<psi>)\<close>
+    using Rep_ell2 by blast
+  then have summable: "f abs_summable_on UNIV"
+    using f_def has_ell2_norm_infsetsum by fastforce
+  
+  have \<open>norm \<psi> = (ell2_norm (Rep_ell2 \<psi>))\<close>
+    apply transfer by simp
+  also have \<open>\<dots> = sqrt (infsetsum' f UNIV)\<close>
+    unfolding ell2_norm_infsetsum[OF has] f_def[symmetric]
+    using summable by (simp add: infsetsum_infsetsum')
+  finally have norm\<psi>: \<open>norm \<psi> = sqrt (infsetsum' f UNIV)\<close>
+    by -
+
+  have norm_trunc: \<open>norm (trunc_ell2 S \<psi>) = sqrt (sum f S)\<close> if \<open>finite S\<close> for S
+    using f_def that norm_trunc_ell2_finite by fastforce
+
+  have \<open>(sum f \<longlongrightarrow> infsetsum' f UNIV) (finite_subsets_at_top UNIV)\<close>
+    by (simp add: abs_summable_infsetsum'_converges infsetsum'_tendsto summable)
+  then have \<open>((\<lambda>S. sqrt (sum f S)) \<longlongrightarrow> sqrt (infsetsum' f UNIV)) (finite_subsets_at_top UNIV)\<close>
+    using tendsto_real_sqrt by blast
+  then show \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
+    apply (subst tendsto_cong[where g=\<open>\<lambda>S. sqrt (sum f S)\<close>])
+    by (auto simp add: eventually_finite_subsets_at_top_weakI norm_trunc norm\<psi>)
+qed*)
+
+subsection \<open>Sort me...\<close>
+
+
+
+(* lemma norm_vector_component: "norm (Rep_ell2 x i) \<le> norm x"
+  using norm_point_bound_ell2
+  by (simp add: norm_point_bound_ell2)  *)
+
+(* lemma Cauchy_vector_component: 
+  fixes X
+  defines "x i == Rep_ell2 (X i)"
+  shows "Cauchy X \<Longrightarrow> Cauchy (\<lambda>i. x i j)"
+proof -
+  assume "Cauchy X"
+  have "dist (x i j) (x i' j) \<le> dist (X i) (X i')" for i i'
+  proof -
+    have "dist (X i) (X i') = norm (X i - X i')"
+      unfolding dist_norm by simp
+    also have "norm (X i - X i') \<ge> norm (Rep_ell2 (X i - X i') j)"
+      by (rule norm_vector_component)
+    also have "Rep_ell2 (X i - X i') j = x i j - x i' j"
+      unfolding x_def
+      by (simp add: minus_ell2.rep_eq)       
+    also have "norm (x i j - x i' j) = dist (x i j) (x i' j)"
+      unfolding dist_norm by simp
+    finally show ?thesis by assumption
+  qed
+  thus ?thesis
+    unfolding Cauchy_def
+    using \<open>Cauchy X\<close> unfolding Cauchy_def
+    by (meson le_less_trans) 
+qed *)
+
+(* Use plus_ccsubspace_def instead *)
+(* lemma subspace_sup_plus: "(sup :: 'a ell2 ccsubspace \<Rightarrow> _ \<Rightarrow> _) = (+)" *)
+
+(* Use inf_assoc instead *)
+(* lemma inf_assoc_subspace[simp]: "A \<sqinter> B \<sqinter> C = A \<sqinter> (B \<sqinter> C)" 
+  for A B C :: "_ ell2 ccsubspace" *)
+
+(* Use inf_left_commute instead *)
+(* lemma inf_left_commute[simp]: "A \<sqinter> (B \<sqinter> C) = B \<sqinter> (A \<sqinter> C)" for A B C :: "_ ell2 ccsubspace" *)
+
+(* lemma bot_plus[simp]: "bot + x = x" for x :: "'a ell2 ccsubspace" *)
+
+(* lemma plus_bot[simp]: "x + bot = x" for x :: "'a ell2 ccsubspace" by simp
+lemma top_plus[simp]: "top + x = top" for x :: "'a ell2 ccsubspace" by simp
+lemma plus_top[simp]: "x + top = top" for x :: "'a ell2 ccsubspace" by simp *)
+
+
+(* Use orthogonal_ket instead *)
+(* lemma ket_is_orthogonal[simp]:
+  "is_orthogonal (ket x) (ket y) \<longleftrightarrow> x \<noteq> y"
+  by (metis cinner_ket_same orthogonal_ket)  *)
+
+
+
+(* TODO rename \<rightarrow> sum_butterfly_ket *)
+lemma sum_butter[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = id_cblinfun\<close>
+  apply (rule equal_ket)
+  apply (subst complex_vector.linear_sum[where f=\<open>\<lambda>y. y *\<^sub>V ket _\<close>])
+  apply (auto simp add: scaleC_cblinfun.rep_eq cblinfun.add_left clinearI butterfly_def cblinfun_compose_image cinner_ket)
+  apply (subst sum.mono_neutral_cong_right[where S=\<open>{_}\<close>])
+  by auto
+
+
 
 (* lemma ell2_norm_cinner:
   fixes a b :: "'a \<Rightarrow> complex" and X :: "'a set"
@@ -2259,9 +2229,6 @@ proof-
   ultimately show ?thesis 
     by simp    
 qed *)
-
-
-subsection \<open>Unsorted\<close>
 
 lemma is_ortho_set_ket[simp]: \<open>is_ortho_set (range ket)\<close>
   using is_ortho_set_def by fastforce

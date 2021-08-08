@@ -522,6 +522,10 @@ proof (cases "f = 0")
   qed
 qed (simp add: onorm_zero)
 
+(* Renamed from closed_csubspace_INF *)
+lemma csubspace_INF[simp]: "(\<And>x. x \<in> A \<Longrightarrow> csubspace x) \<Longrightarrow> csubspace (\<Inter>A)"
+  by (simp add: complex_vector.subspace_Inter)
+
 subsection \<open>Subspace\<close>
 
 locale closed_csubspace =
@@ -794,7 +798,6 @@ qed
 
 instance ..
 end
-
 
 subsection \<open>ccspan\<close>
 
@@ -2473,6 +2476,30 @@ lemma finite_cspan_closed_csubspace:
   shows "closed_csubspace (cspan S)"
   by (simp add: assms closed_csubspace.intro)
 
+
+instantiation ccsubspace :: ("{complex_vector,t1_space}") zero begin
+definition zero_ccsubspace :: "'a ccsubspace" where [simp]: "zero_ccsubspace = bot"
+lemma zero_ccsubspace_transfer[transfer_rule]: \<open>pcr_ccsubspace (=) {0} 0\<close>
+  unfolding zero_ccsubspace_def by transfer_prover
+instance ..
+end
+
+instantiation ccsubspace :: (complex_normed_vector) comm_monoid_add begin
+definition plus_ccsubspace :: "'a ccsubspace \<Rightarrow> _ \<Rightarrow> _"
+  where [simp]: "plus_ccsubspace = sup"
+instance 
+proof
+  fix a b c :: \<open>'a ccsubspace\<close>
+  show "a + b + c = a + (b + c)"
+    using sup.assoc by auto    
+  show "a + b = b + a"
+    by (simp add: sup.commute)    
+  show "0 + a = a"
+    by (simp add: zero_ccsubspace_def)
+qed
+end
+
+
 subsection \<open>Conjugate space\<close>
 
 typedef 'a conjugate_space = "UNIV :: 'a set"
@@ -2608,13 +2635,6 @@ proof
     apply (auto simp add: cspan_raw_def vector_space_over_itself.span_Basis)
     by (metis complex_scaleC_def complex_vector.span_base complex_vector.span_scale cspan_raw_def insertI1 mult.right_neutral)
 qed
-end
-
-instantiation ccsubspace :: ("{complex_vector,t1_space}") zero begin
-definition zero_ccsubspace :: "'a ccsubspace" where [simp]: "zero_ccsubspace = bot"
-lemma zero_ccsubspace_transfer[transfer_rule]: \<open>pcr_ccsubspace (=) {0} 0\<close>
-  unfolding zero_ccsubspace_def by transfer_prover
-instance ..
 end
 
 lemma csubspace_is_convex[simp]:
@@ -2805,5 +2825,22 @@ proof -
     by (metis complex_vector.dim_eq_card)
   finally show ?thesis by simp
 qed
+
+(* Renamed from subspace_plus_sup *)
+lemma ccsubspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
+  for x y z :: "'a::complex_normed_vector ccsubspace"
+  unfolding plus_ccsubspace_def by auto
+
+(* Renamed from subspace_empty_Sup *)
+lemma ccsubspace_Sup_empty: "Sup {} = (0::_ ccsubspace)"
+  unfolding zero_ccsubspace_def by auto
+
+(* Renamed from leq_plus_subspace *)
+lemma ccsubspace_add_right_incr[simp]: "a \<le> a + c" for a::"_ ccsubspace"
+  by (simp add: add_increasing2)
+
+(* Renamed from leq_plus_subspace2 *)
+lemma ccsubspace_add_left_incr[simp]: "a \<le> c + a" for a::"_ ccsubspace"
+  by (simp add: add_increasing)
 
 end

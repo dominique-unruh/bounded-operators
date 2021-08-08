@@ -2338,21 +2338,7 @@ qed
 
 subsection \<open>Commutative monoid of subspaces\<close>
 
-instantiation ccsubspace :: (chilbert_space) comm_monoid_add begin
-definition plus_ccsubspace :: "'a ccsubspace \<Rightarrow> _ \<Rightarrow> _"
-  where [simp]: "plus_ccsubspace = sup"
-instance 
-proof
-  fix a b c :: \<open>'a ccsubspace\<close>
-  show "a + b + c = a + (b + c)"
-    using sup.assoc by auto    
-  show "a + b = b + a"
-    by (simp add: sup.commute)    
-  show "(0::'a ccsubspace) + a = a"
-    by simp    
-qed
-end
-
+thm sup_ccsubspace_def
 
 (* Use projection_zero instead
 lemma projection_zero_subspace:

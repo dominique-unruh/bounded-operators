@@ -419,4 +419,24 @@ overloading heterogenous_identity_id \<equiv> "heterogenous_identity :: 'a \<Rig
 definition heterogenous_identity_def[simp]: \<open>heterogenous_identity_id = id\<close>
 end
 
+lemma bdd_above_image_mono:
+  assumes \<open>\<And>x. x\<in>S \<Longrightarrow> f x \<le> g x\<close>
+  assumes \<open>bdd_above (g ` S)\<close>
+  shows \<open>bdd_above (f ` S)\<close>
+  by (smt (verit, ccfv_threshold) assms(1) assms(2) bdd_aboveI2 bdd_above_def order_trans rev_image_eqI)
+
+lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
+proof -
+  let ?enum = "Enum.enum :: 'a::{CARD_1,enum} list"
+  have "length ?enum = 1"
+    apply (subst card_UNIV_length_enum[symmetric])
+    by (rule CARD_1)
+  then obtain b where "?enum = [b]"
+    apply atomize_elim
+    apply (cases ?enum, auto)
+    by (metis length_0_conv length_Cons nat.inject)
+  thus "?enum = [a]"
+    by (subst everything_the_same[of _ b], simp)
+qed
+
 end

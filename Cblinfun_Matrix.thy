@@ -2369,7 +2369,7 @@ proof-
     proof-
       have "(classical_operator f) *\<^sub>V ket (Enum.enum!c) 
           = (case f (Enum.enum!c) of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
-        using classical_operator_finite .
+        using classical_operator_ket_finite .
       also have "\<dots> = 0"
         using c1 by simp
       finally have "(classical_operator f) *\<^sub>V ket (Enum.enum!c) = 0" .
@@ -2402,7 +2402,7 @@ proof-
         by blast
       have "(classical_operator f) *\<^sub>V ket (Enum.enum!c) 
           = (case f (Enum.enum!c) of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)"
-        using classical_operator_finite .
+        using classical_operator_ket_finite .
       also have "\<dots> = ket (Enum.enum!r')"
         using c1 by simp
       finally have "(classical_operator f) *\<^sub>V ket (Enum.enum!c) = ket (Enum.enum!r')" .
@@ -2475,7 +2475,7 @@ proof-
       hence "(classical_operator f) *\<^sub>V (BasisA!c) = (classical_operator f) *\<^sub>V (ket (Enum.enum!c))"
         unfolding BasisA_def canonical_basis_ell2_def by simp
       also have "... = (case f (enum_class.enum ! c) of None \<Rightarrow> 0 | Some x \<Rightarrow> ket x)"
-        by (rule classical_operator_finite)
+        by (rule classical_operator_ket_finite)
       also have "\<dots> = BasisB!r"
         using w0 b1 by (simp add: BasisB_def canonical_basis_ell2_def) 
       finally have w1: "(classical_operator f) *\<^sub>V (BasisA!c) = BasisB!r"
