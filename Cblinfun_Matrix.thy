@@ -3070,7 +3070,7 @@ proof-
       have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
       proof-
         have "x \<in> cspan (range ket)"
-          using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan
+          using finite_class.finite_UNIV finite_imageI closed_cspan_range_ket closure_finite_cspan
           by (metis  iso_tuple_UNIV_I) 
 
         moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
@@ -3200,7 +3200,7 @@ proof-
       have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
       proof-
         have "x \<in> cspan (range ket)"
-          using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan
+          using finite_class.finite_UNIV finite_imageI closed_cspan_range_ket closure_finite_cspan
           by (metis  iso_tuple_UNIV_I) 
 
         moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
@@ -3331,7 +3331,7 @@ proof-
       have x_ket: "x = Rep_ell2 x i *\<^sub>C ket i"
       proof-
         have "x \<in> cspan (range ket)"
-          using finite_class.finite_UNIV finite_imageI ket_ell2_span closure_finite_cspan
+          using finite_class.finite_UNIV finite_imageI closed_cspan_range_ket closure_finite_cspan
           by (metis  iso_tuple_UNIV_I) 
 
         moreover have "range (ket::'a \<Rightarrow>_) = {ket i}"
