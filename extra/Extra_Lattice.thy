@@ -224,6 +224,47 @@ qed auto
 instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
   by intro_classes
 
+(* Renamed from SUP_max *)
+lemma image_of_maximum:
+  fixes f::"'a::order \<Rightarrow> 'b::conditionally_complete_lattice"
+  assumes "mono f"
+    and "\<And>x. x:M \<Longrightarrow> x\<le>m"
+    and "m:M"
+  shows "(SUP x\<in>M. f x) = f m"
+  by (smt (verit, ccfv_threshold) assms(1) assms(2) assms(3) cSup_eq_maximum imageE imageI monoD)
+
+lemma cSup_eq_cSup:
+  fixes A B :: \<open>'a::conditionally_complete_lattice set\<close>
+  assumes bdd: \<open>bdd_above A\<close>
+  assumes B: \<open>\<And>a. a\<in>A \<Longrightarrow> \<exists>b\<in>B. b \<ge> a\<close>
+  assumes A: \<open>\<And>b. b\<in>B \<Longrightarrow> \<exists>a\<in>A. a \<ge> b\<close>
+  shows \<open>Sup A = Sup B\<close>
+proof (cases \<open>B = {}\<close>)
+  case True
+  with A B have \<open>A = {}\<close>
+    by auto
+  with True show ?thesis by simp
+next
+  case False
+  have \<open>bdd_above B\<close>
+    by (meson A bdd bdd_above_def order_trans)
+  have \<open>A \<noteq> {}\<close>
+    using A False by blast
+  moreover have \<open>a \<le> Sup B\<close> if \<open>a \<in> A\<close> for a
+  proof -
+    obtain b where \<open>b \<in> B\<close> and \<open>b \<ge> a\<close>
+      using B \<open>a \<in> A\<close> by auto
+    then show ?thesis
+      apply (rule cSup_upper2)
+      using \<open>bdd_above B\<close> by simp
+  qed
+  moreover have \<open>Sup B \<le> c\<close> if \<open>\<And>a. a \<in> A \<Longrightarrow> a \<le> c\<close> for c
+    using False apply (rule cSup_least)
+    using A that by fastforce
+  ultimately show ?thesis
+    by (rule cSup_eq_non_empty)
+qed
+
 unbundle no_lattice_notation
 
 end

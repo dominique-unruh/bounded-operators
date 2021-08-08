@@ -2174,31 +2174,6 @@ proof -
 qed
 
 
-(* lemma cinner_vec_of_onb_enum:
-  "\<langle>x, y\<rangle> = (vec_of_onb_enum y) \<bullet>c (vec_of_onb_enum x)"
-
-proof-
-  define u where "u = vec_of_onb_enum x"
-  define v where "v = vec_of_onb_enum y"
-  define n where "n = canonical_basis_length TYPE('a)"
-  have b1: "dim_vec u = n"
-    unfolding u_def n_def
-    by (simp add: dim_vec_of_onb_enum_list') 
-  have b2: "dim_vec v = n"
-    unfolding v_def n_def
-    by (simp add: dim_vec_of_onb_enum_list') 
-  have  "\<langle>(onb_enum_of_vec::_\<Rightarrow> 'a) u, (onb_enum_of_vec::_\<Rightarrow> 'a) v\<rangle>
-           = v \<bullet>c u"
-    using b1 b2 cinner_onb_enum_of_vec
-    by (simp add: cinner_onb_enum_of_vec n_def)
-  moreover have "x = onb_enum_of_vec u"
-    by (simp add: onb_enum_of_vec_inverse u_def)
-  moreover have "y = onb_enum_of_vec v"
-    by (simp add: onb_enum_of_vec_inverse v_def)
-  ultimately show ?thesis
-    using u_def v_def by presburger 
-qed *)
-
 
 lemma cblinfun_of_mat_inj: "inj_on (cblinfun_of_mat::complex mat \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b) 
       (carrier_mat (canonical_basis_length TYPE('b::onb_enum))

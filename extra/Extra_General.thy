@@ -376,38 +376,6 @@ lemma sum_single:
   apply (subst sum.mono_neutral_cong_right[where S=\<open>A \<inter> {i}\<close> and h=f])
   using assms by auto
 
-lemma cSup_eq_cSup:
-  fixes A B :: \<open>'a::conditionally_complete_lattice set\<close>
-  assumes bdd: \<open>bdd_above A\<close>
-  assumes B: \<open>\<And>a. a\<in>A \<Longrightarrow> \<exists>b\<in>B. b \<ge> a\<close>
-  assumes A: \<open>\<And>b. b\<in>B \<Longrightarrow> \<exists>a\<in>A. a \<ge> b\<close>
-  shows \<open>Sup A = Sup B\<close>
-proof (cases \<open>B = {}\<close>)
-  case True
-  with A B have \<open>A = {}\<close>
-    by auto
-  with True show ?thesis by simp
-next
-  case False
-  have \<open>bdd_above B\<close>
-    by (meson A bdd bdd_above_def order_trans)
-  have \<open>A \<noteq> {}\<close>
-    using A False by blast
-  moreover have \<open>a \<le> Sup B\<close> if \<open>a \<in> A\<close> for a
-  proof -
-    obtain b where \<open>b \<in> B\<close> and \<open>b \<ge> a\<close>
-      using B \<open>a \<in> A\<close> by auto
-    then show ?thesis
-      apply (rule cSup_upper2)
-      using \<open>bdd_above B\<close> by simp
-  qed
-  moreover have \<open>Sup B \<le> c\<close> if \<open>\<And>a. a \<in> A \<Longrightarrow> a \<le> c\<close> for c
-    using False apply (rule cSup_least)
-    using A that by fastforce
-  ultimately show ?thesis
-    by (rule cSup_eq_non_empty)
-qed
-
 lemma image_set_plus: 
   assumes \<open>linear U\<close>
   shows \<open>U ` (A + B) = U ` A + U ` B\<close>
@@ -438,5 +406,28 @@ proof -
   thus "?enum = [a]"
     by (subst everything_the_same[of _ b], simp)
 qed
+
+lemma L2_set_mono2:
+  assumes a1: "finite L" and a2: "K \<le> L"
+  shows "L2_set f K \<le> L2_set f L"
+proof-
+  have "(\<Sum>i\<in>K. (f i)\<^sup>2) \<le> (\<Sum>i\<in>L. (f i)\<^sup>2)"
+  proof (rule sum_mono2)
+    show "finite L"
+      using a1.
+    show "K \<subseteq> L"
+      using a2.
+    show "0 \<le> (f b)\<^sup>2"
+      if "b \<in> L - K"
+      for b :: 'a
+      using that
+      by simp 
+  qed
+  hence "sqrt (\<Sum>i\<in>K. (f i)\<^sup>2) \<le> sqrt (\<Sum>i\<in>L. (f i)\<^sup>2)"
+    by (rule real_sqrt_le_mono)
+  thus ?thesis
+    unfolding L2_set_def.
+qed
+
 
 end
