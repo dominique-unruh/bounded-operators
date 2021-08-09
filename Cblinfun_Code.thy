@@ -574,7 +574,7 @@ proof -
       by simp
     also have "\<dots> = {w. A *\<^sub>V w = 0}"
       apply auto
-      by (metis (no_types, lifting) Am_carrier Am_def carrier_matD(2) carrier_vec_dim_vec dim_vec_of_onb_enum_list' image_iff mat_carrier mat_of_cblinfun_def onb_enum_of_vec_inverse)
+      by (metis (no_types, lifting) Am_carrier Am_def carrier_matD(2) carrier_vec_dim_vec dim_vec_of_onb_enum' image_iff mat_carrier mat_of_cblinfun_def onb_enum_of_vec_inverse)
     finally show ?thesis
       by -
   qed

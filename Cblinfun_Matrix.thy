@@ -29,33 +29,34 @@ text \<open>We define the canonical isomorphism between \<^typ>\<open>'a::onb_en
   and the complex \<^term>\<open>n*m\<close>-matrices (where n,m are the cdimensions of 'a,'b, 
   respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>onb_enum\<close>
   since that class fixes a finite canonical basis. Matrices are represented using
-  the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.\<close>
-  (* TODO (for DOMINIQUE): Define in this description what the canonical isomorphism is. *)
+  the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.
+  (The isomorphism will be called \<^term>\<open>mat_of_cblinfun\<close> below.)\<close>
 
-primrec vec_of_onb_enum_list :: \<open>'a list \<Rightarrow> 'a::{basis_enum,complex_inner} \<Rightarrow> nat \<Rightarrow> complex vec\<close> 
+(* primrec vec_of_onb_enum_list :: \<open>'a list \<Rightarrow> 'a::{basis_enum,complex_inner} \<Rightarrow> nat \<Rightarrow> complex vec\<close> 
   where
   \<open>vec_of_onb_enum_list [] v _ = 0\<^sub>v (length (canonical_basis::'a list))\<close> |
   \<open>vec_of_onb_enum_list (x#ys) v i = vec_of_onb_enum_list ys v (Suc i) +
-    \<langle>x, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i\<close>
-
+    \<langle>x, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i\<close> *)
 
 definition vec_of_onb_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
+  \<comment> \<open>Maps \<^term>\<open>v\<close> to a \<^typ>\<open>'a vec\<close> represented in basis \<^const>\<open>canonical_basis\<close>\<close>
   \<open>vec_of_onb_enum v = vec_of_list (map (crepresentation (set canonical_basis) v) canonical_basis)\<close>
 
-lemma dim_vec_of_onb_enum_list:
+(* lemma dim_vec_of_onb_enum_list:
   \<open>dim_vec (vec_of_onb_enum_list (L::'a list) v i) = length (canonical_basis::'a::{basis_enum,complex_inner} list)\<close>
-  by (induction L, auto)
+  by (induction L, auto) *)
 
-lemma dim_vec_of_onb_enum_list':
+(* Renamed from dim_vec_of_onb_enum_list' *)
+lemma dim_vec_of_onb_enum':
   \<open>dim_vec (vec_of_onb_enum (v::'a)) = length (canonical_basis::'a::basis_enum list)\<close>
   unfolding vec_of_onb_enum_def 
-  using dim_vec_of_onb_enum_list
+  (* using dim_vec_of_onb_enum_list *)
   by simp  
 
 lemma dim_vec_vec_of_onb_enum[simp]: "dim_vec (vec_of_onb_enum (a :: 'a::enum ell2)) = CARD('a)"
-  by (metis canonical_basis_length_ell2 dim_vec_of_onb_enum_list')
+  by (metis canonical_basis_length_ell2 dim_vec_of_onb_enum')
 
-lemma vec_of_onb_enum_list_add:
+(* lemma vec_of_onb_enum_list_add:
   \<open>vec_of_onb_enum_list (L::'a::{basis_enum,complex_inner} list) (v1 + v2) i =
    vec_of_onb_enum_list L v1 i + vec_of_onb_enum_list L v2 i\<close>
 proof (induction L arbitrary : i)
@@ -105,8 +106,9 @@ next
        vec_of_onb_enum_list (a # L) v2 i"
     by smt
 qed
+ *)
 
-lemma vec_of_onb_enum_list_mult:
+(* lemma vec_of_onb_enum_list_mult:
   fixes L :: "'a::{basis_enum,complex_inner} list"
   shows \<open>vec_of_onb_enum_list L (c *\<^sub>C v) i = c \<cdot>\<^sub>v vec_of_onb_enum_list L v i\<close>
 proof(induction L arbitrary: i)
@@ -135,7 +137,7 @@ next
   finally show "vec_of_onb_enum_list (a # L) (c *\<^sub>C v) i =
         c \<cdot>\<^sub>v vec_of_onb_enum_list (a # L) v i"
     by simp
-qed
+qed *)
 
 fun onb_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::complex_vector\<close> where 
   \<open>onb_enum_of_vec_list [] v = 0\<close> |
@@ -455,10 +457,10 @@ lemma onb_enum_of_vec_expansion:
   using assms sum_list_sum_nth[where xs = "map2 (*\<^sub>C) L S"]
   by auto
 
-lemma length_list_of_vec_vec_of_onb_enum_list:
+(* lemma length_list_of_vec_vec_of_onb_enum_list:
   fixes w::"'a::{basis_enum,complex_inner}" and S::"'a list"
   shows "length (list_of_vec (vec_of_onb_enum_list S w i)) = length (canonical_basis::'a list)"
-  by (simp add: dim_vec_of_onb_enum_list)
+  by (simp add: dim_vec_of_onb_enum_list) *)
 
 lemma list_of_vec_unit_vec:
   defines "basis == canonical_basis::'a::basis_enum list"
@@ -1196,7 +1198,7 @@ lemma cscalar_prod_cinner: "cinner \<psi> \<phi> = cscalar_prod (vec_of_onb_enum
   for \<psi> :: "'a::onb_enum"
   thm cinner_onb_enum_of_vec
   apply (subst cinner_onb_enum_of_vec[symmetric, where 'a='a])
-  by (simp_all add: dim_vec_of_onb_enum_list')
+  by (simp_all add: dim_vec_of_onb_enum')
 
 lemma norm_ell2_vec: "norm \<psi> = 
   (let \<psi>' = vec_of_onb_enum \<psi> in
@@ -1327,11 +1329,11 @@ proof
 
   show add: \<open>f M (b1 + b2) = f M b1 + f M b2\<close> for b1 b2
     apply (auto simp: f_def)
-    by (metis (mono_tags, lifting) carrier_matD(1) carrier_vec_dim_vec dim_mult_mat_vec dim_vec_of_onb_enum_list' m_def mult_add_distrib_mat_vec n_def onb_enum_of_vec_add vec_of_onb_enum_add)
+    by (metis (mono_tags, lifting) carrier_matD(1) carrier_vec_dim_vec dim_mult_mat_vec dim_vec_of_onb_enum' m_def mult_add_distrib_mat_vec n_def onb_enum_of_vec_add vec_of_onb_enum_add)
 
   show scale: \<open>f M (c *\<^sub>C b) = c *\<^sub>C f M b\<close> for c b
     apply (auto simp: f_def)
-    by (metis carrier_matD(1) carrier_vec_dim_vec dim_mult_mat_vec dim_vec_of_onb_enum_list' m_def mult_mat_vec n_def onb_enum_of_vec_mult vec_of_onb_enum_scaleC)
+    by (metis carrier_matD(1) carrier_vec_dim_vec dim_mult_mat_vec dim_vec_of_onb_enum' m_def mult_mat_vec n_def onb_enum_of_vec_mult vec_of_onb_enum_scaleC)
 
   from add scale have \<open>clinear (f M)\<close>
     by (simp add: clinear_iff)
@@ -2624,7 +2626,7 @@ lemma (in complex_vec_space) module_span_cspan:
   shows "span (vec_of_onb_enum ` X) = vec_of_onb_enum ` cspan X"
 proof -
   have carrier: "vec_of_onb_enum ` X \<subseteq> carrier_vec n"
-    by (metis assms carrier_vecI dim_vec_of_onb_enum_list' image_subsetI)
+    by (metis assms carrier_vecI dim_vec_of_onb_enum' image_subsetI)
   have lincomb_sum: "lincomb c A = vec_of_onb_enum (\<Sum>b\<in>B. c' b *\<^sub>C b)" 
     if B_def: "B = onb_enum_of_vec ` A" and \<open>finite A\<close>
       and AX: "A \<subseteq> vec_of_onb_enum ` X" and c'_def: "\<And>b. c' b = c (vec_of_onb_enum b)"
@@ -2653,7 +2655,7 @@ proof -
           = vec_of_onb_enum (\<Sum>b\<in>onb_enum_of_vec ` insert x F. c' b *\<^sub>C b)"
       apply simp apply (rule sym)
       apply (subst sum.insert)
-      using \<open>finite F\<close> \<open>x \<notin> F\<close> dim_vec_of_onb_enum_list' insert.prems 
+      using \<open>finite F\<close> \<open>x \<notin> F\<close> dim_vec_of_onb_enum' insert.prems 
         vec_of_onb_enum_add c'_def by auto
     finally show ?case
       by -
@@ -2785,7 +2787,7 @@ proof-
     for j
   proof-
     have j_bound: "j < length (canonical_basis::'a ell2 list)"
-      by (metis dim_vec_of_onb_enum_list' that)
+      by (metis dim_vec_of_onb_enum' that)
     have y1: "cindependent (set (canonical_basis::'a ell2 list))"
       using is_cindependent_set by blast
     have y2: "canonical_basis ! j \<in> set (canonical_basis::'a ell2 list)"
@@ -2814,7 +2816,7 @@ proof-
       by auto
     moreover have "length (enum_class.enum::'a list) = dim_vec (vec_of_onb_enum (ket i))"
       unfolding vec_of_onb_enum_def canonical_basis_ell2_def
-      using dim_vec_of_onb_enum_list'[where v = "ket i"]
+      using dim_vec_of_onb_enum'[where v = "ket i"]
       unfolding canonical_basis_ell2_def by simp              
     ultimately have "enum_idx i < dim_vec (unit_vec (canonical_basis_length TYPE('a ell2)) 
         (enum_idx i))"
@@ -2897,7 +2899,7 @@ proof-
     for j
   proof-
     have j_bound: "j < length (canonical_basis::'a list)"
-      by (metis dim_vec_of_onb_enum_list' that)
+      by (metis dim_vec_of_onb_enum' that)
     have y1: "cindependent (set (canonical_basis::'a list))"
       by (simp add: is_cindependent_set)              
     have y2: "canonical_basis ! j \<in> set (canonical_basis::'a list)"
@@ -3440,7 +3442,7 @@ proof-
       using one_dim_canonical_basis[where 'a = 'b]
       by (metis \<open>nB = 1\<close> nB_def)
     hence dim_vec_b: "dim_vec (vec_of_onb_enum x) = 1"
-      by (simp add: dim_vec_of_onb_enum_list')            
+      by (simp add: dim_vec_of_onb_enum')            
     have "mat_of_cols nA [vec_of_onb_enum \<psi>] *\<^sub>v vec_of_onb_enum x
         = vec nA
      (\<lambda>i. scalar_prod (row (mat_of_cols nA [vec_of_onb_enum \<psi>]) i) (vec_of_onb_enum x))"
@@ -3511,7 +3513,7 @@ proof-
           by auto
       qed
       have "dim_vec (vec_of_onb_enum \<psi>) = nA"
-        by (simp add: dim_vec_of_onb_enum_list' nA_def')
+        by (simp add: dim_vec_of_onb_enum' nA_def')
       thus ?thesis
         using sss[where a = "one_dim_iso x" and y = "vec_of_onb_enum \<psi>"]
         by auto
@@ -3542,7 +3544,7 @@ proof-
       qed
       have "dim_vec (vec_of_onb_enum (one_dim_iso (x::'b::one_dim) *\<^sub>C (\<psi>::'a::onb_enum))) 
             = (nA::nat)"
-        by (simp add: dim_vec_of_onb_enum_list' nA_def')
+        by (simp add: dim_vec_of_onb_enum' nA_def')
       thus ?thesis using ll[where y = "vec_of_onb_enum (one_dim_iso x *\<^sub>C \<psi>)"]
         by blast
     qed
@@ -3617,7 +3619,7 @@ next
          \<in> carrier_mat d d"
   proof-
     have d1: "dim_vec (vec_of_onb_enum a) = d"
-      by (simp add: d_def dim_vec_of_onb_enum_list')
+      by (simp add: d_def dim_vec_of_onb_enum')
     hence d2: "mat_of_cols d [vec_of_onb_enum a] \<in> carrier_mat d 1"
       unfolding mat_of_cols_def by auto
     have d3: "mat_of_rows d [conjugate (vec_of_onb_enum a)] \<in> carrier_mat 1 d"
@@ -3681,7 +3683,7 @@ next
         apply (subst mat_of_rows_index) using \<open>j < d\<close> by auto
       also have "\<dots> = vec_of_onb_enum a $ i * cnj (vec_of_onb_enum a $ j)"
         apply (subst vec_index_conjugate) using \<open>j < d\<close> apply auto
-        by (simp add: assms(1) dim_vec_of_onb_enum_list')
+        by (simp add: assms(1) dim_vec_of_onb_enum')
       finally show ?thesis
         by simp
     qed     
@@ -3751,10 +3753,10 @@ proof-
   define d where "d = canonical_basis_length TYPE('a)"
   have ucdim: "dim_vec u = d"
     unfolding u_def d_def
-    by (simp add: dim_vec_of_onb_enum_list') 
+    by (simp add: dim_vec_of_onb_enum') 
   have vcdim: "dim_vec v = d"
     unfolding v_def d_def
-    by (simp add: dim_vec_of_onb_enum_list') 
+    by (simp add: dim_vec_of_onb_enum') 
   have "dim_col (mat_of_cols d [u]) = 1"
     by auto
   hence x1: "row (mat_of_cols d [u]) i $ 0 = u $ i"
@@ -3964,10 +3966,10 @@ proof -
 
   have Av_carrier: "set Av \<subseteq> carrier_vec d"
     unfolding Av_def apply auto
-    by (simp add: carrier_vecI d_def dim_vec_of_onb_enum_list')
+    by (simp add: carrier_vecI d_def dim_vec_of_onb_enum')
   have Bv_carrier: "set Bv \<subseteq> carrier_vec d"
     unfolding Bv_def apply auto
-    by (simp add: carrier_vecI d_def dim_vec_of_onb_enum_list')
+    by (simp add: carrier_vecI d_def dim_vec_of_onb_enum')
   have Bo_carrier: "set Bo \<subseteq> carrier_vec d"
     apply (simp add: Bo_def)
     using Bv_carrier by (rule gram_schmidt0_result(1))
@@ -3990,9 +3992,9 @@ proof -
   also have "\<dots> \<longleftrightarrow> span (set Av) \<subseteq> span (set Bo)"
     unfolding Bo_def Av_def Bv_def
     apply (subst gram_schmidt0_result(4)[symmetric])
-    by (simp_all add: carrier_dim_vec d_def dim_vec_of_onb_enum_list' image_subset_iff)
+    by (simp_all add: carrier_dim_vec d_def dim_vec_of_onb_enum' image_subset_iff)
     (* apply (subst gram_schmidt0_result(4)[symmetric]) *)
-    (* by (simp_all add: carrier_dim_vec d_def dim_vec_of_onb_enum_list' image_subset_iff) *)
+    (* by (simp_all add: carrier_dim_vec d_def dim_vec_of_onb_enum' image_subset_iff) *)
   also have "\<dots> \<longleftrightarrow> (\<forall>v\<in>set Av. adjuster d v Bo = - v)"
   proof (intro iffI ballI)
     fix v assume "v \<in> set Av" and "span (set Av) \<subseteq> span (set Bo)"
@@ -4171,7 +4173,7 @@ proof -
       apply (subst mat_of_rows_index) apply auto
       apply (subst mat_of_rows_index) apply auto
       apply (subst mat_of_cols_index) apply auto
-      by (simp add: assms(1) dim_vec_of_onb_enum_list')
+      by (simp add: assms(1) dim_vec_of_onb_enum')
     also have "\<dots> = mat_of_cblinfun (selfbutter (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
       apply (simp add: butterfly_scaleR_left butterfly_scaleR_right power_inverse mat_of_cblinfun_scaleR factor_def)
       apply (simp add: butterfly_def cblinfun_of_mat_timesOp
@@ -4228,12 +4230,12 @@ proof-
       and "gs = gram_schmidt0 d (map vec_of_onb_enum S)"
   interpret complex_vec_space d.
   have gs_dim: "x \<in> set gs \<Longrightarrow> dim_vec x = d" for x
-    by (smt carrier_vecD carrier_vec_dim_vec d_def dim_vec_of_onb_enum_list' ex_map_conv gram_schmidt0_result(1) gs_def subset_code(1))
+    by (smt carrier_vecD carrier_vec_dim_vec d_def dim_vec_of_onb_enum' ex_map_conv gram_schmidt0_result(1) gs_def subset_code(1))
   have ortho_gs: "is_ortho_set (set (map onb_enum_of_vec gs :: 'a list))"
     apply (rule corthogonal_is_ortho_set)
-    by (smt carrier_dim_vec cof_vec_space.gram_schmidt0_result(1) d_def dim_vec_of_onb_enum_list' gram_schmidt0_result(3) gs_def imageE map_idI map_map o_apply set_map subset_code(1) onb_enum_of_vec_inverse')
+    by (smt carrier_dim_vec cof_vec_space.gram_schmidt0_result(1) d_def dim_vec_of_onb_enum' gram_schmidt0_result(3) gs_def imageE map_idI map_map o_apply set_map subset_code(1) onb_enum_of_vec_inverse')
   have distinct_gs: "distinct (map onb_enum_of_vec gs :: 'a list)"
-    by (metis (mono_tags, hide_lams) carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_onb_enum_list' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI onb_enum_of_vec_inverse')
+    by (metis (mono_tags, hide_lams) carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_onb_enum' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI onb_enum_of_vec_inverse')
 
   have "mk_projector_orthog d gs 
       = mk_projector_orthog d (map vec_of_onb_enum (map onb_enum_of_vec gs :: 'a list))"
@@ -4248,7 +4250,7 @@ proof-
     apply (rule arg_cong[where f="\<lambda>x. mat_of_cblinfun (Proj x)"])
     unfolding gs_def d_def
     apply (subst Span_onb_enum_gram_schmidt0)
-    by (auto simp add: carrier_vecI dim_vec_of_onb_enum_list')
+    by (auto simp add: carrier_vecI dim_vec_of_onb_enum')
   finally show ?thesis
     unfolding d_def gs_def by auto
 qed
