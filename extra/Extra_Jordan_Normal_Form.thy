@@ -49,7 +49,7 @@ unbundle jnf_notation
 
 
 lemma mat_entry_explicit:
-  fixes M :: "complex mat"
+  fixes M :: "'a::field mat"
   assumes "M \<in> carrier_mat m n" and "i < m" and "j < n"
   shows   "vec_index (M *\<^sub>v unit_vec n j) i = M $$ (i,j)"
 proof-
