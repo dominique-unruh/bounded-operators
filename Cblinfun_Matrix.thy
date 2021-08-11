@@ -1090,14 +1090,11 @@ lemma mat_of_cblinfun_adj:
   for F :: "'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::onb_enum"
   by (metis (no_types, lifting) cblinfun_of_mat_inverse map_carrier_mat mat_adjoint_def' mat_carrier cblinfun_of_mat_adjoint mat_of_cblinfun_def mat_of_cblinfun_inverse transpose_carrier_mat)
 
-(* TODO clean from here *)
-
-subsubsection\<open>Gram Schmidt sub\<close>
-
-lemma (in complex_vec_space) module_span_cspan:
+(* Renamed from module_span_cspan *)
+lemma (in complex_vec_space) vec_of_basis_enum_cspan:
   fixes X :: "'a::basis_enum set"
   assumes "canonical_basis_length TYPE('a) = n"
-  shows "span (vec_of_basis_enum ` X) = vec_of_basis_enum ` cspan X"
+  shows "vec_of_basis_enum ` cspan X = span (vec_of_basis_enum ` X)"
 proof -
   have carrier: "vec_of_basis_enum ` X \<subseteq> carrier_vec n"
     by (metis assms carrier_vecI dim_vec_of_basis_enum' image_subsetI)
@@ -1173,16 +1170,17 @@ proof -
   qed
 qed
 
-lemma (in complex_vec_space) module_span_cspan':
+(* Renamed from module_span_cspan' *)
+lemma (in complex_vec_space) basis_enum_of_vec_span:
   assumes "canonical_basis_length TYPE('a) = n"
   assumes "Y \<subseteq> carrier_vec n"
-  shows "cspan (basis_enum_of_vec ` Y :: 'a::basis_enum set) = basis_enum_of_vec ` local.span Y"
+  shows "basis_enum_of_vec ` local.span Y = cspan (basis_enum_of_vec ` Y :: 'a::basis_enum set)"
 proof -
   define X::"'a set" where "X = basis_enum_of_vec ` Y"
   then have "cspan (basis_enum_of_vec ` Y :: 'a set) = basis_enum_of_vec ` vec_of_basis_enum ` cspan X"
     by (simp add: image_image)
   also have "\<dots> = basis_enum_of_vec ` local.span (vec_of_basis_enum ` X)"
-    apply (subst module_span_cspan)
+    apply (subst vec_of_basis_enum_cspan)
     using assms by simp_all
   also have "vec_of_basis_enum ` X = Y"
     unfolding X_def image_image
@@ -1192,12 +1190,13 @@ proof -
     by simp
 qed
 
-lemma Span_basis_enum_gram_schmidt0:
+
+(* Renamed from ccspan_gram_schmidt0_invariant *)
+lemma ccspan_gram_schmidt0_invariant:
   defines "basis_enum == (basis_enum_of_vec :: _ \<Rightarrow> 'a::{basis_enum,complex_normed_vector})"
   defines "n == canonical_basis_length TYPE('a)"
   assumes "set ws \<subseteq> carrier_vec n"
-  shows "ccspan (set (map basis_enum (gram_schmidt0 n ws)))
-     = ccspan (set (map basis_enum ws))"
+  shows "ccspan (set (map basis_enum (gram_schmidt0 n ws))) = ccspan (set (map basis_enum ws))"
 proof (transfer fixing: n ws basis_enum)
   interpret complex_vec_space.
   define gs where "gs = gram_schmidt0 n ws"
@@ -1209,7 +1208,7 @@ proof (transfer fixing: n ws basis_enum)
     by simp
   also have "\<dots> = basis_enum ` span (set gs)"
     unfolding basis_enum_def
-    apply (rule module_span_cspan')
+    apply (rule basis_enum_of_vec_span[symmetric])
     using n_def apply simp
     by (simp add: assms(3) cof_vec_space.gram_schmidt0_result(1) gs_def)
   also have "\<dots> = basis_enum ` span (set ws)"
@@ -1218,7 +1217,7 @@ proof (transfer fixing: n ws basis_enum)
     using assms by auto
   also have "\<dots> = cspan (basis_enum ` set ws)"
     unfolding basis_enum_def
-    apply (rule module_span_cspan'[symmetric])
+    apply (rule basis_enum_of_vec_span)
     using n_def apply simp
     by (simp add: assms(3))
   also have "\<dots> = cspan (set (map basis_enum ws))"
@@ -1340,13 +1339,15 @@ proof-
 qed
 
 
-lemma vec_of_basis_vector:
+(* Renamed from vec_of_basis_vector *)
+lemma vec_of_basis_enum_canonical_basis:
   assumes "i < canonical_basis_length TYPE('a)"
   shows "vec_of_basis_enum (canonical_basis!i :: 'a)
        = unit_vec (canonical_basis_length TYPE('a::basis_enum)) i"
   by (metis assms basis_enum_of_vec_inverse' basis_enum_of_vec_unit_vec index_unit_vec(3))
 
-lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"  
+(* TODO move *)
+lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"
 proof-
   have "x = (enum_class.enum::'a list) ! enum_idx x"
     using enum_idx_correct[where i = x] by simp
@@ -1376,8 +1377,9 @@ proof -
     by (auto simp: vec_of_basis_enum_def)
 qed
 
-(* TODO rename to vec_of_basis_enum_of_inverse *)
-lemma vec_of_basis_enum_inverse: 
+
+(* Renamed from vec_of_basis_enum_inverse *)
+lemma vec_of_basis_enum_to_inverse: 
   fixes \<psi> :: "'a::one_dim"
   shows "vec_of_basis_enum (inverse \<psi>) = vec_of_list [inverse (vec_index (vec_of_basis_enum \<psi>) 0)]"
 proof -
@@ -1396,7 +1398,7 @@ lemma vec_of_basis_enum_divide:
   fixes \<psi> \<phi> :: "'a::one_dim"
   shows "vec_of_basis_enum (\<psi> / \<phi>)
    = vec_of_list [vec_index (vec_of_basis_enum \<psi>) 0 / vec_index (vec_of_basis_enum \<phi>) 0]"
-  by (simp add: divide_inverse vec_of_basis_enum_inverse vec_of_basis_enum_times)
+  by (simp add: divide_inverse vec_of_basis_enum_to_inverse vec_of_basis_enum_times)
 
 lemma vec_of_basis_enum_1: "vec_of_basis_enum (1 :: 'a::one_dim) = vec_of_list [1]"
 proof -
@@ -1409,7 +1411,9 @@ proof -
     by (auto simp: vec_of_basis_enum_def)
 qed
 
-lemma mat_of_cblinfun_ell2_to_l2bounded:
+
+(* Renamed from mat_of_cblinfun_ell2_to_l2bounded *)
+lemma mat_of_cblinfun_vector_to_cblinfun:
   "mat_of_cblinfun (vector_to_cblinfun \<psi>)
        = mat_of_cols (canonical_basis_length TYPE('a)) [vec_of_basis_enum \<psi>]"
   for \<psi>::"'a::{basis_enum,complex_normed_vector}"  
@@ -1440,7 +1444,7 @@ proof (cases "a = 0")
   also have \<open>\<dots> = 1 / norm2 \<cdot>\<^sub>m (mat_of_cblinfun (vector_to_cblinfun a :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a) * mat_adjoint (mat_of_cblinfun (vector_to_cblinfun a :: complex \<Rightarrow>\<^sub>C\<^sub>L 'a)))\<close>
     by (simp add: butterfly_def mat_of_cblinfun_compose mat_of_cblinfun_adj)
   also have \<open>\<dots> = ?rhs\<close>
-    by (simp add: mat_of_cblinfun_ell2_to_l2bounded mat_adjoint_def flip: d_def)
+    by (simp add: mat_of_cblinfun_vector_to_cblinfun mat_adjoint_def flip: d_def)
   finally show ?thesis
     by -
 next
@@ -1452,8 +1456,7 @@ next
 qed
 
 
-
-lemma mat_of_cblinfun_proj':
+(* lemma mat_of_cblinfun_proj':
   fixes a b::"'a::onb_enum" 
   defines "u == vec_of_basis_enum a"
     and "v == vec_of_basis_enum b"
@@ -1573,30 +1576,46 @@ proof-
     by auto
   thus ?thesis
     unfolding d_def norm2_def mat_of_cblinfun_proj[where 'a = 'a and a = a].
+qed *)
+
+
+lemma corthogonal_vec_of_basis_enum:
+  fixes S :: "'a::onb_enum list"
+  shows "corthogonal (map vec_of_basis_enum S) \<longleftrightarrow> is_ortho_set (set S) \<and> distinct S"
+proof auto
+  assume assm: \<open>corthogonal (map vec_of_basis_enum S)\<close>
+  then show \<open>is_ortho_set (set S)\<close>
+    by (smt (verit, ccfv_SIG) cinner_eq_zero_iff corthogonal_def cscalar_prod_vec_of_basis_enum in_set_conv_nth is_ortho_set_def length_map nth_map)
+  show \<open>distinct S\<close>
+      using assm corthogonal_distinct distinct_map by blast 
+next
+  assume \<open>is_ortho_set (set S)\<close> and \<open>distinct S\<close>
+  then show \<open>corthogonal (map vec_of_basis_enum S)\<close>
+    by (smt (verit, ccfv_threshold) cinner_eq_zero_iff corthogonalI cscalar_prod_vec_of_basis_enum is_ortho_set_def length_map length_map nth_eq_iff_index_eq nth_map nth_map nth_mem nth_mem)
 qed
 
-
-lemma is_ortho_set_corthogonal:
+(* Use corthogonal_vec_of_basis_enum instead *)
+(* lemma is_ortho_set_corthogonal:
   fixes S :: "'a::onb_enum list"
-  defines  "R \<equiv> map vec_of_basis_enum S"
-  assumes a1: "is_ortho_set (set S)" and a2: "distinct S"
-  shows    "corthogonal R"
-  by (smt (verit, ccfv_threshold) R_def a1 a2 cinner_eq_zero_iff corthogonalI cscalar_prod_vec_of_basis_enum is_ortho_set_def length_map length_map nth_eq_iff_index_eq nth_map nth_map nth_mem nth_mem)
+  assumes "is_ortho_set (set S)" and "distinct S"
+  shows    "corthogonal (map vec_of_basis_enum S)" *)
 
-lemma corthogonal_is_ortho_set:
+(* Use corthogonal_vec_of_basis_enum instead *)
+(* lemma corthogonal_is_ortho_set:
   fixes vs :: "'a::onb_enum list"
   assumes "corthogonal (map vec_of_basis_enum vs)"
-  shows "is_ortho_set (set vs)"
-  by (smt (verit, ccfv_SIG) assms cinner_eq_zero_iff corthogonal_def cscalar_prod_vec_of_basis_enum in_set_conv_nth is_ortho_set_def length_map nth_map)
+  shows "is_ortho_set (set vs)" *)
 
-definition "is_subspace_of n vs ws = 
+(* Renamed from is_subspace_of *)
+definition "is_subspace_of_vec_list n vs ws = 
   (let ws' = gram_schmidt0 n ws in
      \<forall>v\<in>set vs. adjuster n v ws' = - v)"
 
-lemma Span_leq:
+(* Renamed from Span_leq *)
+lemma ccspan_leq_using_vec:
   fixes A B :: "'a::{basis_enum,complex_normed_vector} list"
   shows "(ccspan (set A) \<le> ccspan (set B)) \<longleftrightarrow>
-    is_subspace_of (canonical_basis_length TYPE('a)) 
+    is_subspace_of_vec_list (canonical_basis_length TYPE('a)) 
       (map vec_of_basis_enum A) (map vec_of_basis_enum B)"
 proof -
   define d Av Bv Bo
@@ -1629,8 +1648,8 @@ proof -
     by (subst closure_finite_cspan, simp_all)
   also have "\<dots> \<longleftrightarrow> span (set Av) \<subseteq> span (set Bv)"
     apply (simp add: Av_def Bv_def)
-    apply (subst module_span_cspan, simp add: d_def)
-    apply (subst module_span_cspan, simp add: d_def)
+    apply (subst vec_of_basis_enum_cspan[symmetric], simp add: d_def)
+    apply (subst vec_of_basis_enum_cspan[symmetric], simp add: d_def)
     by (metis inj_image_subset_iff inj_on_def basis_enum_of_vec_inverse)
   also have "\<dots> \<longleftrightarrow> span (set Av) \<subseteq> span (set Bo)"
     unfolding Bo_def Av_def Bv_def
@@ -1662,19 +1681,21 @@ proof -
       apply auto
       by (meson Bo_carrier in_mono span_subsetI subsetI)
   qed
-  also have "\<dots> = is_subspace_of d Av Bv"
-    by (simp add: is_subspace_of_def d_def Bo_def)
-  finally show "ccspan (set A) \<le> ccspan (set B) \<longleftrightarrow> is_subspace_of d Av Bv"
+  also have "\<dots> = is_subspace_of_vec_list d Av Bv"
+    by (simp add: is_subspace_of_vec_list_def d_def Bo_def)
+  finally show "ccspan (set A) \<le> ccspan (set B) \<longleftrightarrow> is_subspace_of_vec_list d Av Bv"
     by simp
 qed
 
-lemma apply_cblinfun_Span: 
+
+(* Renamed from apply_cblinfun_Span *)
+lemma cblinfun_apply_ccspan_using_vec: 
   "A *\<^sub>S ccspan (set S) = ccspan (basis_enum_of_vec ` set (map ((*\<^sub>v) (mat_of_cblinfun A)) (map vec_of_basis_enum S)))"
   apply (auto simp: cblinfun_image_Span image_image)
   by (metis mat_of_cblinfun_cblinfun_apply basis_enum_of_vec_inverse)
 
 
-text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-cdimensional vectors
+text \<open>\<^term>\<open>mk_projector_orthog d L\<close> takes a list L of d-dimensional vectors
 and returns the projector onto the span of L. (Assuming that all vectors in L are 
 orthogonal and nonzero.)\<close>
 fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> complex mat" where
@@ -1685,7 +1706,8 @@ fun mk_projector_orthog :: "nat \<Rightarrow> complex vec list \<Rightarrow> com
                                    smult_mat (1/norm2) (mat_of_cols d [v] * mat_of_rows d [conjugate v]) 
                                         + mk_projector_orthog d vs)"
 
-lemma mat_of_cblinfun_Proj_Span_aux_1:
+(* Renamed from mat_of_cblinfun_Proj_ccspan_aux_1 *)
+lemma mk_projector_orthog_correct:
   fixes S :: "'a::onb_enum list"
   defines "d == canonical_basis_length TYPE('a)"
   assumes ortho: "is_ortho_set (set S)" and distinct: "distinct S"
@@ -1818,8 +1840,8 @@ proof -
     also have "\<dots> = mat_of_cblinfun (selfbutter (a /\<^sub>R norm a)) + mat_of_cblinfun sumS"
       apply (simp add: butterfly_scaleR_left butterfly_scaleR_right power_inverse mat_of_cblinfun_scaleR factor_def)
       apply (simp add: butterfly_def mat_of_cblinfun_compose
-          mat_of_cblinfun_adj mat_of_cblinfun_ell2_to_l2bounded d_def)
-      by (simp add: mat_of_cblinfun_compose mat_of_cblinfun_adj mat_of_cblinfun_ell2_to_l2bounded mat_of_cblinfun_scaleC power2_eq_square)
+          mat_of_cblinfun_adj mat_of_cblinfun_vector_to_cblinfun d_def)
+      by (simp add: mat_of_cblinfun_compose mat_of_cblinfun_adj mat_of_cblinfun_vector_to_cblinfun mat_of_cblinfun_scaleC power2_eq_square)
     finally show ?case
       by (simp add: mat_of_cblinfun_plus sumS_def)
   qed
@@ -1860,7 +1882,8 @@ proof -
     by -
 qed
 
-lemma mat_of_cblinfun_Proj_Span: 
+(* Renamed from mat_of_cblinfun_Proj_Span *)
+lemma mat_of_cblinfun_Proj_ccspan: 
   fixes S :: "'a::onb_enum list"
   shows "mat_of_cblinfun (Proj (ccspan (set S))) =
     (let d = canonical_basis_length TYPE('a) in 
@@ -1873,7 +1896,7 @@ proof-
   have gs_dim: "x \<in> set gs \<Longrightarrow> dim_vec x = d" for x
     by (smt carrier_vecD carrier_vec_dim_vec d_def dim_vec_of_basis_enum' ex_map_conv gram_schmidt0_result(1) gs_def subset_code(1))
   have ortho_gs: "is_ortho_set (set (map basis_enum_of_vec gs :: 'a list))"
-    apply (rule corthogonal_is_ortho_set)
+    apply (subst corthogonal_vec_of_basis_enum[THEN iffD1], auto)
     by (smt carrier_dim_vec cof_vec_space.gram_schmidt0_result(1) d_def dim_vec_of_basis_enum' gram_schmidt0_result(3) gs_def imageE map_idI map_map o_apply set_map subset_code(1) basis_enum_of_vec_inverse')
   have distinct_gs: "distinct (map basis_enum_of_vec gs :: 'a list)"
     by (metis (mono_tags, hide_lams) carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_basis_enum' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI basis_enum_of_vec_inverse')
@@ -1885,16 +1908,18 @@ proof-
     using gs_dim by (auto intro!: basis_enum_of_vec_inverse simp: d_def)
   also have "\<dots> = mat_of_cblinfun (Proj (ccspan (set (map basis_enum_of_vec gs :: 'a list))))"
     unfolding d_def
-    apply (subst mat_of_cblinfun_Proj_Span_aux_1)
+    apply (subst mk_projector_orthog_correct)
     using ortho_gs distinct_gs by auto
   also have "\<dots> = mat_of_cblinfun (Proj (ccspan (set S)))"
     apply (rule arg_cong[where f="\<lambda>x. mat_of_cblinfun (Proj x)"])
     unfolding gs_def d_def
-    apply (subst Span_basis_enum_gram_schmidt0)
+    apply (subst ccspan_gram_schmidt0_invariant)
     by (auto simp add: carrier_vecI dim_vec_of_basis_enum')
   finally show ?thesis
     unfolding d_def gs_def by auto
 qed
+
+(* TODO clean from here *)
 
 lemma vec_of_basis_enum_ell2_index:
   fixes \<psi> :: \<open>'a::enum ell2\<close> 

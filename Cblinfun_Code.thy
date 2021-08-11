@@ -202,7 +202,7 @@ lemma inverse_ell2_code'[code]:
   fixes \<psi> :: "'a::{CARD_1,enum} ell2"
   shows "vec_of_ell2 (inverse \<psi>)
    = vec_of_list [inverse (vec_index (vec_of_ell2 \<psi>) 0)]"
-  by (simp add: vec_of_ell2_def vec_of_basis_enum_inverse)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_to_inverse)
 
 lemma one_ell2_code'[code]: 
   \<comment> \<open>Code equation for the unit in the algebra of one-dimensional vectors\<close>
@@ -259,7 +259,7 @@ lemma vector_to_cblinfun_code[code]:
   \<comment> \<open>Code equation for translating a vector into an operation (single-column matrix)\<close>
   "mat_of_cblinfun (vector_to_cblinfun_code \<psi>) = mat_of_cols (CARD('a)) [vec_of_ell2 \<psi>]"
   for \<psi>::"'a::enum ell2"
-  by (simp add: mat_of_cblinfun_ell2_to_l2bounded  vec_of_ell2_def vector_to_cblinfun_code_def)
+  by (simp add: mat_of_cblinfun_vector_to_cblinfun  vec_of_ell2_def vector_to_cblinfun_code_def)
 
 subsection \<open>Subspaces\<close>
 
@@ -314,7 +314,7 @@ proof -
     by auto
   show ?thesis
     unfolding SPAN_def mat_of_cblinfun_Proj_code_def
-    using mat_of_cblinfun_Proj_Span[where S = 
+    using mat_of_cblinfun_Proj_ccspan[where S = 
         "map basis_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
     apply (simp only: Let_def map_filter_map_filter filter_set image_set map_map_filter o_def)
     unfolding *
@@ -372,13 +372,13 @@ end
 
 lemma leq_ccsubspace_code[code]:
   \<comment> \<open>Code equation for deciding inclusion of one space in another.
-     Uses the constant \<^term>\<open>is_subspace_of\<close> which implements the actual
+     Uses the constant \<^term>\<open>is_subspace_of_vec_list\<close> which implements the actual
      computation by checking for each generator of A whether it is in the
      span of B (by orthogonal projection onto an orthonormal basis of B
      which is computed using Gram-Schmidt).\<close>
   "SPAN A \<le> (SPAN B :: 'a::onb_enum ccsubspace)
       \<longleftrightarrow> (let d = canonical_basis_length TYPE('a) in
-          is_subspace_of d
+          is_subspace_of_vec_list d
           (filter (\<lambda>v. dim_vec v = d) A)
           (filter (\<lambda>v. dim_vec v = d) B))"
 proof -
@@ -389,7 +389,7 @@ proof -
   show ?thesis
     unfolding SPAN_def d_def[symmetric] filter_set Let_def
         A'_def[symmetric] B'_def[symmetric] image_set
-    apply (subst Span_leq)
+    apply (subst ccspan_leq_using_vec)
     unfolding d_def[symmetric] map_map o_def
     apply (subst map_cong[where xs=A', OF refl])
         apply (rule basis_enum_of_vec_inverse')
@@ -423,7 +423,7 @@ proof -
     by simp
   also have "\<dots> = ccspan ((\<lambda>x. basis_enum_of_vec 
             (mat_of_cblinfun A *\<^sub>v vec_of_basis_enum (basis_enum_of_vec x :: 'a))) ` set S')"
-    apply (subst apply_cblinfun_Span)
+    apply (subst cblinfun_apply_ccspan_using_vec)
     by (simp add: image_image)
   also have "\<dots> = ccspan ((\<lambda>x. basis_enum_of_vec (mat_of_cblinfun A *\<^sub>v x)) ` set S')"
     apply (subst image_cong[OF refl])
@@ -543,7 +543,7 @@ proof -
     by simp_all
 
   also have "\<dots> = basis_enum_of_vec ` span (set base)"
-    apply (subst module_span_cspan')
+    apply (subst basis_enum_of_vec_span)
     using base_carrier dA_def by auto
 
   also have "\<dots> = basis_enum_of_vec ` mat_kernel Ag"
