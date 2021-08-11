@@ -360,9 +360,8 @@ lemma span_Set_Monad[code]: "Span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l)
      constructor that represents sets as lists in the computation.)\<close>
   apply (simp add: Span_code_def SPAN_def Let_def)
   apply (subst Set_filter_unchanged)
-   apply (metis dim_vec_vec_of_basis_enum imageE vec_of_ell2_def)
+   apply (auto simp add: vec_of_ell2_def)[1]
   by (metis (no_types, lifting) ell2_of_vec_def image_image map_idI set_map vec_of_ell2_inverse)
-
 
 text \<open>This instantiation defines a code equation for equality tests for \<^type>\<open>ccsubspace\<close>.
       The actual code for equality tests is given below (lemma \<open>equal_ccsubspace_code\<close>).\<close>

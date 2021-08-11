@@ -23,8 +23,6 @@ unbundle jnf_notation
 unbundle cblinfun_notation
 
 
-subsection \<open>Setting up code generation for type cblinfun\<close>
-
 text \<open>We define the canonical isomorphism between \<^typ>\<open>'a::basis_enum \<Rightarrow>\<^sub>C\<^sub>L'b::basis_enum\<close>
   and the complex \<^term>\<open>n*m\<close>-matrices (where n,m are the cdimensions of 'a,'b, 
   respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>basis_enum\<close>
@@ -32,119 +30,26 @@ text \<open>We define the canonical isomorphism between \<^typ>\<open>'a::basis_
   the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.
   (The isomorphism will be called \<^term>\<open>mat_of_cblinfun\<close> below.)\<close>
 
-(* primrec vec_of_basis_enum_list :: \<open>'a list \<Rightarrow> 'a::{basis_enum,complex_inner} \<Rightarrow> nat \<Rightarrow> complex vec\<close> 
-  where
-  \<open>vec_of_basis_enum_list [] v _ = 0\<^sub>v (length (canonical_basis::'a list))\<close> |
-  \<open>vec_of_basis_enum_list (x#ys) v i = vec_of_basis_enum_list ys v (Suc i) +
-    \<langle>x, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i\<close> *)
-
 definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
   \<comment> \<open>Maps \<^term>\<open>v\<close> to a \<^typ>\<open>'a vec\<close> represented in basis \<^const>\<open>canonical_basis\<close>\<close>
   \<open>vec_of_basis_enum v = vec_of_list (map (crepresentation (set canonical_basis) v) canonical_basis)\<close>
 
-(* lemma dim_vec_of_basis_enum_list:
-  \<open>dim_vec (vec_of_basis_enum_list (L::'a list) v i) = length (canonical_basis::'a::{basis_enum,complex_inner} list)\<close>
-  by (induction L, auto) *)
-
 (* Renamed from dim_vec_of_basis_enum_list' *)
-lemma dim_vec_of_basis_enum':
+lemma dim_vec_of_basis_enum'[simp]:
   \<open>dim_vec (vec_of_basis_enum (v::'a)) = length (canonical_basis::'a::basis_enum list)\<close>
   unfolding vec_of_basis_enum_def 
-  (* using dim_vec_of_basis_enum_list *)
   by simp  
 
-lemma dim_vec_vec_of_basis_enum[simp]: "dim_vec (vec_of_basis_enum (a :: 'a::enum ell2)) = CARD('a)"
-  by (metis canonical_basis_length_ell2 dim_vec_of_basis_enum')
+(* lemma dim_vec_vec_of_basis_enum[simp]: "dim_vec (vec_of_basis_enum (a :: 'a::enum ell2)) = CARD('a)" *)
 
-(* lemma vec_of_basis_enum_list_add:
-  \<open>vec_of_basis_enum_list (L::'a::{basis_enum,complex_inner} list) (v1 + v2) i =
-   vec_of_basis_enum_list L v1 i + vec_of_basis_enum_list L v2 i\<close>
-proof (induction L arbitrary : i)
-  case Nil thus ?case by simp
-next
-  case (Cons a L)
-  have "vec_of_basis_enum_list (a # L) (v1 + v2) i = 
-    vec_of_basis_enum_list L (v1 + v2) (Suc i) +
-    \<langle>a, v1 + v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i"
-    by simp
-  moreover have "vec_of_basis_enum_list L (v1 + v2) (Suc i) = 
-  vec_of_basis_enum_list L v1 (Suc i) + vec_of_basis_enum_list L v2 (Suc i)"
-    by (simp add: Cons.IH)
-  moreover have "\<langle>a, v1 + v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i = 
-                 \<langle>a, v1\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i + 
-                 \<langle>a, v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i"
-    by (simp add: add_smult_distrib_vec cinner_add_right)
-  ultimately have "vec_of_basis_enum_list (a # L) (v1 + v2) i = 
-                   vec_of_basis_enum_list L v1 (Suc i)
-                 + vec_of_basis_enum_list L v2 (Suc i)
-                 + \<langle>a, v1\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i 
-                 + \<langle>a, v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i"
-    by auto
-  also have "\<dots> = (vec_of_basis_enum_list L v1 (Suc i) + \<langle>a, v1\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i)
-    + (vec_of_basis_enum_list L v2 (Suc i) + \<langle>a, v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i)"
-  proof-
-    have w1: "\<lbrakk>dim_vec a = n; dim_vec b = n; dim_vec c = n; dim_vec d = n\<rbrakk>
-        \<Longrightarrow> a + b + c + d = (a + c) + (b + d)" for a b c d::"complex vec" and n
-      by auto
-    thus ?thesis
-      by (simp add: dim_vec_of_basis_enum_list) 
-  qed
-  finally have "vec_of_basis_enum_list (a # L) (v1 + v2) i = 
-  (vec_of_basis_enum_list L v1 (Suc i) + \<langle>a, v1\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i)
-+ (vec_of_basis_enum_list L v2 (Suc i) + \<langle>a, v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i)"
-    by simp
-  moreover have "vec_of_basis_enum_list L v1 (Suc i)
-                + \<langle>a, v1\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i 
-                = vec_of_basis_enum_list (a # L) v1 i"
-    by simp
-  moreover have "vec_of_basis_enum_list L v2 (Suc i)
-                + \<langle>a, v2\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i =
-                vec_of_basis_enum_list (a # L) v2 i"
-    by simp
-  ultimately show "vec_of_basis_enum_list (a # L) (v1 + v2) i =
-       vec_of_basis_enum_list (a # L) v1 i +
-       vec_of_basis_enum_list (a # L) v2 i"
-    by smt
-qed
- *)
-
-(* lemma vec_of_basis_enum_list_mult:
-  fixes L :: "'a::{basis_enum,complex_inner} list"
-  shows \<open>vec_of_basis_enum_list L (c *\<^sub>C v) i = c \<cdot>\<^sub>v vec_of_basis_enum_list L v i\<close>
-proof(induction L arbitrary: i)
-  case Nil
-  thus ?case by auto
-next
-  case (Cons a L)
-  have "vec_of_basis_enum_list (a # L) (c *\<^sub>C v) i = 
-    vec_of_basis_enum_list L (c *\<^sub>C v) (Suc i) +
-    c * \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i"
-    by simp
-  also have "\<dots> = 
-    c \<cdot>\<^sub>v vec_of_basis_enum_list L v (Suc i) +
-    c * \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i"
-    by (simp add: Cons.IH)
-  also have "\<dots> = 
-    c \<cdot>\<^sub>v (vec_of_basis_enum_list L v (Suc i) +
-           \<langle>a, v\<rangle> \<cdot>\<^sub>v unit_vec (length (canonical_basis::'a list)) i)"
-  proof-
-    have "\<lbrakk>dim_vec x = n; dim_vec y = n\<rbrakk> \<Longrightarrow> 
-         c \<cdot>\<^sub>v x + c \<cdot>\<^sub>v y = c \<cdot>\<^sub>v (x + y)" for x y::"complex vec" and n
-      by (metis carrier_vec_dim_vec smult_add_distrib_vec)      
-    thus ?thesis
-      by (metis dim_vec_of_basis_enum_list index_smult_vec(2) index_unit_vec(3) smult_smult_assoc) 
-  qed
-  finally show "vec_of_basis_enum_list (a # L) (c *\<^sub>C v) i =
-        c \<cdot>\<^sub>v vec_of_basis_enum_list (a # L) v i"
-    by simp
-qed *)
-
-fun basis_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::complex_vector\<close> where 
+(* fun basis_enum_of_vec_list :: \<open>'a list \<Rightarrow> complex list \<Rightarrow> 'a::complex_vector\<close> where 
   \<open>basis_enum_of_vec_list [] v = 0\<close> |
   \<open>basis_enum_of_vec_list y [] = 0\<close> |
-  \<open>basis_enum_of_vec_list (x#ys) (v#vs) = v *\<^sub>C x + basis_enum_of_vec_list ys vs\<close>
+  \<open>basis_enum_of_vec_list (x#ys) (v#vs) = v *\<^sub>C x + basis_enum_of_vec_list ys vs\<close> *)
 
-lemma basis_enum_of_vec_list_def': "basis_enum_of_vec_list xs ys = sum_list (map2 (*\<^sub>C) ys xs)"
+(* definition "basis_enum_of_vec_list xs ys = sum_list (map2 scaleC ys xs)" *)
+
+(* lemma basis_enum_of_vec_list_def': "basis_enum_of_vec_list xs ys = sum_list (map2 ( *\<^sub>C) ys xs)"
 proof(induction xs arbitrary: ys)
   case Nil
   thus ?case by auto
@@ -158,12 +63,12 @@ next
     case (Cons a ys)
     thus ?case by auto
   qed
-qed
+qed *)
 
 definition basis_enum_of_vec :: \<open>complex vec \<Rightarrow> 'a::basis_enum\<close> where
   \<open>basis_enum_of_vec v = 
     (if dim_vec v = canonical_basis_length TYPE('a)
-     then basis_enum_of_vec_list (canonical_basis::'a list) (list_of_vec v)
+     then sum_list (map2 (*\<^sub>C) (list_of_vec v) (canonical_basis::'a list))
      else 0)\<close>
 
 lemma list_of_vec_plus:
@@ -179,127 +84,38 @@ proof-
 qed
 
 lemma basis_enum_of_vec_add:
-  assumes \<open>dim_vec v1 = canonical_basis_length TYPE('a::basis_enum)\<close> and
+  assumes [simp]: \<open>dim_vec v1 = canonical_basis_length TYPE('a::basis_enum)\<close> 
     \<open>dim_vec v2 = canonical_basis_length TYPE('a)\<close>
   shows \<open>((basis_enum_of_vec (v1 + v2)) :: 'a) = basis_enum_of_vec v1 + basis_enum_of_vec v2\<close>
 proof -
-  define l1 l2 where "l1 = list_of_vec v1" and "l2 = list_of_vec v2"
-  define basis where "basis = (canonical_basis::'a list)"
-  have length: "length l1 = length l2"
-    by (simp add: assms l1_def l2_def)
-  have length_basis: "length l2 = length basis"
-    by (simp add: assms basis_def l2_def)
-  have \<open>(basis_enum_of_vec::_\<Rightarrow>'a) (v1 + v2) = basis_enum_of_vec_list basis (list_of_vec (v1+v2))\<close>
-    by (simp add: basis_def basis_enum_of_vec_def assms)
-  also have \<open>\<dots> = basis_enum_of_vec_list basis (map2 (+) l1 l2)\<close>
-    apply (subst list_of_vec_plus)
-    using assms l1_def l2_def by auto
-  also have \<open>\<dots> = basis_enum_of_vec_list basis l1
-           + basis_enum_of_vec_list basis l2\<close>
-    using length length_basis
-  proof (induction l1 l2 basis rule: list_induct3)
-    case Nil
-    thus ?case
-      using basis_enum_of_vec_list.elims by auto 
-  next
-    case (Cons x xs y ys z zs)
-    assume \<open>length xs = length ys\<close> and \<open>length ys = length zs\<close> and
-      \<open>basis_enum_of_vec_list zs (map2 (+) xs ys) =
-       basis_enum_of_vec_list zs xs + basis_enum_of_vec_list zs ys\<close>
-    have \<open>basis_enum_of_vec_list (z # zs) (map2 (+) (x # xs) (y # ys)) =
-       (x + y) *\<^sub>C z + basis_enum_of_vec_list zs (map2 (+) xs ys)\<close>
-      by auto
-    also have \<open>\<dots> =
-       (x + y) *\<^sub>C z + basis_enum_of_vec_list zs xs + basis_enum_of_vec_list zs ys\<close>
-      using \<open>basis_enum_of_vec_list zs (map2 (+) xs ys) =
-       basis_enum_of_vec_list zs xs + basis_enum_of_vec_list zs ys\<close>
-      by auto
-    also have \<open>\<dots> =
-       x *\<^sub>C z + y *\<^sub>C z + basis_enum_of_vec_list zs xs + basis_enum_of_vec_list zs ys\<close>
-    proof-
-      have \<open>(x + y) *\<^sub>C z = x *\<^sub>C z + y *\<^sub>C z\<close>
-        by (simp add: scaleC_left.add)
-      thus ?thesis
-        by simp 
-    qed
-    also have \<open>\<dots> =
-       (x *\<^sub>C z + basis_enum_of_vec_list zs xs) + (y *\<^sub>C z + basis_enum_of_vec_list zs ys)\<close>
-      by simp
-    also have \<open>\<dots> =
-       basis_enum_of_vec_list (z # zs) (x # xs) +
-       basis_enum_of_vec_list (z # zs) (y # ys)\<close>
-      by simp
-    finally show \<open>basis_enum_of_vec_list (z # zs) (map2 (+) (x # xs) (y # ys)) =
-       basis_enum_of_vec_list (z # zs) (x # xs) +
-       basis_enum_of_vec_list (z # zs) (y # ys)\<close> 
-      by blast
-  qed
-  also have \<open>\<dots> = basis_enum_of_vec v1 + basis_enum_of_vec v2\<close>
-    by (simp add: basis_def basis_enum_of_vec_def l1_def l2_def assms)
-  finally show ?thesis
-    by auto
+  have \<open>length (list_of_vec v1) = length (list_of_vec v2)\<close> and \<open>length (list_of_vec v2) = length (canonical_basis :: 'a list)\<close>
+    by simp_all
+  then have \<open>sum_list (map2 (*\<^sub>C) (map2 (+) (list_of_vec v1) (list_of_vec v2)) (canonical_basis::'a list))
+    = sum_list (map2 (*\<^sub>C) (list_of_vec v1) canonical_basis) + sum_list (map2 (*\<^sub>C) (list_of_vec v2) canonical_basis)\<close>
+    apply (induction rule: list_induct3)
+    by (auto simp: scaleC_add_left)
+  then show ?thesis
+    using assms by (auto simp: basis_enum_of_vec_def list_of_vec_plus)
 qed
 
 lemma list_of_vec_mult:
   fixes v :: \<open>complex vec\<close>
   shows \<open>list_of_vec (c \<cdot>\<^sub>v v) = map ((*) c) (list_of_vec v)\<close>
-proof-
-  have \<open>i < dim_vec v \<Longrightarrow> (list_of_vec (c \<cdot>\<^sub>v v))!i = (map ((*) c) (list_of_vec v)) ! i\<close>
-    for i
-    by simp    
-  thus ?thesis
-    by (simp add: list_eq_iff_nth_eq) 
-qed
+  by (metis (mono_tags, lifting) index_smult_vec(1) index_smult_vec(2) length_list_of_vec length_map nth_equalityI nth_list_of_vec nth_map)
 
 lemma basis_enum_of_vec_mult:
-  assumes \<open>dim_vec v = canonical_basis_length TYPE('a::basis_enum)\<close> 
+  assumes [simp]: \<open>dim_vec v = canonical_basis_length TYPE('a::basis_enum)\<close> 
   shows \<open>((basis_enum_of_vec (c \<cdot>\<^sub>v v)) :: 'a) =  c *\<^sub>C basis_enum_of_vec v\<close>
 proof -
-  define basis where "basis \<equiv> canonical_basis::'a::basis_enum list"
-  define l where "l = list_of_vec v"
-  have length_basis: "length l = length basis"
-    by (simp add: assms basis_def l_def)
-  have \<open>(basis_enum_of_vec::_\<Rightarrow>'a) (c \<cdot>\<^sub>v v) =
- basis_enum_of_vec_list basis (list_of_vec (c \<cdot>\<^sub>v v))\<close>
-    by (simp add: basis_def basis_enum_of_vec_def assms)
-  also have \<open>\<dots> = basis_enum_of_vec_list basis (map ((*) c) (list_of_vec v))\<close>
-    apply (subst list_of_vec_mult)
-    by auto
-  also have \<open>\<dots> = basis_enum_of_vec_list basis (map ((*) c) l)\<close>
-    using l_def by auto
-  also have \<open>\<dots> = c *\<^sub>C (basis_enum_of_vec_list basis l)\<close>
-    using length_basis
-  proof (induction l basis rule: list_induct2)
-    case Nil
-    thus ?case by auto
-  next
-    case (Cons x xs y ys)
-    assume \<open>length xs = length ys\<close> and 
-      \<open>basis_enum_of_vec_list ys (map ((*) c) xs) =
-       c *\<^sub>C basis_enum_of_vec_list ys xs\<close> 
-    have \<open>basis_enum_of_vec_list (y # ys)
-        (map ((*) c) (x # xs)) = (c * x) *\<^sub>C y +
-    basis_enum_of_vec_list ys (map ((*) c) xs)\<close>
-      by auto
-    also have \<open>\<dots> = (c * x) *\<^sub>C y + c *\<^sub>C basis_enum_of_vec_list ys xs\<close>
-      by (simp add: Cons.IH)
-    also have \<open>\<dots> = c *\<^sub>C (x *\<^sub>C y) + c *\<^sub>C basis_enum_of_vec_list ys xs\<close>
-      by simp
-    also have \<open>\<dots> = c *\<^sub>C (x *\<^sub>C y + basis_enum_of_vec_list ys xs)\<close>
-      by (simp add: scaleC_add_right)
-    also have \<open>\<dots>  =
-       c *\<^sub>C basis_enum_of_vec_list (y # ys) (x # xs)\<close>
-      by simp
-    finally show \<open>basis_enum_of_vec_list (y # ys)
-        (map ((*) c) (x # xs)) =
-       c *\<^sub>C basis_enum_of_vec_list (y # ys) (x # xs)\<close>
-      by blast
-  qed
-  also have \<open>\<dots> = c *\<^sub>C basis_enum_of_vec v\<close>
-    by (simp add: basis_def basis_enum_of_vec_def l_def assms)
-  finally show ?thesis
-    by auto
+  have *: \<open>monoid_add_hom ((*\<^sub>C) c :: 'a \<Rightarrow> _)\<close>
+    by (simp add: monoid_add_hom_def plus_hom.intro scaleC_add_right semigroup_add_hom.intro zero_hom.intro)
+  show ?thesis
+    apply (auto simp: basis_enum_of_vec_def list_of_vec_mult map_zip_map
+        monoid_add_hom.hom_sum_list[OF *])
+    by (metis case_prod_unfold comp_apply scaleC_scaleC)
 qed
+
+(* TODO clean from here *)
 
 lemma vector_space_zero_canonical_basis:
   assumes f1: "(canonical_basis::('a::basis_enum list)) = []"
@@ -444,11 +260,6 @@ next
   thus "w = (\<Sum>b\<in>set (a # L). \<langle>b, w\<rangle> *\<^sub>C b)" by simp
 qed
 
-(* lemma canonical_basis_inner:
-  "w = (\<Sum>b\<in>set (canonical_basis::'a::onb_enum list). \<langle>b, w\<rangle> *\<^sub>C b)"
-  apply (rule onb_expansion_finite)
-  using is_generator_set by (auto simp add: is_orthonormal is_normal) *)
-
 lemma basis_enum_of_vec_expansion:  
   fixes S::"'a::basis_enum list" and L::"complex list"
   assumes "length S = length L" and "distinct S"
@@ -456,48 +267,6 @@ lemma basis_enum_of_vec_expansion:
              = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
   using assms sum_list_sum_nth[where xs = "map2 (*\<^sub>C) L S"]
   by auto
-
-(* lemma length_list_of_vec_vec_of_basis_enum_list:
-  fixes w::"'a::{basis_enum,complex_inner}" and S::"'a list"
-  shows "length (list_of_vec (vec_of_basis_enum_list S w i)) = length (canonical_basis::'a list)"
-  by (simp add: dim_vec_of_basis_enum_list) *)
-
-(* lemma list_of_vec_unit_vec:
-  defines "basis == canonical_basis::'a::basis_enum list"
-  assumes "length basis \<ge> 1"
-  shows "list_of_vec (c \<cdot>\<^sub>v unit_vec (length basis) (length basis-1))!(length basis-1) = (c::complex)"
-proof-
-  have "c \<cdot>\<^sub>v
-  unit_vec (length basis) 
-  (length basis - 1)
-   = Matrix.vec (length basis)
-     (\<lambda>j. if j = length basis - 1 then c
-          else 0)"
-    unfolding smult_vec_def unit_vec_def mk_vec_def 
-    by auto
-  hence "list_of_vec (c \<cdot>\<^sub>v unit_vec (length (basis)) 
-  (length basis -1))
-   = list_of_vec (Matrix.vec (length basis)
-     (\<lambda>j. if j = length basis - 1 then c else 0) )"
-    by simp
-  hence "list_of_vec (c \<cdot>\<^sub>v unit_vec (length basis) 
-  (length basis - 1))!(length basis - 1)
-   = list_of_vec (Matrix.vec (length basis)
-     (\<lambda>j. if j = length basis - 1 then c
-          else 0) )!(length basis - 1)"
-    by simp
-  also have "\<dots> = c"
-  proof-
-    have "[0..<length basis] !
-    (length basis - Suc 0) = length basis - Suc 0"
-      unfolding basis_def
-      using assms by auto      
-    thus ?thesis unfolding basis_def using assms by auto
-  qed
-  finally show ?thesis 
-    unfolding basis_def
-    using assms(1) by blast    
-qed *)
 
 lemma independent_length_leq:
   defines "basis == canonical_basis::'a::basis_enum list"
@@ -536,7 +305,7 @@ qed
 lemma basis_enum_of_vec_inverse[simp]:
   fixes w::"'a::basis_enum"
   shows  "basis_enum_of_vec (vec_of_basis_enum w) = w"
-  unfolding vec_of_basis_enum_def basis_enum_of_vec_def basis_enum_of_vec_list_def'
+  unfolding vec_of_basis_enum_def basis_enum_of_vec_def 
   unfolding list_vec zip_map1 zip_same_conv_map map_map 
   apply (simp add: o_def)
   apply (subst sum.distinct_set_conv_list[symmetric], simp)
@@ -650,28 +419,28 @@ proof-
     by simp 
   hence length_basis: "length basis = length w"
     by (simp add: basis_def f1 n_def)    
-  have "map (crepresentation (set basis) (basis_enum_of_vec_list basis w)) basis = w"
+  have "map (crepresentation (set basis) (sum_list (map2 scaleC w basis))) basis = w"
   proof-
     have "i < length basis \<Longrightarrow> 
-        crepresentation (set basis) (basis_enum_of_vec_list basis w) (basis!i) = w!i"
+        crepresentation (set basis) (sum_list (map2 scaleC w basis)) (basis!i) = w!i"
       for i
     proof-
       assume h1: "i < length basis"
       have h2: "cindependent (set basis)"
         by (simp add: basis_def is_cindependent_set)
-      have h3: "basis_enum_of_vec_list basis w \<in> cspan (set basis)"
+      have h3: "sum_list (map2 scaleC w basis) \<in> cspan (set basis)"
         using basis_def is_generator_set
           by blast 
       define f where 
-        "f x = crepresentation (set basis) (basis_enum_of_vec_list basis w) x"
+        "f x = crepresentation (set basis) (sum_list (map2 scaleC w basis)) x"
       for x
       have h4: "f x \<noteq> 0 \<Longrightarrow> x \<in> set basis" for x
         by (simp add: complex_vector.representation_ne_zero f_def)
       have h5: "finite {v. f v \<noteq> 0}"
         by (metis \<open>f \<equiv> crepresentation (set basis) 
-            (basis_enum_of_vec_list basis w)\<close> complex_vector.finite_representation)
-      have h6: "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = basis_enum_of_vec_list basis w"
-        by (simp add: \<open>f \<equiv> crepresentation (set basis) (basis_enum_of_vec_list basis w)\<close> basis_def complex_vector.sum_nonzero_representation_eq is_cindependent_set is_generator_set)
+            (sum_list (map2 scaleC w basis))\<close> complex_vector.finite_representation)
+      have h6: "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = sum_list (map2 scaleC w basis)"
+        by (simp add: \<open>f \<equiv> crepresentation (set basis) (sum_list (map2 scaleC w basis))\<close> basis_def complex_vector.sum_nonzero_representation_eq is_cindependent_set is_generator_set)
       have h7: "distinct basis"
         by (simp add: basis_def)
       have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>v\<in>set basis. f v *\<^sub>C v)"
@@ -693,10 +462,8 @@ proof-
         by (metis (mono_tags, lifting) basis_def distinct_canonical_basis list.map_ident 
             map2_map_map sum.cong sum_list_distinct_conv_sum_set)        
       also have "(\<Sum>b\<leftarrow>basis. f b *\<^sub>C b) 
-            = basis_enum_of_vec_list basis w"
+            = sum_list (map2 scaleC w basis)"
         using \<open>(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)\<close> h6 by auto
-      also have "\<dots> = sum_list (map2 (*\<^sub>C) w basis)"
-        by (simp add: basis_enum_of_vec_list_def')      
       also have "\<dots> = (\<Sum>i\<leftarrow>[0..<n]. w!i *\<^sub>C (basis!i))"
         by (smt basis_def f1 length_w map2_map_map map_eq_conv map_nth n_def)
       also have "\<dots> = (\<Sum>i\<leftarrow>[0..<n]. g (basis!i) *\<^sub>C (basis!i))"
@@ -965,13 +732,12 @@ lemma cinner_basis_enum_of_vec:
 proof -
   include notation_norm
   define B where "B = (canonical_basis::'a list)"
-  have a0: "\<langle>basis_enum_of_vec_list B xs, basis_enum_of_vec_list B ys\<rangle> = 
+  have a0: "\<langle>sum_list (map2 scaleC xs B), sum_list (map2 scaleC ys B)\<rangle> = 
     sum_list (map2 (\<lambda>x y. cnj x * y) xs ys)"
     if "length xs = length ys" and "length ys = length B"
       and "is_ortho_set (set B)" and "complex_vector.span (set B) = UNIV"
       and "distinct B" and "\<And>t. t\<in>set B \<Longrightarrow> \<parallel>t\<parallel> = 1"
     for xs ys and B :: "'a list"
-    unfolding basis_enum_of_vec_list_def'
     using that
   proof (induction xs ys B rule:list_induct3)
     case Nil thus ?case by auto
@@ -1173,7 +939,7 @@ proof -
   qed
   have a3: "length (list_of_vec y) = length (canonical_basis::'a list)"
     by (simp add: w2 w1 n_def)    
-  have a1: "\<langle>basis_enum_of_vec_list B (list_of_vec x), basis_enum_of_vec_list B (list_of_vec y)\<rangle>
+  have a1: "\<langle>sum_list (map2 scaleC (list_of_vec x) B), sum_list (map2 scaleC (list_of_vec y) B)\<rangle>
           = (\<Sum>i = 0..<dim_vec x. cnj (vec_index x i) * (vec_index y i))"
     unfolding basis_enum_of_vec_def 
     apply (subst a0)
@@ -1300,9 +1066,9 @@ proof-
   finally have "sum_list (map2 (*\<^sub>C) (list_of_vec (unit_vec n i)) basis)
       = basis ! i"
     by (simp add: a1 a2)    
-  hence "basis_enum_of_vec_list (canonical_basis::'a list) (list_of_vec (unit_vec n i)) 
+  hence "sum_list (map2 scaleC (list_of_vec (unit_vec n i)) (canonical_basis::'a list))
       = (canonical_basis::'a list) ! i"     
-    by (simp add: basis_enum_of_vec_list_def' a1)
+    by (simp add: a1)
   thus ?thesis 
     unfolding basis_enum_of_vec_def
     by (simp add: a1 a2) 
