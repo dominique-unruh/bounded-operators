@@ -1349,9 +1349,9 @@ class basis_enum = complex_vector +
   fixes canonical_basis :: "'a list"
   assumes distinct_canonical_basis[simp]: 
     "distinct canonical_basis"
-    and is_cindependent_set:
+    and is_cindependent_set[simp]:
     "cindependent (set canonical_basis)"
-    and is_generator_set:
+    and is_generator_set[simp]:
     "cspan (set canonical_basis) = UNIV" 
 
 setup \<open>Sign.add_const_constraint ("Complex_Vector_Spaces0.cindependent", SOME \<^typ>\<open>'a::complex_vector set \<Rightarrow> bool\<close>)\<close>

@@ -256,17 +256,14 @@ fun index_of where
 
 definition "enum_idx (x::'a::enum) = index_of x (enum_class.enum :: 'a list)"
 
+lemma index_of_length: "index_of x y \<le> length y"
+  apply (induction y) by auto
+
 lemma index_of_correct:
   assumes "x \<in> set y"
   shows "y ! index_of x y = x"
-  using assms 
-proof(induction y arbitrary: x)
-  case Nil
-  thus ?case by auto
-next
-  case (Cons a y)
-  thus ?case by auto
-qed
+  using assms apply (induction y arbitrary: x)
+  by auto
 
 lemma enum_idx_correct: 
   "Enum.enum ! enum_idx i = i"

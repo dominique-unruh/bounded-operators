@@ -1653,6 +1653,9 @@ qed
 
 abbreviation proj :: "'a::chilbert_space \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'a" where "proj \<psi> \<equiv> Proj (ccspan {\<psi>})"
 
+lemma proj_0[simp]: \<open>proj 0 = 0\<close>
+  apply transfer by auto
+
 lemma surj_isometry_is_unitary:
   fixes U :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
   assumes \<open>isometry U\<close>
@@ -4525,6 +4528,9 @@ proof intro_classes
   ultimately show \<open>\<exists>S :: ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) set. finite S \<and> cspan S = UNIV\<close>
     by auto
 qed  
+
+lemma one_cblinfun_apply_one[simp]: \<open>1 *\<^sub>V 1 = 1\<close>
+  by (simp add: one_cblinfun.rep_eq)
 
 section \<open>Notation\<close>
 

@@ -47,37 +47,37 @@ on the left hand side, we get access to the\<close>
 declare mat_of_cblinfun_plus[code]
   \<comment> \<open>Code equation for addition of cblinfuns\<close>
 
-declare cblinfun_of_mat_id[code]
+declare mat_of_cblinfun_id[code]
   \<comment> \<open>Code equation for computing the identity operator\<close>
 
-declare cblinfun_of_mat_1[code]
+declare mat_of_cblinfun_1[code]
   \<comment> \<open>Code equation for computing the one-dimensional identity\<close>
 
 declare mat_of_cblinfun_zero[code]
   \<comment> \<open>Code equation for computing the zero operator\<close>
 
 
-declare cblinfun_of_mat_uminusOp[code]
+declare mat_of_cblinfun_uminus[code]
   \<comment> \<open>Code equation for computing the unary minus on cblinfun's\<close>
 
 
-declare cblinfun_of_mat_minusOp[code]
+declare mat_of_cblinfun_minus[code]
   \<comment> \<open>Code equation for computing the difference of cblinfun's\<close>
 
 
 declare mat_of_cblinfun_classical_operator[code]
   \<comment> \<open>Code equation for computing the "classical operator"\<close>
 
-declare cblinfun_of_mat_timesOp[code]
+declare mat_of_cblinfun_compose[code]
   \<comment> \<open>Code equation for computing the composition/product of cblinfun's\<close>
 
-declare mat_of_cblinfun_scalarMult[code]
+declare mat_of_cblinfun_scaleC[code]
   \<comment> \<open>Code equation for multiplication with complex scalar\<close>
 
 declare mat_of_cblinfun_scaleR[code]
   \<comment> \<open>Code equation for multiplication with real scalar\<close>
 
-declare mat_of_cblinfun_adjoint'[code]
+declare mat_of_cblinfun_adj[code]
   \<comment> \<open>Code equation for computing the adj\<close>
 
 text \<open>This instantiation defines a code equation for equality tests for cblinfun.\<close>
@@ -175,13 +175,13 @@ lemma ell2_of_vec_uminus[code]:
 
 lemma cinner_ell2_code' [code]: "cinner \<psi> \<phi> = cscalar_prod (vec_of_ell2 \<phi>) (vec_of_ell2 \<psi>)"
   \<comment> \<open>Code equation for the inner product of vectors\<close>
-  by (simp add: cscalar_prod_cinner vec_of_ell2_def)
+  by (simp add: cscalar_prod_vec_of_basis_enum vec_of_ell2_def)
 
 lemma norm_ell2_code [code]: 
   \<comment> \<open>Code equation for the norm of a vector\<close>
   "norm \<psi> = (let \<psi>' = vec_of_ell2 \<psi> in
     sqrt (\<Sum> i \<in> {0 ..< dim_vec \<psi>'}. let z = vec_index \<psi>' i in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
-  by (simp add: norm_ell2_vec vec_of_ell2_def)
+  by (simp add: norm_ell2_vec_of_basis_enum vec_of_ell2_def)
 
 lemma times_ell2_code'[code]: 
   \<comment> \<open>Code equation for the product in the algebra of one-dimensional vectors\<close>
@@ -220,7 +220,7 @@ text \<open>We proceed to give code equations for operations involving both
 
 \<^theory_text>\<open>lemma cblinfun_apply_code[code]:
   "vec_of_ell2 (M *\<^sub>V x) = (mult_mat_vec (mat_of_cblinfun M) (vec_of_ell2 x))"
-  by (simp add: mat_of_cblinfun_description vec_of_ell2_def)\<close>
+  by (simp add: mat_of_cblinfun_cblinfun_apply vec_of_ell2_def)\<close>
 
   Unfortunately, this does not work, Isabelle produces the warning 
   "Projection as head in equation", most likely due to the fact that
@@ -243,7 +243,7 @@ lemma cblinfun_apply_code[code]:
   \<comment> \<open>Code equation for \<^term>\<open>cblinfun_apply_code\<close>, i.e., for applying an operator
      to an \<^type>\<open>ell2\<close> vector\<close>
   "vec_of_ell2 (cblinfun_apply_code M x) = (mult_mat_vec (mat_of_cblinfun M) (vec_of_ell2 x))"
-  by (simp add: cblinfun_apply_code_def mat_of_cblinfun_description vec_of_ell2_def)
+  by (simp add: cblinfun_apply_code_def mat_of_cblinfun_cblinfun_apply vec_of_ell2_def)
 
 text \<open>For the constant \<^term>\<open>vector_to_cblinfun\<close> (canonical isomorphism from
   vectors to operators), we have the same problem and define a constant
@@ -566,7 +566,7 @@ proof -
       apply (rule Collect_cong)
       apply (simp add: Am_def)
       by (metis Am_carrier Am_def carrier_matD(2) carrier_vecD dB_def mat_carrier 
-          mat_of_cblinfun_def mat_of_cblinfun_description basis_enum_of_vec_inverse 
+          mat_of_cblinfun_def mat_of_cblinfun_cblinfun_apply basis_enum_of_vec_inverse 
           basis_enum_of_vec_inverse' vec_of_basis_enum_zero)
     also have "\<dots> = {w \<in> basis_enum_of_vec ` carrier_vec dA. A *\<^sub>V w = 0}"
       apply (subst Compr_image_eq[symmetric])
