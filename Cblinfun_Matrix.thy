@@ -957,7 +957,7 @@ lemma vec_of_basis_enum_minus:
   "vec_of_basis_enum (b1 - b2) = vec_of_basis_enum b1 - vec_of_basis_enum b2"
   by (metis (mono_tags, hide_lams) carrier_vec_dim_vec diff_conv_add_uminus diff_zero index_add_vec(2) minus_add_uminus_vec vec_of_basis_enum_add vec_of_basis_enum_uminus)
 
-lemma cinner_onb_enum_of_vec:
+lemma cinner_basis_enum_of_vec:
   defines "n == canonical_basis_length TYPE('a::onb_enum)"
   assumes w1: "dim_vec x = n" and w2: "dim_vec y = n"
   shows  "\<langle>(basis_enum_of_vec::_\<Rightarrow> 'a) x, (basis_enum_of_vec::_\<Rightarrow> 'a) y\<rangle>
@@ -1192,8 +1192,8 @@ qed
 
 lemma cscalar_prod_cinner: "cinner \<psi> \<phi> = cscalar_prod (vec_of_basis_enum \<phi>) (vec_of_basis_enum \<psi>)"
   for \<psi> :: "'a::onb_enum"
-  thm cinner_onb_enum_of_vec
-  apply (subst cinner_onb_enum_of_vec[symmetric, where 'a='a])
+  thm cinner_basis_enum_of_vec
+  apply (subst cinner_basis_enum_of_vec[symmetric, where 'a='a])
   by (simp_all add: dim_vec_of_basis_enum')
 
 lemma norm_ell2_vec: "norm \<psi> = 

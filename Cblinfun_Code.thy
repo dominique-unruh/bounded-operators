@@ -106,12 +106,12 @@ text \<open>In this section, we define code for operations on vectors. As with o
   must be of sort \<open>enum\<close> to make make sure that \<^typ>\<open>'a ell2\<close> is finite dimensional).
   
   The isomorphism between \<^typ>\<open>'a ell2\<close> is given by the constants \<open>ell2_of_vec\<close>
-  and \<open>vec_of_ell2\<close> which are copies of the more general \<^const>\<open>onb_enum_of_vec\<close>
-  and \<^const>\<open>vec_of_onb_enum\<close> but with a more restricted type to be usable in our code equations.
+  and \<open>vec_of_ell2\<close> which are copies of the more general \<^const>\<open>basis_enum_of_vec\<close>
+  and \<^const>\<open>vec_of_basis_enum\<close> but with a more restricted type to be usable in our code equations.
 \<close>
 
-definition ell2_of_vec :: "complex vec \<Rightarrow> 'a::enum ell2" where "ell2_of_vec = onb_enum_of_vec"
-definition vec_of_ell2 :: "'a::enum ell2 \<Rightarrow> complex vec" where "vec_of_ell2 = vec_of_onb_enum"
+definition ell2_of_vec :: "complex vec \<Rightarrow> 'a::enum ell2" where "ell2_of_vec = basis_enum_of_vec"
+definition vec_of_ell2 :: "'a::enum ell2 \<Rightarrow> complex vec" where "vec_of_ell2 = vec_of_basis_enum"
 
 text \<open>The following theorem registers the isomorphism \<open>ell2_of_vec\<close>/\<open>vec_of_ell2\<close>
   for code generation. From now on,
@@ -123,7 +123,7 @@ text \<open>The following theorem registers the isomorphism \<open>ell2_of_vec\<
 lemma vec_of_ell2_inverse [code abstype]:
   "ell2_of_vec (vec_of_ell2 B) = B" 
   unfolding ell2_of_vec_def vec_of_ell2_def
-  by (rule onb_enum_of_vec_inverse)
+  by (rule basis_enum_of_vec_inverse)
 
 text \<open>This instantiation defines a code equation for equality tests for ell2.\<close>
 instantiation ell2 :: (enum) equal begin
@@ -138,40 +138,40 @@ end
 lemma vec_of_ell2_zero[code]:
   \<comment> \<open>Code equation for computing the zero vector\<close>
   "vec_of_ell2 (0::'a::enum ell2) = zero_vec (canonical_basis_length TYPE('a ell2))"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_zero)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_zero)
 
 lemma vec_of_ell2_ket[code]:
   \<comment> \<open>Code equation for computing a standard basis vector\<close>
   "vec_of_ell2 (ket i) = unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i)" 
   for i::"'a::enum"
-  using vec_of_ell2_def vec_of_onb_enum_ket by metis
+  using vec_of_ell2_def vec_of_basis_enum_ket by metis
 
 lemma vec_of_ell2_timesScalarVec[code]: 
   \<comment> \<open>Code equation for multiplying a vector with a complex scalar\<close>
   "vec_of_ell2 (scaleC a \<psi>) = smult_vec a (vec_of_ell2 \<psi>)"
   for \<psi> :: "'a::enum ell2"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_scaleC)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_scaleC)
 
 lemma vec_of_ell2_scaleR[code]: 
   \<comment> \<open>Code equation for multiplying a vector with a real scalar\<close>
   "vec_of_ell2 (scaleR a \<psi>) = smult_vec (complex_of_real a) (vec_of_ell2 \<psi>)"
   for \<psi> :: "'a::enum ell2"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_scaleR)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_scaleR)
 
 lemma ell2_of_vec_plus[code]:
   \<comment> \<open>Code equation for adding vectors\<close>
   "vec_of_ell2 (x + y) =  (vec_of_ell2 x) + (vec_of_ell2 y)" for x y :: "'a::enum ell2"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_add) 
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_add) 
 
 lemma ell2_of_vec_minus[code]:
   \<comment> \<open>Code equation for subtracting vectors\<close>
   "vec_of_ell2 (x - y) =  (vec_of_ell2 x) - (vec_of_ell2 y)" for x y :: "'a::enum ell2"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_minus)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_minus)
 
 lemma ell2_of_vec_uminus[code]:
   \<comment> \<open>Code equation for negating a vector\<close>
   "vec_of_ell2 (- y) =  - (vec_of_ell2 y)" for y :: "'a::enum ell2"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_uminus)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_uminus)
 
 lemma cinner_ell2_code' [code]: "cinner \<psi> \<phi> = cscalar_prod (vec_of_ell2 \<phi>) (vec_of_ell2 \<psi>)"
   \<comment> \<open>Code equation for the inner product of vectors\<close>
@@ -188,26 +188,26 @@ lemma times_ell2_code'[code]:
   fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
   shows "vec_of_ell2 (\<psi> * \<phi>)
    = vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 * vec_index (vec_of_ell2 \<phi>) 0]"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_times)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_times)
 
 lemma divide_ell2_code'[code]: 
   \<comment> \<open>Code equation for the product in the algebra of one-dimensional vectors\<close>
   fixes \<psi> \<phi> :: "'a::{CARD_1,enum} ell2"
   shows "vec_of_ell2 (\<psi> / \<phi>)
    = vec_of_list [vec_index (vec_of_ell2 \<psi>) 0 / vec_index (vec_of_ell2 \<phi>) 0]"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_divide)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_divide)
 
 lemma inverse_ell2_code'[code]: 
   \<comment> \<open>Code equation for the product in the algebra of one-dimensional vectors\<close>
   fixes \<psi> :: "'a::{CARD_1,enum} ell2"
   shows "vec_of_ell2 (inverse \<psi>)
    = vec_of_list [inverse (vec_index (vec_of_ell2 \<psi>) 0)]"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_inverse)
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_inverse)
 
 lemma one_ell2_code'[code]: 
   \<comment> \<open>Code equation for the unit in the algebra of one-dimensional vectors\<close>
   "vec_of_ell2 (1 :: 'a::{CARD_1,enum} ell2) = vec_of_list [1]"
-  by (simp add: vec_of_ell2_def vec_of_onb_enum_1) 
+  by (simp add: vec_of_ell2_def vec_of_basis_enum_1) 
 
 subsection \<open>Vector/Matrix\<close>
 
@@ -280,7 +280,7 @@ Then all code equations for different operations need to be formulated as
 functions of values of the form \<open>SPAN x\<close>. (E.g., \<open>SPAN x + SPAN y = SPAN (\<dots>)\<close>.)\<close>
 
 definition [code del]: "SPAN x = (let n = canonical_basis_length TYPE('a::onb_enum) in
-    ccspan (onb_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a ccsubspace)"
+    ccspan (basis_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a ccsubspace)"
   \<comment> \<open>The SPAN of vectors x, as a \<^type>\<open>ccsubspace\<close>.
       We filter out vectors of the wrong dimension because \<open>SPAN\<close> needs to have
       well-defined behavior even in cases that would not actually occur in an execution.\<close>
@@ -309,13 +309,13 @@ lemma mat_of_cblinfun_Proj_code_code[code]:
               (gram_schmidt0 d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
   (* note [[show_types, show_consts]] *)
-  have *: "map_option vec_of_onb_enum (if dim_vec x = canonical_basis_length TYPE('a) then Some (onb_enum_of_vec x :: 'a) else None)
+  have *: "map_option vec_of_basis_enum (if dim_vec x = canonical_basis_length TYPE('a) then Some (basis_enum_of_vec x :: 'a) else None)
       = (if dim_vec x = canonical_basis_length TYPE('a) then Some x else None)" for x
     by auto
   show ?thesis
     unfolding SPAN_def mat_of_cblinfun_Proj_code_def
     using mat_of_cblinfun_Proj_Span[where S = 
-        "map onb_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
+        "map basis_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
     apply (simp only: Let_def map_filter_map_filter filter_set image_set map_map_filter o_def)
     unfolding *
     by (simp add: map_filter_map_filter[symmetric])
@@ -330,7 +330,7 @@ lemma top_ccsubspace_code[code]:
   unfolding SPAN_def
   apply (simp only: index_unit_vec Let_def map_filter_map_filter filter_set image_set map_map_filter 
       map_filter_map o_def unit_vecs_def)
-  apply (simp add: onb_enum_of_vec_unit_vec)
+  apply (simp add: basis_enum_of_vec_unit_vec)
   apply (subst nth_image)
   by (auto simp: )
 
@@ -360,7 +360,7 @@ lemma span_Set_Monad[code]: "Span_code (Set_Monad l) = (SPAN (map vec_of_ell2 l)
      constructor that represents sets as lists in the computation.)\<close>
   apply (simp add: Span_code_def SPAN_def Let_def)
   apply (subst Set_filter_unchanged)
-   apply (metis dim_vec_vec_of_onb_enum imageE vec_of_ell2_def)
+   apply (metis dim_vec_vec_of_basis_enum imageE vec_of_ell2_def)
   by (metis (no_types, lifting) ell2_of_vec_def image_image map_idI set_map vec_of_ell2_inverse)
 
 
@@ -393,10 +393,10 @@ proof -
     apply (subst Span_leq)
     unfolding d_def[symmetric] map_map o_def
     apply (subst map_cong[where xs=A', OF refl])
-        apply (rule onb_enum_of_vec_inverse')
+        apply (rule basis_enum_of_vec_inverse')
      apply (simp add: A'_def d_def)
     apply (subst map_cong[where xs=B', OF refl])
-     apply (rule onb_enum_of_vec_inverse')
+     apply (rule basis_enum_of_vec_inverse')
     by (simp_all add: B'_def d_def)
 qed
 
@@ -419,16 +419,16 @@ proof -
       and "dB = canonical_basis_length TYPE('b)"
       and "S' = filter (\<lambda>v. dim_vec v = dA) S"
 
-  have "cblinfun_image A (SPAN S) = A *\<^sub>S ccspan (set (map onb_enum_of_vec S'))"
+  have "cblinfun_image A (SPAN S) = A *\<^sub>S ccspan (set (map basis_enum_of_vec S'))"
     unfolding SPAN_def dA_def[symmetric] Let_def S'_def filter_set
     by simp
-  also have "\<dots> = ccspan ((\<lambda>x. onb_enum_of_vec 
-            (mat_of_cblinfun A *\<^sub>v vec_of_onb_enum (onb_enum_of_vec x :: 'a))) ` set S')"
+  also have "\<dots> = ccspan ((\<lambda>x. basis_enum_of_vec 
+            (mat_of_cblinfun A *\<^sub>v vec_of_basis_enum (basis_enum_of_vec x :: 'a))) ` set S')"
     apply (subst apply_cblinfun_Span)
     by (simp add: image_image)
-  also have "\<dots> = ccspan ((\<lambda>x. onb_enum_of_vec (mat_of_cblinfun A *\<^sub>v x)) ` set S')"
+  also have "\<dots> = ccspan ((\<lambda>x. basis_enum_of_vec (mat_of_cblinfun A *\<^sub>v x)) ` set S')"
     apply (subst image_cong[OF refl])
-     apply (subst onb_enum_of_vec_inverse')
+     apply (subst basis_enum_of_vec_inverse')
     by (auto simp add: S'_def dA_def)
   also have "\<dots> = SPAN (map (mult_mat_vec (mat_of_cblinfun A)) S')"
     unfolding SPAN_def dB_def[symmetric] Let_def filter_set 
@@ -534,47 +534,47 @@ proof -
 
 
   have "space_as_set (SPAN base)
-       = space_as_set (ccspan (onb_enum_of_vec ` set base :: 'a set))"
+       = space_as_set (ccspan (basis_enum_of_vec ` set base :: 'a set))"
     unfolding SPAN_def dA_def[symmetric] Let_def filter_set
     apply (subst filter_True)
     using base_carrier by auto
 
-  also have "\<dots> = cspan (onb_enum_of_vec ` set base)"
+  also have "\<dots> = cspan (basis_enum_of_vec ` set base)"
     apply transfer apply (subst closure_finite_cspan)
     by simp_all
 
-  also have "\<dots> = onb_enum_of_vec ` span (set base)"
+  also have "\<dots> = basis_enum_of_vec ` span (set base)"
     apply (subst module_span_cspan')
     using base_carrier dA_def by auto
 
-  also have "\<dots> = onb_enum_of_vec ` mat_kernel Ag"
+  also have "\<dots> = basis_enum_of_vec ` mat_kernel Ag"
     using basis_base k.Ker.basis_def k.span_same by auto
 
-  also have "\<dots> = onb_enum_of_vec ` {v \<in> carrier_vec dA. Ag *\<^sub>v v = 0\<^sub>v dB}"
-    apply (rule arg_cong[where f="\<lambda>x. onb_enum_of_vec ` x"])
+  also have "\<dots> = basis_enum_of_vec ` {v \<in> carrier_vec dA. Ag *\<^sub>v v = 0\<^sub>v dB}"
+    apply (rule arg_cong[where f="\<lambda>x. basis_enum_of_vec ` x"])
     unfolding mat_kernel_def using Ag_carrier
     by simp
 
-  also have "\<dots> = onb_enum_of_vec ` {v \<in> carrier_vec dA. Am *\<^sub>v v = 0\<^sub>v dB}"
+  also have "\<dots> = basis_enum_of_vec ` {v \<in> carrier_vec dA. Am *\<^sub>v v = 0\<^sub>v dB}"
     using gauss_jordan_single(1)[OF Am_carrier Ag_def[symmetric]]
     by auto
 
   also have "\<dots> = {w. A *\<^sub>V w = 0}"
   proof -
-    have "onb_enum_of_vec ` {v \<in> carrier_vec dA. Am *\<^sub>v v = 0\<^sub>v dB}
-        = onb_enum_of_vec ` {v \<in> carrier_vec dA. A *\<^sub>V onb_enum_of_vec v = 0}"
-      apply (rule arg_cong[where f="\<lambda>t. onb_enum_of_vec ` t"])
+    have "basis_enum_of_vec ` {v \<in> carrier_vec dA. Am *\<^sub>v v = 0\<^sub>v dB}
+        = basis_enum_of_vec ` {v \<in> carrier_vec dA. A *\<^sub>V basis_enum_of_vec v = 0}"
+      apply (rule arg_cong[where f="\<lambda>t. basis_enum_of_vec ` t"])
       apply (rule Collect_cong)
       apply (simp add: Am_def)
       by (metis Am_carrier Am_def carrier_matD(2) carrier_vecD dB_def mat_carrier 
-          mat_of_cblinfun_def mat_of_cblinfun_description onb_enum_of_vec_inverse 
-          onb_enum_of_vec_inverse' vec_of_onb_enum_zero)
-    also have "\<dots> = {w \<in> onb_enum_of_vec ` carrier_vec dA. A *\<^sub>V w = 0}"
+          mat_of_cblinfun_def mat_of_cblinfun_description basis_enum_of_vec_inverse 
+          basis_enum_of_vec_inverse' vec_of_basis_enum_zero)
+    also have "\<dots> = {w \<in> basis_enum_of_vec ` carrier_vec dA. A *\<^sub>V w = 0}"
       apply (subst Compr_image_eq[symmetric])
       by simp
     also have "\<dots> = {w. A *\<^sub>V w = 0}"
       apply auto
-      by (metis (no_types, lifting) Am_carrier Am_def carrier_matD(2) carrier_vec_dim_vec dim_vec_of_onb_enum' image_iff mat_carrier mat_of_cblinfun_def onb_enum_of_vec_inverse)
+      by (metis (no_types, lifting) Am_carrier Am_def carrier_matD(2) carrier_vec_dim_vec dim_vec_of_basis_enum' image_iff mat_carrier mat_of_cblinfun_def basis_enum_of_vec_inverse)
     finally show ?thesis
       by -
   qed
