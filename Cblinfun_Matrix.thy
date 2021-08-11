@@ -117,7 +117,7 @@ qed
 
 (* TODO clean from here *)
 
-lemma vector_space_zero_canonical_basis:
+(* lemma vector_space_zero_canonical_basis:
   assumes f1: "(canonical_basis::('a::basis_enum list)) = []"
   shows "(v::'a) = 0"
 proof-
@@ -130,9 +130,9 @@ proof-
     thus ?thesis by simp 
   qed
   ultimately show ?thesis by auto
-qed
+qed *)
 
-lemma cinner_span_breakdown_eq:
+(* lemma cinner_span_breakdown_eq:
   includes notation_norm
   assumes f1: "a \<notin> S" and f2: "is_ortho_set (insert a S)" and f3: "\<parallel>a\<parallel> = 1"
   shows
@@ -194,9 +194,9 @@ proof
   show "x \<in> cspan (insert a S)"
     if "x - \<langle>a, x\<rangle> *\<^sub>C a \<in> cspan S"
     using that complex_vector.span_breakdown_eq by auto 
-qed
+qed *)
 
-lemma span_set_inner:
+(* lemma span_set_inner:
   includes notation_norm
   assumes "w \<in> complex_vector.span (set L)" and "distinct L" and "is_ortho_set (set L)" 
       and "\<forall>a\<in>set L. \<parallel>a\<parallel> = 1"
@@ -258,17 +258,17 @@ next
   finally have "(\<Sum>b\<in>set (a # L). \<langle>b, w\<rangle> *\<^sub>C b) = w"
     by blast
   thus "w = (\<Sum>b\<in>set (a # L). \<langle>b, w\<rangle> *\<^sub>C b)" by simp
-qed
+qed *)
 
-lemma basis_enum_of_vec_expansion:  
+(* lemma basis_enum_of_vec_expansion:  
   fixes S::"'a::basis_enum list" and L::"complex list"
   assumes "length S = length L" and "distinct S"
   shows   "sum_list (map2 (\<lambda>l s. l *\<^sub>C s) L S)
              = (\<Sum>i\<in>{0..<length S}. L!i *\<^sub>C S!i)"
-  using assms sum_list_sum_nth[where xs = "map2 (*\<^sub>C) L S"]
-  by auto
+  using assms sum_list_sum_nth[where xs = "map2 scaleC L S"]
+  by auto *)
 
-lemma independent_length_leq:
+(* lemma independent_length_leq:
   defines "basis == canonical_basis::'a::basis_enum list"
   assumes f1: "complex_vector.independent (set (S::'a list))"
     and f2: "distinct S"
@@ -299,9 +299,9 @@ proof(rule classical)
     by (smt \<open>cspan (set basis) = UNIV\<close> \<open>\<not> length S \<le> length basis\<close> 
         \<open>finite (set basis)\<close> basis_def) 
   thus ?thesis using g2 by (smt leD)
-qed
+qed *)
 
-
+(* TODO: rename to vec_of_basis_enum_inverse *)
 lemma basis_enum_of_vec_inverse[simp]:
   fixes w::"'a::basis_enum"
   shows  "basis_enum_of_vec (vec_of_basis_enum w) = w"
@@ -315,23 +315,23 @@ lemma basis_enum_of_vec_inverse[simp]:
   apply simp
   by simp
 
-lemma uniq_linear_expansion_sum_list_zero:
+(* lemma uniq_linear_expansion_sum_list_zero:
   fixes f::"'a::{basis_enum} \<Rightarrow> complex"
   defines  "basis == (canonical_basis::'a list)"
-  assumes h0: "sum_list (map2 (*\<^sub>C) (map f basis) basis) = 0"
+  assumes h0: "sum_list (map2 scaleC (map f basis) basis) = 0"
     and h1: "b \<in> set basis"
   shows "f b = 0"
 proof-
   have a1: "distinct basis"
     by (simp add: basis_def)    
-  have "sum_list (map2 (*\<^sub>C) (map f basis) basis) = (\<Sum>x\<leftarrow>basis. f x *\<^sub>C x)"
+  have "sum_list (map2 scaleC (map f basis) basis) = (\<Sum>x\<leftarrow>basis. f x *\<^sub>C x)"
     by (metis (no_types) map2_map_map map_ident)
   also have "\<dots> = (\<Sum>x\<in>set basis. f x *\<^sub>C x)"
     using a1
     by (simp add: sum_list_distinct_conv_sum_set) 
   also have "\<dots> = f b *\<^sub>C b + (\<Sum>x\<in>(set basis)-{b}. f x *\<^sub>C x)"
     by (meson List.finite_set h1 sum.remove)
-  finally have "sum_list (map2 (*\<^sub>C) (map f basis) basis)
+  finally have "sum_list (map2 scaleC (map f basis) basis)
               = f b *\<^sub>C b + (\<Sum>x\<in>(set basis)-{b}. f x *\<^sub>C x)"
     by blast
   hence "f b *\<^sub>C b + (\<Sum>x\<in>(set basis)-{b}. f x *\<^sub>C x) = 0"
@@ -371,134 +371,77 @@ proof-
   ultimately have "-f b = 0"
     by simp
   thus ?thesis by simp
-qed
+qed *)
 
-lemma uniq_linear_expansion_sum_list:
+(* lemma uniq_linear_expansion_sum_list:
   fixes f g::"'a::{basis_enum} \<Rightarrow> complex"
   defines  "basis == (canonical_basis::'a list)"
-  assumes h0: "sum_list (map2 (*\<^sub>C) (map f basis) basis)
-             = sum_list (map2 (*\<^sub>C) (map g basis) basis)"
+  assumes h0: "sum_list (map2 scaleC (map f basis) basis)
+             = sum_list (map2 scaleC (map g basis) basis)"
     and h1: "b \<in> set basis"
   shows "f b = g b"
 proof-
-  have a1: "sum_list (map2 (*\<^sub>C) (map f basis) basis)
+  have a1: "sum_list (map2 scaleC (map f basis) basis)
       = (\<Sum>x\<leftarrow>basis. f x *\<^sub>C x)"
     by (metis (no_types) map2_map_map map_ident)
-  have a2: "sum_list (map2 (*\<^sub>C) (map g basis) basis)
+  have a2: "sum_list (map2 scaleC (map g basis) basis)
       = (\<Sum>x\<leftarrow>basis. g x *\<^sub>C x)"
     by (metis (no_types) map2_map_map map_ident)
-  have a3: "sum_list (map2 (*\<^sub>C) (map (\<lambda>x. f x - g x) basis) basis)
+  have a3: "sum_list (map2 scaleC (map (\<lambda>x. f x - g x) basis) basis)
       = (\<Sum>x\<leftarrow>basis. (f x - g x) *\<^sub>C x)"
     by (metis (no_types) map2_map_map map_ident)
   have a4: "(\<Sum>x\<leftarrow>basis. (f x - g x) *\<^sub>C x) = (\<Sum>x\<leftarrow>basis. f x *\<^sub>C x) - (\<Sum>x\<leftarrow>basis. g x *\<^sub>C x)"
     by (simp add: scaleC_left.diff sum_list_subtractf)    
-  have "0 = sum_list (map2 (*\<^sub>C) (map f basis) basis)
-          - sum_list (map2 (*\<^sub>C) (map g basis) basis)"
+  have "0 = sum_list (map2 scaleC (map f basis) basis)
+          - sum_list (map2 scaleC (map g basis) basis)"
     by (simp add: h0)
-  also have "\<dots> = sum_list (map2 (*\<^sub>C) (map (\<lambda>x. f x - g x) basis) basis)"
+  also have "\<dots> = sum_list (map2 scaleC (map (\<lambda>x. f x - g x) basis) basis)"
     using a1 a2 a3 a4 by auto 
-  finally have "0 = sum_list (map2 (*\<^sub>C) (map (\<lambda>x. f x - g x) basis) basis)".
-  hence "sum_list (map2 (*\<^sub>C) (map (\<lambda>x. f x - g x) basis) basis) = 0"
+  finally have "0 = sum_list (map2 scaleC (map (\<lambda>x. f x - g x) basis) basis)".
+  hence "sum_list (map2 scaleC (map (\<lambda>x. f x - g x) basis) basis) = 0"
     by simp
   hence "(\<lambda>x. f x - g x) b = 0"
     using uniq_linear_expansion_sum_list_zero[where f = "(\<lambda>x. f x - g x)"]
       basis_def h1 by blast
   thus ?thesis by simp
-qed
+qed *)
 
+(* TODO: rename \<rightarrow> basis_enum_of_vec_inverse (no prime) *)
 lemma basis_enum_of_vec_inverse'[simp]:
   fixes v::"complex vec"
   defines "n == canonical_basis_length TYPE('a::basis_enum)"
   assumes f1: "dim_vec v = n"
   shows "vec_of_basis_enum ((basis_enum_of_vec v)::'a) = v"
-proof- 
+proof (rule eq_vecI)
+  show \<open>dim_vec (vec_of_basis_enum (basis_enum_of_vec v :: 'a)) = dim_vec v\<close>
+    by (auto simp: vec_of_basis_enum_def f1 n_def)
+next
+  fix j assume j_v: \<open>j < dim_vec v\<close> 
   define w where "w = list_of_vec v"
   define basis where "basis = (canonical_basis::'a list)"
-  have length_w: "length w = dim_vec v"
-    using f1 unfolding w_def
-    by simp 
-  hence length_basis: "length basis = length w"
-    by (simp add: basis_def f1 n_def)    
-  have "map (crepresentation (set basis) (sum_list (map2 scaleC w basis))) basis = w"
-  proof-
-    have "i < length basis \<Longrightarrow> 
-        crepresentation (set basis) (sum_list (map2 scaleC w basis)) (basis!i) = w!i"
-      for i
-    proof-
-      assume h1: "i < length basis"
-      have h2: "cindependent (set basis)"
-        by (simp add: basis_def is_cindependent_set)
-      have h3: "sum_list (map2 scaleC w basis) \<in> cspan (set basis)"
-        using basis_def is_generator_set
-          by blast 
-      define f where 
-        "f x = crepresentation (set basis) (sum_list (map2 scaleC w basis)) x"
-      for x
-      have h4: "f x \<noteq> 0 \<Longrightarrow> x \<in> set basis" for x
-        by (simp add: complex_vector.representation_ne_zero f_def)
-      have h5: "finite {v. f v \<noteq> 0}"
-        by (metis \<open>f \<equiv> crepresentation (set basis) 
-            (sum_list (map2 scaleC w basis))\<close> complex_vector.finite_representation)
-      have h6: "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = sum_list (map2 scaleC w basis)"
-        by (simp add: \<open>f \<equiv> crepresentation (set basis) (sum_list (map2 scaleC w basis))\<close> basis_def complex_vector.sum_nonzero_representation_eq is_cindependent_set is_generator_set)
-      have h7: "distinct basis"
-        by (simp add: basis_def)
-      have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>v\<in>set basis. f v *\<^sub>C v)"
-        by (simp add: h4 subset_eq sum.mono_neutral_cong_left)
-      also have "\<dots> = sum_list (map (\<lambda>x. f x *\<^sub>C x) basis)"
-        using Groups_List.monoid_add_class.sum_list_distinct_conv_sum_set
-        by (simp add: sum_list_distinct_conv_sum_set h7)        
-      also have "\<dots> = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)"
-        by simp
-      finally have "(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)"
-        by (simp add: \<open>(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>v\<in>set basis. f v *\<^sub>C v)\<close> 
-            \<open>(\<Sum>v\<in>set basis. f v *\<^sub>C v) = (\<Sum>x\<leftarrow>basis. f x *\<^sub>C x)\<close>)
-      define g where "g b = w!(SOME i::nat. i < n \<and> basis!i = b)" for b
-      have e1: "i < n \<Longrightarrow>  w!i = g (basis!i)" for i
-        unfolding g_def
-        by (smt basis_def distinct_Ex1 f1 h1 h7 le_neq_implies_less length_basis length_list_of_vec less_not_refl mem_Collect_eq nth_mem set_conv_nth someI_ex sup.strict_order_iff sup_ge2 w_def) 
-      have "sum_list (map2 (*\<^sub>C) (map f basis) basis)
-            = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)"
-        by (metis (mono_tags, lifting) basis_def distinct_canonical_basis list.map_ident 
-            map2_map_map sum.cong sum_list_distinct_conv_sum_set)        
-      also have "(\<Sum>b\<leftarrow>basis. f b *\<^sub>C b) 
-            = sum_list (map2 scaleC w basis)"
-        using \<open>(\<Sum>v | f v \<noteq> 0. f v *\<^sub>C v) = (\<Sum>b\<leftarrow>basis. f b *\<^sub>C b)\<close> h6 by auto
-      also have "\<dots> = (\<Sum>i\<leftarrow>[0..<n]. w!i *\<^sub>C (basis!i))"
-        by (smt basis_def f1 length_w map2_map_map map_eq_conv map_nth n_def)
-      also have "\<dots> = (\<Sum>i\<leftarrow>[0..<n]. g (basis!i) *\<^sub>C (basis!i))"
-      proof-
-        have "i < n \<Longrightarrow>  w!i *\<^sub>C (basis!i) = g (basis!i) *\<^sub>C (basis!i)" for i
-          using e1
-          by simp 
-        hence "(\<Sum>i=0..<n. w ! i *\<^sub>C basis ! i) =
-               (\<Sum>i=0..<n. g (basis ! i) *\<^sub>C basis ! i)"
-          by (meson sum.ivl_cong)
-        thus ?thesis
-          by (metis (no_types, lifting) atLeastLessThan_upt interv_sum_list_conv_sum_set_nat)
-      qed
-      also have "\<dots> = (\<Sum>b\<leftarrow>basis. g b *\<^sub>C b)"
-        unfolding n_def basis_def
-        by (smt length_map map_nth nth_equalityI nth_map) 
-      also have "\<dots> = sum_list (map2 (*\<^sub>C) (map g basis) basis)"
-        by (metis (no_types) map2_map_map map_ident)
-      finally have "sum_list (map2 (*\<^sub>C) (map f basis) basis)
-                  = sum_list (map2 (*\<^sub>C) (map g basis) basis)"
-        by blast
-      hence "f (basis!i) = g (basis!i)"
-        using basis_def h1 nth_mem[where n = i and xs = "basis"] 
-          uniq_linear_expansion_sum_list[where b = "basis ! i"]
-        by auto        
-      hence "f (basis!i) = w!i"
-        using e1 f1 h1 length_basis length_w by auto        
-      thus ?thesis unfolding f_def.
-    qed
-    thus ?thesis 
-      by (smt length_basis length_map nth_equalityI nth_map)
-  qed
-  thus ?thesis
-    unfolding basis_def
-    by (simp add: basis_enum_of_vec_def vec_list vec_of_basis_enum_def w_def assms)
+  have [simp]: "length w = n" "length basis = n" \<open>dim_vec v = n\<close> \<open>length (canonical_basis::'a list) = n\<close>
+    \<open>j < n\<close>
+    using j_v by (auto simp: f1 basis_def w_def n_def)
+  have [simp]: \<open>cindependent (set basis)\<close> \<open>cspan (set basis) = UNIV\<close>
+    by (auto simp: basis_def is_cindependent_set is_generator_set)
+
+  have \<open>vec_of_basis_enum ((basis_enum_of_vec v)::'a) $ j
+       = map (crepresentation (set basis) (sum_list (map2 (*\<^sub>C) w basis))) basis ! j\<close>
+    by (auto simp: vec_of_list_index vec_of_basis_enum_def basis_enum_of_vec_def simp flip: w_def basis_def)
+  also have \<open>\<dots> = crepresentation (set basis) (sum_list (map2 (*\<^sub>C) w basis)) (basis!j)\<close>
+    by simp
+  also have \<open>\<dots> = crepresentation (set basis) (\<Sum>i<n. (w!i) *\<^sub>C (basis!i)) (basis!j)\<close>
+    by (auto simp: sum_list_sum_nth atLeast0LessThan)
+  also have \<open>\<dots> = (\<Sum>i<n. (w!i) *\<^sub>C crepresentation (set basis) (basis!i) (basis!j))\<close>
+    by (auto simp: complex_vector.representation_sum complex_vector.representation_scale)
+  also have \<open>\<dots> = w!j\<close>
+    apply (subst sum_single[where i=j])
+      apply (auto simp: complex_vector.representation_basis)
+    using \<open>j < n\<close> \<open>length basis = n\<close> basis_def distinct_canonical_basis nth_eq_iff_index_eq by blast
+  also have \<open>\<dots> = v $ j\<close>
+    by (simp add: w_def)
+  finally show \<open>vec_of_basis_enum (basis_enum_of_vec v :: 'a) $ j = v $ j\<close>
+    by -
 qed
 
 lemma vec_of_basis_enum_add:
@@ -1127,12 +1070,6 @@ definition mat_of_cblinfun :: \<open>'a::{basis_enum,complex_normed_vector} \<Ri
     \<lambda> (i, j). crepresentation (set (canonical_basis::'b list)) (f *\<^sub>V ((canonical_basis::'a list)!j)) ((canonical_basis::'b list)!i))\<close>
   for f
 
-(* definition mat_of_cblinfun :: \<open>'a::basis_enum \<Rightarrow>\<^sub>C\<^sub>L'b::basis_enum \<Rightarrow> complex mat\<close> where
-  \<open>mat_of_cblinfun f = 
-    mat (canonical_basis_length TYPE('b)) (canonical_basis_length TYPE('a)) (
-    \<lambda> (i, j). \<langle> (canonical_basis::'b list)!i, f *\<^sub>V ((canonical_basis::'a list)!j) \<rangle> )\<close>
-  for f *)
-
 lemma mat_of_cblinfun_ell2_carrier[simp]: \<open>mat_of_cblinfun (a::'a::enum ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b::enum ell2) \<in> carrier_mat CARD('b) CARD('a)\<close>
   by (simp add: mat_of_cblinfun_def)
 
@@ -1141,144 +1078,6 @@ lemma dim_row_mat_of_cblinfun[simp]: \<open>dim_row (mat_of_cblinfun (a::'a::enu
 
 lemma dim_col_mat_of_cblinfun[simp]: \<open>dim_col (mat_of_cblinfun (a::'a::enum ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b::enum ell2)) = CARD('a)\<close>
   by (simp add: mat_of_cblinfun_def)
-
-(* lemma cinner_mat_of_cblinfun_basis:
-  fixes F::"'a::basis_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::basis_enum"
-  defines "BasisA == (canonical_basis::'a list)"
-    and "BasisB == (canonical_basis::'b list)"
-    and "nA == canonical_basis_length TYPE('a)"
-    and "nB == canonical_basis_length TYPE('b)"
-  assumes "iB < nB" and "iA < nA"
-  shows "vec_index (mat_of_cblinfun F *\<^sub>v unit_vec nA iA) iB
-        = \<langle> BasisB!iB, F *\<^sub>V (BasisA!iA) \<rangle>"
-proof-
-  have  "mat_of_cblinfun F \<in> carrier_mat nB nA"
-    unfolding  mat_of_cblinfun_def nB_def nA_def by simp
-  hence "vec_index (mat_of_cblinfun F *\<^sub>v unit_vec nA iA) iB
-      = (mat_of_cblinfun F) $$ (iB, iA)"
-    using mat_entry_explicit assms(5) assms(6) by auto    
-  also have "\<dots> =  \<langle> BasisB!iB, F *\<^sub>V (BasisA!iA) \<rangle>"
-    using assms unfolding BasisA_def BasisB_def mat_of_cblinfun_def
-    by auto
-  finally show ?thesis .
-qed *)
-
-(* lemma cinner_mat_of_cblinfun:
-  fixes F::"'a::basis_enum \<Rightarrow>\<^sub>C\<^sub>L 'b::basis_enum"
-  defines "BasisB == (canonical_basis::'b list)"
-    and "nB == canonical_basis_length TYPE('b)"
-  assumes "iB < nB"
-  shows "vec_index (mat_of_cblinfun F *\<^sub>v vec_of_basis_enum u) iB
-        = \<langle> BasisB!iB, F *\<^sub>V u \<rangle>"
-proof-
-  define BasisA where "BasisA = (canonical_basis::'a list)"
-  define basisA where "basisA = set BasisA"
-  define nA where "nA == canonical_basis_length TYPE('a)"
-  define P where "P x = vec_index (mat_of_cblinfun F *\<^sub>v vec_of_basis_enum x) iB" for x::'a
-  define Q where "Q x = \<langle> BasisB!iB, F *\<^sub>V x \<rangle>" for x::'a
-  have carrier_mat1: "mat_of_cblinfun F \<in> carrier_mat nB nA"
-    unfolding nB_def nA_def mat_of_cblinfun_def by simp
-  have "clinear P"
-    unfolding clinear_def proof
-    show "P (b1 + b2) = P b1 + P b2"
-      for b1 :: 'a
-        and b2 :: 'a
-    proof-
-      have "vec_of_basis_enum (b1 + b2) = vec_of_basis_enum b1 + vec_of_basis_enum b2"
-        by (simp add: vec_of_basis_enum_add)
-      hence "mat_of_cblinfun F *\<^sub>v (vec_of_basis_enum (b1 + b2)) 
-            = mat_of_cblinfun F *\<^sub>v (vec_of_basis_enum b1)
-            + mat_of_cblinfun F *\<^sub>v (vec_of_basis_enum b2)"
-        using carrier_mat1
-          add.commute carrier_vec_dim_vec dim_vec_last index_add_vec(2) mult_add_distrib_mat_vec 
-          nA_def vec_of_basis_enum_add basis_enum_of_vec_inverse'
-        by metis
-      thus ?thesis
-        unfolding P_def
-        using assms(3) carrier_mat1 by auto      
-    qed
-    show "P (r *\<^sub>C b) = r *\<^sub>C P b"
-      for r :: complex
-        and b :: 'a
-    proof-
-      have carrier_vec1: "vec_of_basis_enum b \<in> carrier_vec nA"
-        unfolding nA_def vec_of_basis_enum_def
-        by (simp add: carrier_dim_vec)
-      have "vec_of_basis_enum (r *\<^sub>C b) = r \<cdot>\<^sub>v (vec_of_basis_enum b)"
-        by (simp add: vec_of_basis_enum_scaleC)
-      hence "mat_of_cblinfun F *\<^sub>v (vec_of_basis_enum (r *\<^sub>C b)) 
-            = mat_of_cblinfun F *\<^sub>v (r \<cdot>\<^sub>v (vec_of_basis_enum b))"
-        by simp
-      also have "\<dots> = r \<cdot>\<^sub>v (mat_of_cblinfun F *\<^sub>v (vec_of_basis_enum b))"
-        apply (rule Matrix.mult_mat_vec[where nr = nB and nc = nA and k = r and A = "mat_of_cblinfun F" and v = "vec_of_basis_enum b"])
-         apply (simp add: carrier_mat1)
-        by (simp add: carrier_vec1)
-      finally have "mat_of_cblinfun F *\<^sub>v vec_of_basis_enum (r *\<^sub>C b) =
-             r \<cdot>\<^sub>v (mat_of_cblinfun F *\<^sub>v vec_of_basis_enum b)".
-      thus ?thesis
-        unfolding P_def
-        using assms(3) carrier_mat1 by auto      
-    qed
-  qed
-  moreover have "clinear Q"
-    unfolding clinear_def proof
-    show "Q (b1 + b2) = Q b1 + Q b2"
-      for b1 :: 'a
-        and b2 :: 'a
-    proof-
-      have "F *\<^sub>V (b1 + b2) = F *\<^sub>V b1 + F *\<^sub>V b2"
-        by (simp add: cblinfun.add_right)        
-      thus ?thesis
-        unfolding Q_def
-        by (simp add: cinner_add_right)        
-    qed
-    show "Q (r *\<^sub>C b) = r *\<^sub>C Q b"
-      for r :: complex
-        and b :: 'a
-    proof-
-      have "F *\<^sub>V (r *\<^sub>C b) = r *\<^sub>C (F *\<^sub>V b)"
-        by (simp add: cblinfun.scaleC_right)        
-      thus ?thesis
-        unfolding Q_def
-        by (simp add: cinner_add_right)        
-    qed
-  qed
-  moreover have "P x = Q x" 
-    if "x \<in> basisA"
-    for x
-  proof-
-    have "\<exists>iA. BasisA!iA = x \<and> iA < nA"
-      by (metis BasisA_def basisA_def distinct_Ex1 
-          distinct_canonical_basis nA_def that)     
-    then obtain iA where a1: "BasisA!iA = x" and a2: "iA < nA"
-      by blast
-    have "vec_of_basis_enum (BasisA ! iA) = unit_vec nA iA"
-      unfolding BasisA_def nA_def
-      by (metis a2 index_unit_vec(3) nA_def basis_enum_of_vec_unit_vec basis_enum_of_vec_inverse')
-    hence "P (BasisA!iA) = Q (BasisA!iA)"
-      using cinner_mat_of_cblinfun_basis[where iA = iA and iB = iB and F = F]
-      unfolding P_def Q_def nA_def BasisA_def BasisB_def
-      using a2 assms(3) nA_def nB_def by auto     
-    thus ?thesis
-      by (simp add: a1)      
-  qed
-  ultimately have "P x = Q x"
-    if "x \<in> complex_vector.span basisA"
-    for x
-    using complex_vector.linear_eq_on that by blast
-  moreover have "complex_vector.span basisA = UNIV"
-  proof-
-    have "closure (cspan basisA) = cspan basisA"
-      by (simp add: basisA_def closure_finite_cspan)
-    thus ?thesis
-      using BasisA_def basisA_def is_generator_set
-        by (metis BasisA_def basisA_def  is_generator_set)
-  qed
-  ultimately have "P = Q" 
-    by (metis UNIV_I ext)    
-  thus ?thesis unfolding P_def Q_def
-    by meson 
-qed *)
 
 
 lemma mat_of_cblinfun_description:
@@ -1647,29 +1446,8 @@ lemma cinner_square_canonical_basis:
   shows "\<langle>BasisA!i, BasisA!i\<rangle> = 1"
   using BasisA_def a1 cnorm_eq_1 is_normal n_def nth_mem by blast
 
-(* TODO remove? (Use CARD()) *)
-lemma enum_canonical_basis_length:
-  "length (enum_class.enum::'a list) = canonical_basis_length TYPE('a::enum ell2)"
-proof-
-  define nA where "nA = canonical_basis_length TYPE('a ell2)" 
-  define BasisA where "BasisA = (canonical_basis::'a ell2 list)"
-  have q1:"BasisA = map ket (enum_class.enum::'a list)"
-    unfolding BasisA_def
-    using canonical_basis_ell2_def by auto
-  hence "length BasisA = length (map ket (enum_class.enum::'a list))"
-    by simp
-  also have "\<dots> = length (enum_class.enum::'a list)"
-    by simp
-  finally have "length BasisA = length (enum_class.enum::'a list)"
-    .
-  hence "length (enum_class.enum::'a list) = length BasisA"
-    by simp
-  also have "length BasisA = nA"
-    unfolding BasisA_def nA_def
-    by (simp add:)
-  finally show ?thesis unfolding nA_def .
-qed
-
+(* lemma enum_canonical_basis_length:
+  "length (enum_class.enum::'a list) = canonical_basis_length TYPE('a::enum ell2)" *)
 
 lemma mat_of_cblinfun_classical_operator:
   fixes f::"'a::enum \<Rightarrow> 'b::enum option"
@@ -2160,11 +1938,10 @@ proof -
     by (auto simp: vec_of_basis_enum_def)
 qed
 
-
+(* TODO rename to vec_of_basis_enum_of_inverse *)
 lemma vec_of_basis_enum_inverse: 
   fixes \<psi> :: "'a::one_dim"
-  shows "vec_of_basis_enum (inverse \<psi>)
-     = vec_of_list [inverse (vec_index (vec_of_basis_enum \<psi>) 0)]"
+  shows "vec_of_basis_enum (inverse \<psi>) = vec_of_list [inverse (vec_index (vec_of_basis_enum \<psi>) 0)]"
 proof -
   have [simp]: \<open>crepresentation {1} x 1 = one_dim_iso x\<close> for x :: 'a
     apply (subst one_dim_scaleC_1[where x=x, symmetric])
