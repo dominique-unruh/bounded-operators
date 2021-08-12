@@ -2021,6 +2021,12 @@ lemma cinner_continuous_left:
 (* lemma closed_line:
   \<open>closed {c *\<^sub>C (k::'a::complex_inner)| c. True}\<close> *)
 
+lemma cinner_canonical_basis:
+  assumes \<open>i < length (canonical_basis :: 'a::onb_enum list)\<close>
+  assumes \<open>j < length (canonical_basis :: 'a::onb_enum list)\<close>
+  shows \<open>cinner (canonical_basis!i :: 'a) (canonical_basis!j) = (if i=j then 1 else 0)\<close>
+  by (metis assms(1) assms(2) distinct_canonical_basis is_normal is_ortho_set_def is_orthonormal nth_eq_iff_index_eq nth_mem of_real_1 power2_norm_eq_cinner power_one)
+
 lemma orthonormal_basis_of_cspan:
   fixes S::"'a::complex_inner set"
   assumes "finite S"

@@ -545,6 +545,27 @@ lemma adjuster_carrier': (* Like adjuster_carrier but with one assm less *)
   shows "adjuster n w us \<in> carrier_vec n"
   by (insert us, induction us, auto)
 
+lemma eq_mat_on_vecI:
+  fixes M N :: \<open>'a::field mat\<close>
+  assumes eq: \<open>\<And>v. v\<in>carrier_vec nA \<Longrightarrow> M *\<^sub>v v = N *\<^sub>v v\<close>
+  assumes [simp]: \<open>M \<in> carrier_mat nB nA\<close> \<open>N \<in> carrier_mat nB nA\<close>
+  shows \<open>M = N\<close>
+proof (rule eq_matI)
+  show [simp]: \<open>dim_row M = dim_row N\<close> \<open>dim_col M = dim_col N\<close>
+    using assms(2) assms(3) by blast+
+  fix i j
+  assume [simp]: \<open>i < dim_row N\<close> \<open>j < dim_col N\<close>
+  show \<open>M $$ (i, j) = N $$ (i, j)\<close>
+    thm mat_entry_explicit[where M=M]
+    apply (subst mat_entry_explicit[symmetric])
+    using assms apply auto[3]
+    apply (subst mat_entry_explicit[symmetric])
+    using assms apply auto[3]
+    apply (subst eq)
+    apply auto using assms(3) unit_vec_carrier by blast
+qed
+
+
 
 unbundle no_jnf_notation
 

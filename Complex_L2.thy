@@ -1196,6 +1196,21 @@ lemma canonical_basis_length_ell2[code_unfold, simp]:
   unfolding canonical_basis_ell2_def apply simp
     using card_UNIV_length_enum by metis
 
+lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"
+proof-
+  have "x = (enum_class.enum::'a list) ! enum_idx x"
+    using enum_idx_correct[where i = x] by simp
+  hence p1: "ket x = ket ((enum_class.enum::'a list) ! enum_idx x)"
+    by simp
+  have "enum_idx x < length (enum_class.enum::'a list)"
+    using enum_idx_bound[where x = x].
+  hence "(map ket (enum_class.enum::'a list)) ! enum_idx x 
+        = ket ((enum_class.enum::'a list) ! enum_idx x)"
+    by auto      
+  thus ?thesis
+    unfolding canonical_basis_ell2_def using p1 by auto    
+qed
+
 lemma clinear_equal_ket:
   fixes f g :: \<open>'a::finite ell2 \<Rightarrow> _\<close>
   assumes \<open>clinear f\<close>

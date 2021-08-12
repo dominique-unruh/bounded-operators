@@ -123,7 +123,7 @@ text \<open>The following theorem registers the isomorphism \<open>ell2_of_vec\<
 lemma vec_of_ell2_inverse [code abstype]:
   "ell2_of_vec (vec_of_ell2 B) = B" 
   unfolding ell2_of_vec_def vec_of_ell2_def
-  by (rule basis_enum_of_vec_inverse)
+  by (rule vec_of_basis_enum_inverse)
 
 text \<open>This instantiation defines a code equation for equality tests for ell2.\<close>
 instantiation ell2 :: (enum) equal begin
@@ -392,10 +392,10 @@ proof -
     apply (subst ccspan_leq_using_vec)
     unfolding d_def[symmetric] map_map o_def
     apply (subst map_cong[where xs=A', OF refl])
-        apply (rule basis_enum_of_vec_inverse')
+        apply (rule basis_enum_of_vec_inverse)
      apply (simp add: A'_def d_def)
     apply (subst map_cong[where xs=B', OF refl])
-     apply (rule basis_enum_of_vec_inverse')
+     apply (rule basis_enum_of_vec_inverse)
     by (simp_all add: B'_def d_def)
 qed
 
@@ -427,7 +427,7 @@ proof -
     by (simp add: image_image)
   also have "\<dots> = ccspan ((\<lambda>x. basis_enum_of_vec (mat_of_cblinfun A *\<^sub>v x)) ` set S')"
     apply (subst image_cong[OF refl])
-     apply (subst basis_enum_of_vec_inverse')
+     apply (subst basis_enum_of_vec_inverse)
     by (auto simp add: S'_def dA_def)
   also have "\<dots> = SPAN (map (mult_mat_vec (mat_of_cblinfun A)) S')"
     unfolding SPAN_def dB_def[symmetric] Let_def filter_set 
@@ -566,14 +566,14 @@ proof -
       apply (rule Collect_cong)
       apply (simp add: Am_def)
       by (metis Am_carrier Am_def carrier_matD(2) carrier_vecD dB_def mat_carrier 
-          mat_of_cblinfun_def mat_of_cblinfun_cblinfun_apply basis_enum_of_vec_inverse 
-          basis_enum_of_vec_inverse' vec_of_basis_enum_zero)
+          mat_of_cblinfun_def mat_of_cblinfun_cblinfun_apply vec_of_basis_enum_inverse 
+          basis_enum_of_vec_inverse vec_of_basis_enum_zero)
     also have "\<dots> = {w \<in> basis_enum_of_vec ` carrier_vec dA. A *\<^sub>V w = 0}"
       apply (subst Compr_image_eq[symmetric])
       by simp
     also have "\<dots> = {w. A *\<^sub>V w = 0}"
       apply auto
-      by (metis (no_types, lifting) Am_carrier Am_def carrier_matD(2) carrier_vec_dim_vec dim_vec_of_basis_enum' image_iff mat_carrier mat_of_cblinfun_def basis_enum_of_vec_inverse)
+      by (metis (no_types, lifting) Am_carrier Am_def carrier_matD(2) carrier_vec_dim_vec dim_vec_of_basis_enum' image_iff mat_carrier mat_of_cblinfun_def vec_of_basis_enum_inverse)
     finally show ?thesis
       by -
   qed
