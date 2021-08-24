@@ -18,8 +18,14 @@ begin
 
 subsection \<open>Complex inner product spaces\<close>
 
-(* TODO: get rid of this notation, Isabelle uses \<bullet> for real inner product *)
-notation (input) cinner ("\<langle>_, _\<rangle>") 
+bundle cinner_bracket_notation begin
+notation cinner ("\<langle>_, _\<rangle>")
+end
+unbundle cinner_bracket_notation
+
+bundle no_cinner_bracket_notation begin
+no_notation cinner ("\<langle>_, _\<rangle>")
+end
 
 lemma cinner_real: "cinner x x \<in> \<real>"
   by (meson cinner_ge_zero reals_zero_comparable_iff)
@@ -29,7 +35,7 @@ lemmas cinner_commute' [simp] = cinner_commute[symmetric]
 lemma (in complex_inner) cinner_eq_flip: \<open>(cinner x y = cinner z w) \<longleftrightarrow> (cinner y x = cinner w z)\<close>
   by (metis cinner_commute)
 
-lemma Im_cinner_x_x[simp]: "Im (\<langle>x , x\<rangle>) = 0"
+lemma Im_cinner_x_x[simp]: "Im \<langle>x , x\<rangle> = 0"
   using comp_Im_same[OF cinner_ge_zero] by simp
 
 

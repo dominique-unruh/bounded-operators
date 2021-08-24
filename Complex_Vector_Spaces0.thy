@@ -974,15 +974,45 @@ lemmas open_complex_lessThan = open_lessThan[where 'a=complex]
 lemmas open_complex_greaterThanLessThan = open_greaterThanLessThan[where 'a=complex]
 *)
 
-(* TODO: prove these *)
-(*
-lemmas closed_complex_atMost = closed_atMost[where 'a=complex]
-lemmas closed_complex_atLeast = closed_atLeast[where 'a=complex]
-lemmas closed_complex_atLeastAtMost = closed_atLeastAtMost[where 'a=complex] 
-*)
+lemma closed_complex_atMost: \<open>closed {..a::complex}\<close>
+proof -
+  have \<open>{..a} = Im -` {Im a} \<inter> Re -` {..Re a}\<close>
+    by (auto simp: less_eq_complex_def)
+  also have \<open>closed \<dots>\<close>
+    by (auto intro!: closed_Int closed_vimage continuous_on_Im continuous_on_Re)
+  finally show ?thesis
+    by -
+qed
+
+lemma closed_complex_atLeast: \<open>closed {a::complex..}\<close>
+proof -
+  have \<open>{a..} = Im -` {Im a} \<inter> Re -` {Re a..}\<close>
+    by (auto simp: less_eq_complex_def)
+  also have \<open>closed \<dots>\<close>
+    by (auto intro!: closed_Int closed_vimage continuous_on_Im continuous_on_Re)
+  finally show ?thesis
+    by -
+qed
+
+lemma closed_complex_atLeastAtMost: \<open>closed {a::complex .. b}\<close>
+proof (cases \<open>Im a = Im b\<close>)
+  case True
+  have \<open>{a..b} = Im -` {Im a} \<inter> Re -` {Re a..Re b}\<close>
+    by (auto simp add: less_eq_complex_def intro!: True)
+  also have \<open>closed \<dots>\<close>
+    by (auto intro!: closed_Int closed_vimage continuous_on_Im continuous_on_Re)
+  finally show ?thesis
+    by -
+next
+  case False
+  then have *: \<open>{a..b} = {}\<close>
+    using less_eq_complex_def by auto
+  show ?thesis
+    by (simp add: *)  
+qed
 
 (* As far as I can tell, there is no analogue to this for complex:
-instance real :: ordered_complex_vector
+instance real :: ordered_real_vector
   by standard (auto intro: mult_left_mono mult_right_mono)
 *)
 
