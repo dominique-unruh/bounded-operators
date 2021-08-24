@@ -1637,7 +1637,7 @@ qed
 (* Renamed from apply_cblinfun_Span *)
 lemma cblinfun_apply_ccspan_using_vec: 
   "A *\<^sub>S ccspan (set S) = ccspan (basis_enum_of_vec ` set (map ((*\<^sub>v) (mat_of_cblinfun A)) (map vec_of_basis_enum S)))"
-  apply (auto simp: cblinfun_image_Span image_image)
+  apply (auto simp: cblinfun_image_ccspan image_image)
   by (metis mat_of_cblinfun_cblinfun_apply vec_of_basis_enum_inverse)
 
 

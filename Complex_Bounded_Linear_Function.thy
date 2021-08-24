@@ -64,8 +64,7 @@ qed
 lemma id_cblinfun_not_0[simp]: \<open>(id_cblinfun :: 'a::{complex_normed_vector, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L _) \<noteq> 0\<close>
   by (metis (full_types) Extra_General.UNIV_not_singleton cblinfun.zero_left cblinfun_id_cblinfun_apply ex_norm1 norm_zero one_neq_zero)
 
-subsection \<open>Algebraic properties of real cblinfun operators\<close>
-(* TODO rename section *)
+subsection \<open>Relationship to real bounded operators (\<^typ>\<open>_ \<Rightarrow>\<^sub>L _\<close>)\<close>
 
 instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
 begin
@@ -2463,8 +2462,8 @@ lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightar
   \<open>\<lambda>\<psi> \<phi>. one_dim_iso \<phi> *\<^sub>C \<psi>\<close>
   by (simp add: bounded_clinear_scaleC_const)
 
-(* TODO: rename *)
-lemma vector_to_cblinfun_applyOp: 
+(* Renamed from vector_to_cblinfun_applyOp *)
+lemma vector_to_cblinfun_cblinfun_apply: 
   "vector_to_cblinfun (A *\<^sub>V \<psi>) = A  o\<^sub>C\<^sub>L (vector_to_cblinfun \<psi>)" 
   apply transfer 
   unfolding comp_def bounded_clinear_def clinear_def Vector_Spaces.linear_def
@@ -2500,7 +2499,7 @@ proof (subst asm_rl [of "a *\<^sub>C \<psi> = (a *\<^sub>C id_cblinfun) *\<^sub>
   show "a *\<^sub>C \<psi> = a *\<^sub>C id_cblinfun *\<^sub>V \<psi>"
     by (simp add: scaleC_cblinfun.rep_eq)
   show "vector_to_cblinfun (a *\<^sub>C id_cblinfun *\<^sub>V \<psi>) = a *\<^sub>C (vector_to_cblinfun \<psi>::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
-    by (metis cblinfun_id_cblinfun_apply cblinfun_compose_scaleC_left vector_to_cblinfun_applyOp)
+    by (metis cblinfun_id_cblinfun_apply cblinfun_compose_scaleC_left vector_to_cblinfun_cblinfun_apply)
 qed
 
 
@@ -2781,8 +2780,8 @@ lemma kernel_memberI:
   shows "x \<in> space_as_set (kernel A)"
   using assms apply transfer by auto
 
-(* TODO rename *)
-lemma cblinfun_image_Span: 
+(* Renamed from cblinfun_image_Span *)
+lemma cblinfun_image_ccspan: 
   shows "A *\<^sub>S ccspan G = ccspan ((*\<^sub>V) A ` G)"
   apply transfer
   by (simp add: bounded_clinear.bounded_linear bounded_clinear_def closure_bounded_linear_image_subset_eq complex_vector.linear_span_image)
@@ -2818,14 +2817,14 @@ lemma ccspan_leq_ortho_ccspan:
   fixes A B
   shows "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B" *)
 
-(* TODO name those *)
 lemma scaleC_1_right[simp]: \<open>scaleC x (1::'a::one_dim) = of_complex x\<close>
   unfolding of_complex_def by simp
 
-lemma scaleC_1_left[simp]: \<open>scaleC x (of_complex y) = of_complex (x * y)\<close>
+(* Renamed from scaleC_1_left *)
+lemma scaleC_of_complex[simp]: \<open>scaleC x (of_complex y) = of_complex (x * y)\<close>
   unfolding of_complex_def using scaleC_scaleC by blast
 
-lemma scaleC_1_apply[simp]: \<open>x *\<^sub>C 1 *\<^sub>V y = x *\<^sub>C y\<close>
+lemma scaleC_1_apply[simp]: \<open>(x *\<^sub>C 1) *\<^sub>V y = x *\<^sub>C y\<close>
   by (metis cblinfun.scaleC_left cblinfun_id_cblinfun_apply id_cblinfun_eq_1)
 
 lemma cblinfun_apply_1_left[simp]: \<open>1 *\<^sub>V y = y\<close>
@@ -2835,6 +2834,9 @@ lemma of_complex_cblinfun_apply[simp]: \<open>of_complex x *\<^sub>V y = x *\<^s
   unfolding of_complex_def
   by (metis cblinfun.scaleC_left cblinfun_id_cblinfun_apply id_cblinfun_eq_1)
 
+(* This lemma is proven in Complex_Bounded_Linear_Function0 but we add the [simp]
+   only here because we try to keep Complex_Bounded_Linear_Function0 as close to
+   Bounded_Linear_Function as possible. *)
 declare scaleC_conv_of_complex[simp]
 
 (* Renamed from vector_to_cblinfun_adj_applytor_to_cblinfun *)
@@ -3365,11 +3367,11 @@ qed
 (* Renamed from butterfly_comp_butterfly_right *)
 lemma butterfly_comp_cblinfun: "butterfly \<psi> \<phi> o\<^sub>C\<^sub>L a = butterfly \<psi> (a* *\<^sub>V \<phi>)"
   unfolding butterfly_def
-  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_applyOp)  
+  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_cblinfun_apply)  
 
 lemma cblinfun_comp_butterfly: "a o\<^sub>C\<^sub>L butterfly \<psi> \<phi> = butterfly (a *\<^sub>V \<psi>) \<phi>"
   unfolding butterfly_def
-  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_applyOp)  
+  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_cblinfun_apply)  
 
 lemma butterfly_apply[simp]: "butterfly \<psi> \<psi>' *\<^sub>V \<phi> = \<langle>\<psi>', \<phi>\<rangle> *\<^sub>C \<psi>"
   by (simp add: butterfly_def scaleC_cblinfun.rep_eq)
@@ -3400,7 +3402,7 @@ lemma butterfly_comp_butterfly[simp]: "butterfly \<psi>1 \<psi>2 o\<^sub>C\<^sub
   by (simp add: butterfly_comp_cblinfun)
 
 lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
-  by (metis cblinfun.zero_left cblinfun_compose_zero_left vector_to_cblinfun_applyOp)
+  by (metis cblinfun.zero_left cblinfun_compose_zero_left vector_to_cblinfun_cblinfun_apply)
 
 (* Renamed from butterfly_0 *)
 lemma butterfly_0_left[simp]: "butterfly 0 a = 0"

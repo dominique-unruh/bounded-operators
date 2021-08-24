@@ -21,7 +21,7 @@ subsection \<open>Complex inner product spaces\<close>
 (* TODO: get rid of this notation, Isabelle uses \<bullet> for real inner product *)
 notation (input) cinner ("\<langle>_, _\<rangle>") 
 
-lemma cinner_real: "(cinner x x) \<in> \<real>"
+lemma cinner_real: "cinner x x \<in> \<real>"
   by (meson cinner_ge_zero reals_zero_comparable_iff)
 
 lemmas cinner_commute' [simp] = cinner_commute[symmetric]
@@ -85,36 +85,6 @@ proposition parallelogram_law:
   shows \<open>\<parallel>x+y\<parallel>^2 + \<parallel>x-y\<parallel>^2 = 2*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 )\<close>
     \<comment> \<open>Shown in the proof of Theorem 2.3 in @{cite conway2013course}\<close> 
   by (simp add: polar_identity_minus polar_identity)
-
-(* TODO remove *)
-corollary ParallelogramLawVersion1:
-  includes notation_norm
-  fixes x :: "'a::complex_inner"
-  shows \<open>\<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2
-    = (1/2)*( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2\<close>
-    \<comment> \<open>Shown in the proof of Theorem 2.5 in @{cite conway2013course}\<close> 
-proof -
-  have \<open>\<parallel> (1/2) *\<^sub>C x + (1/2) *\<^sub>C y \<parallel>^2 + \<parallel> (1/2) *\<^sub>C x - (1/2) *\<^sub>C y \<parallel>^2 
-  = 2*( \<parallel>(1/2) *\<^sub>C x\<parallel>^2 +  \<parallel>(1/2) *\<^sub>C y\<parallel>^2)\<close>
-    using parallelogram_law by blast
-  also have \<open>... = 2*( ((1/2) * \<parallel>x\<parallel>)^2 + ((1/2) * \<parallel>y\<parallel>)^2)\<close>
-    by auto
-  also have \<open>... = 2*( (1/2)^2 * \<parallel>x\<parallel>^2 +  (1/2)^2 * \<parallel>y\<parallel>^2 )\<close>
-    by (metis power_mult_distrib)
-  also have \<open>... = 2*( (1/4) * \<parallel>x\<parallel>^2 +  (1/4) * \<parallel>y\<parallel>^2 )\<close>
-    by (metis (no_types, lifting) mult.right_neutral numeral_Bit0 one_add_one one_power2 power2_sum power_divide)
-  also have \<open>... = 2*(1/4) * \<parallel>x\<parallel>^2 + 2*(1/4) * \<parallel>y\<parallel>^2\<close>
-    by auto
-  also have \<open>... = (1/2) * \<parallel>x\<parallel>^2 + (1/2) * \<parallel>y\<parallel>^2\<close>
-    by auto
-  also have \<open>... = (1/2) * ( \<parallel>x\<parallel>^2 + \<parallel>y\<parallel>^2 )\<close>
-    by auto
-  finally have \<open>\<parallel>(1 / 2) *\<^sub>C x + (1 / 2) *\<^sub>C y\<parallel>\<^sup>2 + \<parallel>(1 / 2) *\<^sub>C x - (1 / 2) *\<^sub>C y\<parallel>\<^sup>2
-                   = 1 / 2 * (\<parallel>x\<parallel>\<^sup>2 + \<parallel>y\<parallel>\<^sup>2)\<close>
-    by blast
-  thus ?thesis 
-    by (metis add_diff_cancel_left')
-qed
 
 
 theorem pythagorean_theorem:
@@ -394,8 +364,7 @@ proof-
       by (simp add: \<open>\<And>x. x \<in> M \<Longrightarrow> d \<le> \<parallel>x\<parallel>\<^sup>2\<close>)
     have \<open>\<parallel> (1/2) *\<^sub>R (r n) - (1/2) *\<^sub>R (r m) \<parallel>^2
               = (1/2)*( \<parallel> r n \<parallel>^2 + \<parallel> r m \<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2\<close> 
-      using ParallelogramLawVersion1 
-      by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
+      by (smt (z3) div_by_1 field_sum_of_halves nonzero_mult_div_cancel_left parallelogram_law polar_identity power2_norm_eq_cinner' scaleR_collapse times_divide_eq_left)
     also have  \<open>...  
               < (1/2)*( d + 1/(n+1) + \<parallel> r m \<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R (r n) + (1/2) *\<^sub>R (r m) \<parallel>^2\<close>
       using \<open>\<parallel>r n\<parallel>\<^sup>2 < d + 1 / real (n + 1)\<close> by auto
@@ -514,11 +483,6 @@ lemma smallest_norm_unique:
   assumes s: \<open>is_arg_min (\<lambda> x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) s\<close>
   shows \<open>r = s\<close>
 proof -
-  have u1: \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2
-      = (1/2)*( \<parallel>r\<parallel>^2 + \<parallel>s\<parallel>^2 ) - \<parallel> (1/2) *\<^sub>R r + (1/2) *\<^sub>R s \<parallel>^2\<close> 
-    using  ParallelogramLawVersion1 
-    by (simp add: ParallelogramLawVersion1 scaleR_scaleC)
-
   have \<open>r \<in> M\<close> 
     using \<open>is_arg_min (\<lambda>x. \<parallel>x\<parallel>) (\<lambda> t. t \<in> M) r\<close>
     by (simp add: is_arg_min_def)
@@ -541,8 +505,8 @@ proof -
   ultimately have u3: \<open>\<parallel>r\<parallel> = \<parallel>s\<parallel>\<close> by simp      
 
   have \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 \<le> 0\<close>
-    using u1 u2 u3
-    by simp
+    using u2 u3 parallelogram_law
+    by (smt (verit, ccfv_SIG) polar_identity_minus power2_norm_eq_cinner' scaleR_add_right scaleR_half_double)
   hence \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel>^2 = 0\<close>
     by simp
   hence \<open>\<parallel> (1/2) *\<^sub>R r - (1/2) *\<^sub>R s \<parallel> = 0\<close>
@@ -1202,8 +1166,7 @@ proof-
   thus ?thesis by blast
 qed *)
 
-\<comment> \<open>Exercice 2 (section 2, chapter I) in  @{cite conway2013course}\<close>
-(* TODO: can we formulate this for complex_inner? using is_projection_on? *)
+\<comment> \<open>Exercise 2 (section 2, chapter I) in  @{cite conway2013course}\<close>
 lemma projection_on_orthogonal_complement[simp]:
   fixes M :: "'a::chilbert_space set"
   assumes a1: "closed_csubspace M"
@@ -2114,200 +2077,11 @@ next
   qed
 qed
 
-(* TODO remove, use orthonormal_basis_of_cspan *)
-lemma orthogonal_basis_of_cspan:
+(* Use orthonormal_basis_of_cspan instead *)
+(* lemma orthogonal_basis_of_cspan:
   fixes S::"'a::complex_inner set"
   assumes a1: "finite S"
-  shows "\<exists>A. is_ortho_set A \<and> cspan A = cspan S \<and> finite A"
-proof -
-  have  \<open>\<forall>S::'a::complex_inner set. 0\<notin>S \<and> finite S \<and> card S = n
-       \<longrightarrow> (\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> cspan A = cspan S \<and> 0 \<notin> A \<and> finite A)\<close> for n
-  proof (induction n)
-    case 0 thus ?case using card_0_eq by auto 
-  next
-    case (Suc n)
-    have "\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. (a::'a) \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-         \<and> complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A"
-      if b1: \<open>0 \<notin> S\<close> and b2: \<open>finite S\<close> and b3: \<open>card S = Suc n\<close>
-      for S
-    proof-
-      have \<open>\<exists>S' s. finite S' \<and> s\<notin>S' \<and> S = insert s S'\<close>
-        by (metis b2 b3 card_Suc_eq finite_insert)
-      then obtain S' s where S'1: \<open>finite S'\<close> and S'2: \<open>s\<notin>S'\<close> and S'3: \<open>S = insert s S'\<close>
-        by blast
-      have s1: \<open>card S' = n\<close>
-        using S'1 S'2 S'3 b3 by auto
-      have \<open>\<exists>A'. (\<forall>a\<in>A'. \<forall>a'\<in>A'. (a::'a) \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
-          complex_vector.span A' = complex_vector.span S' \<and> 0 \<notin> A' \<and> finite A'\<close>
-        using Suc.IH S'1 S'3 s1 b1 by blast
-      then obtain A'::\<open>'a set\<close> where A'_def1: \<open>\<forall>a\<in>A'. \<forall>a'\<in>A'. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0\<close> and
-        A'_def2: \<open>complex_vector.span A' = complex_vector.span S'\<close> and A'_def3: \<open>0 \<notin> A'\<close> 
-        and A'_def4:\<open>finite A'\<close>
-        by auto
-      define \<sigma> where \<open>\<sigma> = s - (\<Sum>a'\<in>A'. ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a')\<close>
-      have c2: "\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
-            complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A"
-        if "\<sigma> = 0"
-      proof-
-        have \<open>s \<in> complex_vector.span A'\<close>
-          unfolding \<sigma>_def
-          by (metis (no_types, lifting) \<sigma>_def complex_vector.span_base complex_vector.span_scale 
-              complex_vector.span_sum eq_iff_diff_eq_0 that)
-        hence \<open>complex_vector.span A' = complex_vector.span S\<close>
-          by (simp add: A'_def2 S'3 complex_vector.span_redundant)
-        thus ?thesis
-          using A'_def1 A'_def3 A'_def4 by blast                     
-      qed
-      define A where \<open>A = insert \<sigma> A'\<close>
-
-      have caseI : \<open>\<langle>a, a'\<rangle> = 0\<close>
-        if p1: \<open>a \<in> A\<close> and p2: \<open>a' \<in> A\<close> and p3: \<open>a' \<in> A'\<close> and p4: \<open>a \<notin> A'\<close>
-        for a a'::'a
-      proof-
-        have \<open>a''\<in>A'-{a'} \<Longrightarrow> \<langle> a'', a' \<rangle> = 0\<close>
-          for a''
-          by (simp add: A'_def1 p3)  
-        hence uu2: \<open>(\<Sum>a''\<in>A'-{a'}. (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>) = 0\<close>
-          by simp
-        have r1: \<open>\<langle> ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a'', a'\<rangle> =  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>\<close>
-          for a'' a'
-          by simp
-        have \<open>\<langle>(\<Sum>a''\<in>A'.  ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a''), a'\<rangle>
-                         = (\<Sum>a''\<in>A'. \<langle> ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a'', a'\<rangle>)\<close>
-          using cinner_sum_left by blast
-        also have \<open>\<dots> = (\<Sum>a''\<in>A'.  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>)\<close>
-          using r1
-          by (smt A'_def1 cinner_scaleC_left mult_not_zero sum.cong p3)             
-        also have \<open>\<dots> =  (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a', a'\<rangle>
-                                  + (\<Sum>a''\<in>A'-{a'}. (\<langle>s, a'\<rangle>/\<langle>a', a'\<rangle>) * \<langle> a'', a'\<rangle>)\<close>
-          by (meson A'_def4 sum.remove p3)        
-        also have \<open>\<dots> =  \<langle>s, a'\<rangle>\<close>
-          using uu2 by auto          
-        finally have uu1: \<open>\<langle>\<Sum>a''\<in>A'. ((cnj \<langle>s, a''\<rangle>)/\<langle>a'', a''\<rangle>) *\<^sub>C a'', a'\<rangle> = \<langle>s, a'\<rangle>\<close>
-          by blast
-        have \<open>a = \<sigma>\<close>
-          using A_def p1 p4 by blast 
-        hence \<open>\<langle>a, a'\<rangle> = \<langle>s - (\<Sum>a'\<in>A'.  ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a') , a'\<rangle>\<close>
-          using \<sigma>_def by auto
-        also have \<open>\<dots> = \<langle>s, a'\<rangle> - \<langle>(\<Sum>a'\<in>A'.  ((cnj \<langle>s, a'\<rangle>)/\<langle>a', a'\<rangle>) *\<^sub>C a'), a'\<rangle>\<close>
-          by (simp add: cinner_diff_left)
-        also have \<open>\<dots> = 0\<close>
-          using uu1 by auto
-        finally show ?thesis by blast
-      qed
-      have s1x: "\<langle>a, a'\<rangle> = 0"
-        if w1: "a \<in> A"
-          and w2: "a' \<in> A"
-          and w3: "a \<noteq> a'"
-          and w4: "a \<notin> A'"
-        for a a'
-        using A_def caseI w1 w2 w3 w4 by auto
-      moreover have s1y: "\<langle>a, a'\<rangle> = 0"
-        if w1: "a \<in> A"
-          and w2: "a' \<in> A"
-          and w3: "a \<noteq> a'"
-          and w4: "a' \<notin> A'"
-        for a a'
-        using is_orthogonal_sym s1x w1 w2 w3 w4 by blast      
-      ultimately have s1: "\<langle>a, a'\<rangle> = 0"
-        if w1: "a \<in> A"
-          and w2: "a' \<in> A"
-          and w3: "a \<noteq> a'"
-          and w4: "\<not> (a \<in> A' \<and> a' \<in> A')"
-        for a a'
-        using that by blast      
-      have z1: "\<langle>a, a'\<rangle> = 0"
-        if w1: "a\<in>A" and w2: "a'\<in>A" and w3: "a \<noteq> a'"
-        for a a'
-        using A'_def1 s1x s1y w1 w2 w3 by blast     
-      have s1: \<open>s \<in> S\<close>
-        by (simp add: \<open>S = insert s S'\<close>)                  
-      have S'S: \<open>S' \<subseteq> S\<close>
-        by (simp add: S'3 subset_insertI)        
-      hence S'Sspan: \<open>complex_vector.span S' \<subseteq> complex_vector.span S\<close>
-        by (simp add: complex_vector.span_mono) 
-      have xx2: \<open>a' \<in> complex_vector.span S\<close>
-        if "a'\<in>A'"
-        for a'
-        using A'_def2 S'Sspan complex_vector.span_superset that by auto     
-      hence w1: \<open>(\<Sum>a'\<in>A'. (cnj \<langle>s, a'\<rangle> / \<langle>a', a'\<rangle>) *\<^sub>C a') \<in> complex_vector.span S\<close>
-        by (simp add: complex_vector.span_scale complex_vector.span_sum)
-      have d1: \<open>\<sigma> \<in> complex_vector.span S\<close>
-        using \<sigma>_def complex_vector.span_base complex_vector.span_diff s1 w1 by blast 
-      have t1: \<open>A' \<subseteq> complex_vector.span A\<close>
-        by (simp add: A_def complex_vector.span_base subsetI)                  
-      moreover have \<open>complex_vector.span A \<subseteq> complex_vector.span S\<close>
-        by (metis A_def xx2
-            complex_vector.span_mono complex_vector.span_span d1 insert_subset subsetI)
-      ultimately have d2: \<open>A' \<subseteq> complex_vector.span S\<close>
-        by auto
-      have d3: \<open>complex_vector.span A \<subseteq> complex_vector.span S\<close>
-        by (metis A_def complex_vector.span_mono complex_vector.span_span d1 d2 insert_subset)
-      have \<open>\<sigma> \<in> complex_vector.span A\<close>
-        by (simp add: A_def complex_vector.span_base)
-      have \<open>a' \<in> complex_vector.span A\<close>
-        if "a'\<in>A'"
-        for a'
-        using t1 that by auto      
-      hence \<open>(\<Sum>a'\<in>A'. (cnj \<langle>s, a'\<rangle> / \<langle>a', a'\<rangle>) *\<^sub>C a') \<in> complex_vector.span A\<close>
-        by (simp add: complex_vector.span_scale complex_vector.span_sum)
-      hence \<open>\<sigma> - s  \<in> complex_vector.span A\<close>
-        unfolding \<sigma>_def
-        using complex_vector.span_diff complex_vector.span_zero
-        by (metis (no_types, lifting) diff_right_commute diff_self)            
-      hence scs:\<open>s \<in> complex_vector.span A\<close>
-        by (metis A_def complex_vector.eq_span_insert_eq complex_vector.span_base 
-            complex_vector.span_redundant insertI1)        
-      have A'A: \<open>A' \<subseteq> A\<close>
-        by (simp add: A_def subset_insertI)
-      have \<open>S' \<subseteq>  complex_vector.span S'\<close>
-        using complex_vector.span_eq by auto
-      hence \<open>S' \<subseteq>  complex_vector.span A'\<close>
-        by (simp add: A'_def2)
-      moreover have \<open>complex_vector.span A' \<subseteq> complex_vector.span A\<close>
-        using A'A
-        by (simp add: complex_vector.span_mono) 
-      ultimately have \<open>S' \<subseteq> complex_vector.span A\<close>
-        by blast
-      hence d4: \<open>S \<subseteq> complex_vector.span A\<close>
-        by (simp add: S'3 scs)       
-      have \<open>complex_vector.span S \<subseteq> complex_vector.span A\<close>
-        using d1 d2 d3 d4 complex_vector.span_mono complex_vector.span_span
-        by blast 
-      hence z2: \<open>complex_vector.span A = complex_vector.span S\<close>
-        by (simp add: d3 set_eq_subset) 
-      hence c1: "\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0) \<and> 
-            complex_vector.span A = complex_vector.span S \<and> 0 \<notin> A \<and> finite A"
-        if "\<sigma> \<noteq> 0"
-        by (metis A'_def3 A'_def4 A_def finite.insertI insert_iff that z1)
-      show ?thesis
-        using c1 c2 by blast 
-    qed
-    thus ?case by blast        
-  qed
-  hence Gram_Schmidt0:
-    \<open>\<exists>A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = complex_vector.span S
-           \<and> 0 \<notin> A \<and> finite A\<close>
-    if b1: \<open>0 \<notin> S\<close> and b2: \<open>finite S\<close>
-    for S::\<open>'a::complex_inner set\<close>
-    using b1 b2 by blast    
-  have \<open>0 \<notin> S - {0}\<close>
-    by simp
-  moreover have \<open>finite (S - {0})\<close>
-    by (simp add: a1)
-  ultimately have \<open>\<exists> A. (\<forall>a\<in>A. \<forall>a'\<in>A. a \<noteq> a' \<longrightarrow> \<langle>a, a'\<rangle> = 0)
-           \<and> complex_vector.span A = complex_vector.span (S-{0})
-           \<and> 0 \<notin> A \<and> finite A\<close>
-    using Gram_Schmidt0[where S = "S - {0}"]
-    by blast
-  moreover have \<open>complex_vector.span (S - {0}) = complex_vector.span S\<close>
-    by simp
-  ultimately show ?thesis
-    using is_ortho_set_def by auto
-qed
-
+  shows "\<exists>A. is_ortho_set A \<and> cspan A = cspan S \<and> finite A" *)
 
 lemma is_ortho_set_cindependent:
   assumes "is_ortho_set A" 

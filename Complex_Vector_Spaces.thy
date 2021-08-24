@@ -300,7 +300,7 @@ qed
 lemma (in bounded_sesquilinear) comp: "bounded_clinear f \<Longrightarrow> bounded_clinear g \<Longrightarrow> bounded_sesquilinear (\<lambda>x y. prod (f x) (g y))" 
   using comp1 bounded_sesquilinear.comp2 by auto
 
-lemma scalarR_bounded_clinear: (* TODO rename \<rightarrow> bounded_clinear_const_scaleR *)
+lemma bounded_clinear_const_scaleR:
   fixes c :: real
   assumes \<open>bounded_clinear f\<close>
   shows \<open>bounded_clinear (\<lambda> x. c *\<^sub>R f x )\<close>

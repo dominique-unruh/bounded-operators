@@ -17,18 +17,16 @@ lemma reals_zero_comparable_iff:
   unfolding complex_is_Real_iff less_eq_complex_def
   by auto
 
-(* TODO: move to extras *)
 lemma reals_zero_comparable:
   fixes x::complex
   assumes "x\<in>\<real>"
   shows "x \<le> 0 \<or> x \<ge> 0"
   using assms unfolding reals_zero_comparable_iff by assumption
 
-(* TODO: remove *)
-abbreviation (input) uniform_convergence_abbr::
+(* abbreviation (input) uniform_convergence_abbr::
   \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   (\<open>(_): ((_)/ \<midarrow>uniformly\<rightarrow> (_))\<close> [60, 60, 60] 60)
-  where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> (  uniform_limit S f l sequentially )\<close>
+  where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> ( uniform_limit S f l sequentially )\<close> *)
 
 subsection \<open>Not singleton\<close>
 
@@ -351,7 +349,6 @@ proof-
     unfolding L2_set_def.
 qed
 
-(* TODO move *)
 lemma Sup_real_close:
   fixes e :: real
   assumes "0 < e"

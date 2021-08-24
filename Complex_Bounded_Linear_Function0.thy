@@ -78,7 +78,7 @@ lemmas [bounded_linear_intros] =
   bounded_clinear_mult_const
   bounded_clinear_scaleC_const
   bounded_clinear_const_scaleC
-  scalarR_bounded_clinear
+  bounded_clinear_const_scaleR
   bounded_clinear_ident
   bounded_clinear_sum
   (* bounded_clinear_Pair *) (* The Product_Vector theory does not instantiate Pair for complex vector spaces *)
@@ -208,7 +208,7 @@ lift_definition\<^marker>\<open>tag important\<close> plus_cblinfun :: "'a \<Rig
 lift_definition\<^marker>\<open>tag important\<close> scaleC_cblinfun::"complex \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is "\<lambda>r f x. r *\<^sub>C f x"
   by (metis bounded_clinear_compose bounded_clinear_scaleC_right)
 lift_definition\<^marker>\<open>tag important\<close> scaleR_cblinfun::"real \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is "\<lambda>r f x. r *\<^sub>R f x"
-  by (rule scalarR_bounded_clinear)
+  by (rule bounded_clinear_const_scaleR)
 
 definition sgn_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
   where "sgn_cblinfun x = scaleC (inverse (norm x)) x"
@@ -798,9 +798,6 @@ declare cblinfun_cinner_right.rep_eq[simp]
 
 lemma bounded_antilinear_cblinfun_cinner_right[bounded_antilinear]: "bounded_antilinear cblinfun_cinner_right"
   apply transfer by (simp add: bounded_sesquilinear_cinner)
-
-
-(* TODO rewrite from here *)
 
 (* Cannot be defined. cinner is antilinear in first argument. *)
 (* lift_definition cblinfun_cinner_left::"'a::complex_inner \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L complex" is "\<lambda>x y. y \<bullet>\<^sub>C x" *)

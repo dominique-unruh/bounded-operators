@@ -170,7 +170,6 @@ lemmas scaleC_right_distrib = scaleC_add_right
 lemmas scaleC_left_diff_distrib = scaleC_diff_left
 lemmas scaleC_right_diff_distrib = scaleC_diff_right *)
 
-(* TODO: These with a c *)
 lemmas clinear_injective_0 = linear_inj_iff_eq_0
   and clinear_injective_on_subspace_0 = linear_inj_on_iff_eq_0
   and clinear_cmul = linear_scale
@@ -1496,13 +1495,24 @@ text \<open>
   \<^term>\<open>{r::real. \<exists>N. \<forall>n\<ge>N. r < X n}\<close>
 \<close>
 
-(* TODO: Prove this (probably holds) *)
-(* lemma increasing_LIMSEQ:
+lemma complex_increasing_LIMSEQ:
   fixes f :: "nat \<Rightarrow> complex"
   assumes inc: "\<And>n. f n \<le> f (Suc n)"
     and bdd: "\<And>n. f n \<le> l"
     and en: "\<And>e. 0 < e \<Longrightarrow> \<exists>n. l \<le> f n + e"
-  shows "f \<longlonglongrightarrow> l" *)
+  shows "f \<longlonglongrightarrow> l"
+proof -
+  have \<open>(\<lambda>n. Re (f n)) \<longlonglongrightarrow> Re l\<close>
+    apply (rule increasing_LIMSEQ)
+    using assms apply (auto simp: less_eq_complex_def less_complex_def)
+    by (metis Im_complex_of_real Re_complex_of_real)
+  moreover have \<open>Im (f n) = Im l\<close> for n
+    using bdd by (auto simp: less_eq_complex_def)
+  then have \<open>(\<lambda>n. Im (f n)) \<longlonglongrightarrow> Im l\<close>
+    by auto
+  ultimately show \<open>f \<longlonglongrightarrow> l\<close>
+    by (simp add: tendsto_complex_iff)
+qed
 
 lemma complex_Cauchy_convergent:
   fixes X :: "nat \<Rightarrow> complex"
