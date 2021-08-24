@@ -2854,4 +2854,141 @@ next
     by auto
 qed
 
+lemma onb_expansion_finite:
+  includes notation_norm
+  fixes T::\<open>'a::{complex_inner,cfinite_dim} set\<close>
+  assumes a1: \<open>cspan T = UNIV\<close> (* and a2: \<open>finite T\<close> *) and a3: \<open>is_ortho_set T\<close>
+    and a4: \<open>\<And>t. t\<in>T \<Longrightarrow> \<parallel>t\<parallel> = 1\<close>
+  shows \<open>x = (\<Sum>t\<in>T. \<langle> t, x \<rangle> *\<^sub>C t)\<close>
+proof -
+  have \<open>finite T\<close>
+    apply (rule cindependent_cfinite_dim_finite)
+    by (simp add: a3 is_ortho_set_cindependent)
+  have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
+    by (simp add: a1)
+  have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
+    apply auto
+     apply (rule_tac x=\<open>\<lambda>a. if a \<in> t then r a else 0\<close> in exI)
+    apply (simp add: \<open>finite T\<close> sum.mono_neutral_cong_right)
+    using \<open>finite T\<close> by blast
+
+  have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = cspan A"
+    by (simp add: complex_vector.span_explicit)      
+  have f2: "\<forall>a. (\<exists>f. a = (\<Sum>a\<in>T. f a *\<^sub>C a)) \<or> (\<forall>A. (\<forall>f. a \<noteq> (\<Sum>a\<in>A. f a *\<^sub>C a)) \<or> infinite A \<or> \<not> A \<subseteq> T)"
+    using \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close> by auto
+  have f3: "\<forall>A a. (\<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A) \<or> a \<notin> cspan A"
+    using f1 by blast
+  have "cspan T = UNIV"
+    by (metis (full_types, lifting)  \<open>complex_vector.span T = UNIV\<close>)
+  hence \<open>\<exists> r. x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
+    using f3 f2 by blast
+  then obtain r where \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
+    by blast
+
+  have \<open>r a = \<langle>a, x\<rangle>\<close>
+    if \<open>a \<in> T\<close>
+    for a
+  proof-
+    have \<open>norm a = 1\<close>
+      using a4
+      by (simp add: \<open>a \<in> T\<close>)
+    moreover have \<open>norm a = sqrt (norm \<langle>a, a\<rangle>)\<close>
+      using norm_eq_sqrt_cinner by auto        
+    ultimately have \<open>sqrt (norm \<langle>a, a\<rangle>) = 1\<close>
+      by simp
+    hence \<open>norm \<langle>a, a\<rangle> = 1\<close>
+      using real_sqrt_eq_1_iff by blast
+    moreover have \<open>\<langle>a, a\<rangle> \<in> \<real>\<close>
+      by (simp add: cinner_real)        
+    moreover have \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
+      using cinner_ge_zero by blast
+    ultimately have w1: \<open>\<langle>a, a\<rangle> = 1\<close>
+      by (metis \<open>0 \<le> \<langle>a, a\<rangle>\<close> \<open>cmod \<langle>a, a\<rangle> = 1\<close> complex_of_real_cmod of_real_1)
+
+    have \<open>r t * \<langle>a, t\<rangle> = 0\<close> if \<open>t \<in> T-{a}\<close> for t
+      by (metis DiffD1 DiffD2 \<open>a \<in> T\<close> a3 is_ortho_set_def mult_eq_0_iff singletonI that)
+    hence s1: \<open>(\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>) = 0\<close>
+      by (simp add: \<open>\<And>t. t \<in> T - {a} \<Longrightarrow> r t * \<langle>a, t\<rangle> = 0\<close>) 
+    have \<open>\<langle>a, x\<rangle> = \<langle>a, (\<Sum> t\<in>T. r t *\<^sub>C t)\<rangle>\<close>
+      using \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
+      by simp
+    also have \<open>\<dots> = (\<Sum> t\<in>T. \<langle>a, r t *\<^sub>C t\<rangle>)\<close>
+      using cinner_sum_right by blast
+    also have \<open>\<dots> = (\<Sum> t\<in>T. r t * \<langle>a, t\<rangle>)\<close>
+      by simp    
+    also have \<open>\<dots> = r a * \<langle>a, a\<rangle> + (\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>)\<close>
+      using \<open>a \<in> T\<close>
+      by (meson \<open>finite T\<close> sum.remove)
+    also have \<open>\<dots> = r a * \<langle>a, a\<rangle>\<close>
+      using s1
+      by simp
+    also have \<open>\<dots> = r a\<close>
+      by (simp add: w1)
+    finally show ?thesis by auto
+  qed
+  thus ?thesis 
+    using \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
+    by fastforce 
+qed
+
+instance onb_enum \<subseteq> chilbert_space
+proof
+  show "convergent X"
+    if "Cauchy X"
+    for X :: "nat \<Rightarrow> 'a"
+  proof-
+    have \<open>finite (set canonical_basis)\<close>
+      by simp
+    have \<open>Cauchy (\<lambda> n. \<langle> t, X n \<rangle>)\<close> for t
+      by (simp add: bounded_clinear.Cauchy bounded_clinear_cinner_right that)
+    hence \<open>convergent (\<lambda> n. \<langle> t, X n \<rangle>)\<close>
+      for t
+      by (simp add: Cauchy_convergent_iff)      
+    hence \<open>\<forall> t\<in>set canonical_basis. \<exists> L. (\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L\<close>
+      by (simp add: convergentD)
+    hence \<open>\<exists> L. \<forall> t\<in>set canonical_basis. (\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
+      by metis
+    then obtain L where \<open>\<And> t. t\<in>set canonical_basis \<Longrightarrow> (\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
+      by blast
+    define l where \<open>l = (\<Sum>t\<in>set canonical_basis. L t *\<^sub>C t)\<close>
+    have x1: \<open>X n = (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)\<close>
+      for n
+      using onb_expansion_finite[where T = "set canonical_basis" and x = "X n"]
+        \<open>finite (set canonical_basis)\<close> 
+      by (smt  is_generator_set is_normal is_orthonormal)
+
+    have \<open>(\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close> 
+      if r1: \<open>t\<in>set canonical_basis\<close>
+      for t
+    proof-
+      have \<open>(\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
+        using r1  \<open>\<And> t. t\<in>set canonical_basis \<Longrightarrow> (\<lambda> n. \<langle> t, X n \<rangle>) \<longlonglongrightarrow> L t\<close>
+        by blast
+      define f where \<open>f x = x *\<^sub>C t\<close> for x
+      have \<open>isCont f r\<close>
+        for r
+        unfolding f_def
+        by (simp add: bounded_clinear_scaleC_left clinear_continuous_at)
+      hence \<open>(\<lambda> n. f \<langle> t, X n \<rangle>) \<longlonglongrightarrow> f (L t)\<close>
+        using \<open>(\<lambda>n. \<langle>t, X n\<rangle>) \<longlonglongrightarrow> L t\<close> isCont_tendsto_compose by blast
+      hence \<open>(\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close>
+        unfolding f_def
+        by simp
+      thus ?thesis by blast
+    qed
+    hence \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t))
+    \<longlonglongrightarrow>  (\<Sum>t\<in>set canonical_basis. L t *\<^sub>C t)\<close>
+      using \<open>finite (set canonical_basis)\<close>
+        tendsto_sum[where I = "set canonical_basis" and f = "\<lambda> t. \<lambda> n. \<langle>t, X n\<rangle> *\<^sub>C t"
+          and a = "\<lambda> t. L t *\<^sub>C t"]
+      by auto      
+    hence x2: \<open>(\<lambda> n. (\<Sum>t\<in>set canonical_basis. \<langle> t, X n \<rangle> *\<^sub>C t)) \<longlonglongrightarrow> l\<close>
+      using l_def by blast 
+    have \<open>X \<longlonglongrightarrow> l\<close>
+      using x1 x2 by simp
+    thus ?thesis 
+      unfolding convergent_def by blast
+  qed
+qed
+
 end

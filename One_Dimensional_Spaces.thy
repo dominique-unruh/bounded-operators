@@ -291,8 +291,8 @@ proof intro_classes
     by (metis norm_mult one_dim_iso_times one_dim_norm)
 qed
 
-instance one_dim \<subseteq> chilbert_space
-proof intro_classes
+instance one_dim \<subseteq> chilbert_space..
+(* proof intro_classes
   fix X :: \<open>nat \<Rightarrow> 'a::one_dim\<close>
   define X' :: \<open>nat \<Rightarrow> complex\<close> where \<open>X' n = one_dim_iso (X n)\<close> for n
   then have X: \<open>X n = of_complex (X' n)\<close> for n
@@ -310,6 +310,6 @@ proof intro_classes
     by (metis (mono_tags, lifting) dist_norm dist_of_complex eventually_mono)
   then show \<open>convergent X\<close>
     unfolding convergent_def by auto
-qed
+qed *)
 
 end

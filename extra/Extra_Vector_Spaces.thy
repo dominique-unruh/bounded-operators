@@ -1,7 +1,9 @@
 theory Extra_Vector_Spaces
-  imports "HOL-Analysis.Inner_Product"
+  imports
+    "HOL-Analysis.Inner_Product"
     "HOL-Analysis.Euclidean_Space"
     "HOL-Library.Indicator_Function"
+    "HOL-Analysis.Topology_Euclidean_Space"
 begin
 
 subsection \<open>Euclidean spaces\<close>
@@ -110,4 +112,9 @@ proof intro_classes
 qed
 end (* euclidean_space :: (finite) euclidean_space *)
 
+lemma closure_bounded_linear_image_subset_eq:
+  assumes f: "bounded_linear f"
+  shows "closure (f ` closure S) = closure (f ` S)"
+  by (meson closed_closure closure_bounded_linear_image_subset closure_minimal closure_mono closure_subset f image_mono subset_antisym)
+  
 end

@@ -74,6 +74,10 @@ subclass (in card2) not_singleton
   apply standard using two_le_card
   by (meson card_2_iff' obtain_subset_with_card_n)
 
+subclass (in perfect_space) not_singleton
+  apply intro_classes
+  by (metis (mono_tags) Collect_cong Collect_mem_eq UNIV_I local.UNIV_not_singleton local.not_open_singleton local.open_subopen)
+
 lemma class_not_singletonI_monoid_add:
   assumes "(UNIV::'a set) \<noteq> {0}"
   shows "class.not_singleton TYPE('a::monoid_add)"
