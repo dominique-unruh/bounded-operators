@@ -26,6 +26,8 @@ lemma cinner_real: "(cinner x x) \<in> \<real>"
 
 lemmas cinner_commute' [simp] = cinner_commute[symmetric]
 
+lemma (in complex_inner) cinner_eq_flip: \<open>(cinner x y = cinner z w) \<longleftrightarrow> (cinner y x = cinner w z)\<close>
+  by (metis cinner_commute)
 
 lemma Im_cinner_x_x[simp]: "Im (\<langle>x , x\<rangle>) = 0"
   using comp_Im_same[OF cinner_ge_zero] by simp

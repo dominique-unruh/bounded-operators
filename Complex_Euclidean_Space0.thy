@@ -91,10 +91,6 @@ lemma (in ceuclidean_space) ceuclidean_eq_iff:
   "x = y \<longleftrightarrow> (\<forall>b\<in>CBasis. cinner x b = cinner y b)"
   by (auto intro: ceuclidean_eqI)
 
-(* TODO move *)
-lemma (in complex_inner) cinner_eq_flip: \<open>(cinner x y = cinner z w) \<longleftrightarrow> (cinner y x = cinner w z)\<close>
-  by (metis cinner_commute)
-                      thm euclidean_representation_sum
 lemma (in ceuclidean_space) ceuclidean_representation_sum:
   "(\<Sum>i\<in>CBasis. f i *\<^sub>C i) = b \<longleftrightarrow> (\<forall>i\<in>CBasis. f i = cnj (cinner b i))"
   apply (subst ceuclidean_eq_iff) 

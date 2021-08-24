@@ -1340,6 +1340,35 @@ proof -
     using isometry_def by blast
 qed
 
+subsection \<open>Sandwiches\<close>
+
+
+lift_definition sandwich :: \<open>('a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner) \<Rightarrow> (('a \<Rightarrow>\<^sub>C\<^sub>L 'a) \<Rightarrow>\<^sub>C\<^sub>L ('b \<Rightarrow>\<^sub>C\<^sub>L 'b))\<close> is
+  \<open>\<lambda>(A::'a\<Rightarrow>\<^sub>C\<^sub>L'b) B. A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*\<close>
+proof 
+  fix A :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> and B B1 B2 :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'a\<close> and c :: complex
+  show \<open>A o\<^sub>C\<^sub>L (B1 + B2) o\<^sub>C\<^sub>L A* = (A o\<^sub>C\<^sub>L B1 o\<^sub>C\<^sub>L A*) + (A o\<^sub>C\<^sub>L B2 o\<^sub>C\<^sub>L A*)\<close>
+    by (simp add: cblinfun_compose_add_left cblinfun_compose_add_right)
+  show \<open>A o\<^sub>C\<^sub>L (c *\<^sub>C B) o\<^sub>C\<^sub>L A* = c *\<^sub>C (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*)\<close>
+    by auto
+  show \<open>\<exists>K. \<forall>B. norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm B * K\<close>
+  proof (rule exI[of _ \<open>norm A * norm (A*)\<close>], rule allI)
+    fix B
+    have \<open>norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm (A o\<^sub>C\<^sub>L B) * norm (A*)\<close>
+      using norm_cblinfun_compose by blast
+    also have \<open>\<dots> \<le> (norm A * norm B) * norm (A*)\<close>
+      by (simp add: mult_right_mono norm_cblinfun_compose)
+    finally show \<open>norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm B * (norm A * norm (A*))\<close>
+      by (simp add: mult.assoc vector_space_over_itself.scale_left_commute)
+  qed
+qed
+
+lemma sandwich_0[simp]: \<open>sandwich 0 = 0\<close>
+  by (simp add: cblinfun_eqI sandwich.rep_eq)
+
+lemma sandwich_apply: \<open>sandwich A *\<^sub>V B = A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*\<close>
+  apply (transfer fixing: A B) by auto
+
 subsection \<open>Projectors\<close>
 
 lift_definition Proj :: "('a::chilbert_space) ccsubspace \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L'a"
@@ -1567,11 +1596,10 @@ lemma Proj_image_leq: "(Proj S) *\<^sub>S A \<le> S"
   by (metis Proj_range inf_top_left le_inf_iff mult_inf_distrib')
 
 (* Renamed from Proj_times *)
-(* TODO use sandwich, rename *)
-lemma Proj_congruence:
+lemma Proj_sandwich:
   fixes A::"'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"
   assumes "isometry A"
-  shows "A o\<^sub>C\<^sub>L Proj S o\<^sub>C\<^sub>L (A*) = Proj (A *\<^sub>S S)" 
+  shows "sandwich A *\<^sub>V Proj S = Proj (A *\<^sub>S S)" 
 proof-
   define P where \<open>P = A o\<^sub>C\<^sub>L Proj S o\<^sub>C\<^sub>L (A*)\<close>
   have \<open>P o\<^sub>C\<^sub>L P = P\<close>
@@ -1605,8 +1633,7 @@ proof-
     by (metis \<open>P = Proj M\<close> cblinfun_assoc_left(2) Proj_range sup_top_right)
   thus ?thesis
     using \<open>P = Proj M\<close>
-    unfolding P_def
-    by blast
+    unfolding P_def sandwich_apply by blast
 qed
 
 lemma Proj_orthog_ccspan_union:
@@ -1634,7 +1661,7 @@ lemma surj_isometry_is_unitary:
   assumes \<open>isometry U\<close>
   assumes \<open>U *\<^sub>S \<top> = \<top>\<close>
   shows \<open>unitary U\<close>
-  by (metis Proj_congruence Proj_on_own_range' assms(1) assms(2) cblinfun_compose_id_right isometry_def unitary_def unitary_id unitary_range)
+  by (metis Proj_sandwich sandwich_apply Proj_on_own_range' assms(1) assms(2) cblinfun_compose_id_right isometry_def unitary_def unitary_id unitary_range)
 
 (* Use ccspan_singleton_scaleC instead *)
 (* lemma projection_scalar_mult[simp]: 
@@ -3574,32 +3601,6 @@ qed
 lemma one_dim_positive: \<open>A \<ge> 0 \<longleftrightarrow> one_dim_iso A \<ge> (0::complex)\<close> for A :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'a::{chilbert_space, one_dim}\<close>
   using one_dim_loewner_order[where B=0] by auto
 
-
-lift_definition sandwich :: \<open>('a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner) \<Rightarrow> (('a \<Rightarrow>\<^sub>C\<^sub>L 'a) \<Rightarrow>\<^sub>C\<^sub>L ('b \<Rightarrow>\<^sub>C\<^sub>L 'b))\<close> is
-  \<open>\<lambda>(A::'a\<Rightarrow>\<^sub>C\<^sub>L'b) B. A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*\<close>
-proof 
-  fix A :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'b\<close> and B B1 B2 :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L 'a\<close> and c :: complex
-  show \<open>A o\<^sub>C\<^sub>L (B1 + B2) o\<^sub>C\<^sub>L A* = (A o\<^sub>C\<^sub>L B1 o\<^sub>C\<^sub>L A*) + (A o\<^sub>C\<^sub>L B2 o\<^sub>C\<^sub>L A*)\<close>
-    by (auto simp: cbilinear_add_left cbilinear_add_right)
-  show \<open>A o\<^sub>C\<^sub>L (c *\<^sub>C B) o\<^sub>C\<^sub>L A* = c *\<^sub>C (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*)\<close>
-    by auto
-  show \<open>\<exists>K. \<forall>B. norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm B * K\<close>
-  proof (rule exI[of _ \<open>norm A * norm (A*)\<close>], rule allI)
-    fix B
-    have \<open>norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm (A o\<^sub>C\<^sub>L B) * norm (A*)\<close>
-      using norm_cblinfun_compose by blast
-    also have \<open>\<dots> \<le> (norm A * norm B) * norm (A*)\<close>
-      by (simp add: mult_right_mono norm_cblinfun_compose)
-    finally show \<open>norm (A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*) \<le> norm B * (norm A * norm (A*))\<close>
-      by (simp add: mult.assoc vector_space_over_itself.scale_left_commute)
-  qed
-qed
-
-lemma sandwich_0[simp]: \<open>sandwich 0 = 0\<close>
-  by (simp add: cblinfun_eqI sandwich.rep_eq)
-
-lemma sandwich_apply: \<open>sandwich A *\<^sub>V B = A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*\<close>
-  apply (transfer fixing: A B) by auto
 
 lemma cblinfun_norm_approx_witness:
   fixes A :: \<open>'a::{not_singleton,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
