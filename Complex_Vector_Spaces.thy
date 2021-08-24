@@ -3210,6 +3210,9 @@ proof -
     using assms bounded_clinear_def bounded_clinear_axioms_def by blast
 qed
 
+lemma CARD_1_vec_0[simp]: \<open>(\<psi> :: _ ::{complex_vector,CARD_1}) = 0\<close>
+  by auto
+
 
 
 end

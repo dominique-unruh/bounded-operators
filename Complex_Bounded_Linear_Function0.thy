@@ -723,9 +723,13 @@ lift_definition id_cblinfun::"'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^
 
 lemmas cblinfun_id_cblinfun_apply[simp] = id_cblinfun.rep_eq
 
+(* Strong than norm_blinfun_id because we replaced the perfect_space typeclass by not_singleton *)
 lemma norm_cblinfun_id[simp]:
-  "norm (id_cblinfun::'a::{complex_normed_vector, perfect_space} \<Rightarrow>\<^sub>C\<^sub>L 'a) = 1"  (* TODO: weaken: not_singleton *)
-  by transfer (auto simp: onorm_id)
+  "norm (id_cblinfun::'a::{complex_normed_vector, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'a) = 1"
+  apply transfer
+  apply (rule onorm_id[internalize_sort' 'a])
+   apply standard[1]
+  by simp
 
 lemma norm_blinfun_id_le:
   "norm (id_cblinfun::'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'a) \<le> 1"

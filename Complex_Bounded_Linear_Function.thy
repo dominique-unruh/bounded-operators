@@ -3595,36 +3595,11 @@ proof
   qed
 qed
 
+lemma sandwich_0[simp]: \<open>sandwich 0 = 0\<close>
+  by (simp add: cblinfun_eqI sandwich.rep_eq)
+
 lemma sandwich_apply: \<open>sandwich A *\<^sub>V B = A o\<^sub>C\<^sub>L B o\<^sub>C\<^sub>L A*\<close>
   apply (transfer fixing: A B) by auto
-
-(* TODO move *)
-lemma Sup_real_close:
-  fixes e :: real
-  assumes "0 < e"
-    and S: "bdd_above S" "S \<noteq> {}"
-  shows "\<exists>x\<in>S. Sup S - e < x"
-proof -
-  have \<open>\<Squnion> (ereal ` S) \<noteq> \<infinity>\<close>
-    by (metis assms(2) bdd_above_def ereal_less_eq(3) less_SUP_iff less_ereal.simps(4) not_le)
-  moreover have \<open>\<Squnion> (ereal ` S) \<noteq> -\<infinity>\<close>
-    by (simp add: SUP_eq_iff assms(3))
-  ultimately have Sup_bdd: \<open>\<bar>\<Squnion> (ereal ` S)\<bar> \<noteq> \<infinity>\<close>
-    by auto
-  then have \<open>\<exists>x'\<in>ereal ` S. Sup (ereal ` S) - ereal e < x'\<close>
-    apply (rule_tac Sup_ereal_close)
-    using assms by auto
-  then obtain x where \<open>x \<in> S\<close> and Sup_x: \<open>Sup (ereal ` S) - ereal e < ereal x\<close>
-    by auto
-  have \<open>Sup (ereal ` S) = ereal (Sup S)\<close>
-    using Sup_bdd by (rule ereal_Sup[symmetric])
-  with Sup_x have \<open>ereal (Sup S - e) < ereal x\<close>
-    by auto
-  then have \<open>Sup S - e < x\<close>
-    by auto
-  with \<open>x \<in> S\<close> show ?thesis
-    by auto
-qed
 
 lemma cblinfun_norm_approx_witness:
   fixes A :: \<open>'a::{not_singleton,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector\<close>
@@ -3665,28 +3640,6 @@ next
     using \<open>norm \<psi> = 1\<close> by auto
 qed
 
-(* TODO move *)
-attribute_setup internalize_sort = \<open>let
-fun find_tvar thm v = let
-  val tvars = Term.add_tvars (Thm.prop_of thm) []
-  val tv = case find_first (fn (n,sort) => n=v) tvars of
-              SOME tv => tv | NONE => raise THM ("Type variable " ^ string_of_indexname v ^ " not found", 0, [thm])
-in 
-TVar tv
-end
-
-fun internalize_sort_attr (tvar:indexname) =
-  Thm.rule_attribute [] (fn context => fn thm =>
-    (snd (Internalize_Sort.internalize_sort (Thm.ctyp_of (Context.proof_of context) (find_tvar thm tvar)) thm)));
-in
-  Scan.lift Args.var >> internalize_sort_attr
-end\<close>
-  "internalize a sort"
-
-(* TODO move *)
-lemma CARD_1_vec_0[simp]: \<open>(\<psi> :: _ ::{complex_vector,CARD_1}) = 0\<close>
-  by auto
-
 lemma cblinfun_to_CARD_1_0[simp]: \<open>(A :: _ \<Rightarrow>\<^sub>C\<^sub>L _::CARD_1) = 0\<close>
   apply (rule cblinfun_eqI)
   by auto
@@ -3695,13 +3648,6 @@ lemma cblinfun_from_CARD_1_0[simp]: \<open>(A :: _::CARD_1 \<Rightarrow>\<^sub>C
   apply (rule cblinfun_eqI)
   apply (subst CARD_1_vec_0)
   by auto
-
-(* TODO move *)
-lemma not_singleton_vs_CARD_1:
-  assumes \<open>\<not> class.not_singleton TYPE('a)\<close>
-  shows \<open>class.CARD_1 TYPE('a)\<close>
-  using assms unfolding class.not_singleton_def class.CARD_1_def
-  by (metis (full_types) One_nat_def UNIV_I card.empty card.insert empty_iff equalityI finite.intros(1) insert_iff subsetI)
 
 lemma norm_AAadj[simp]: \<open>norm (A o\<^sub>C\<^sub>L A*) = (norm A)\<^sup>2\<close> for A :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::{complex_inner}\<close>
 proof (cases \<open>class.not_singleton TYPE('b)\<close>)
@@ -3712,7 +3658,7 @@ proof (cases \<open>class.not_singleton TYPE('b)\<close>)
   proof -
     obtain \<psi> where \<psi>: \<open>norm ((A*) *\<^sub>V \<psi>) \<ge> norm (A*) * sqrt \<epsilon>\<close> and [simp]: \<open>norm \<psi> = 1\<close>
       apply atomize_elim
-      apply (rule cblinfun_norm_approx_witness_mult[internalize_sort 'a])
+      apply (rule cblinfun_norm_approx_witness_mult[internalize_sort' 'a])
       using \<open>\<epsilon> < 1\<close> by (auto intro: complex_normed_vector_class.complex_normed_vector_axioms)
     have \<open>complex_of_real ((norm A)\<^sup>2 * \<epsilon>) = (norm (A*) * sqrt \<epsilon>)\<^sup>2\<close>
       by (simp add: ordered_field_class.sign_simps(23) that(2))
@@ -3757,29 +3703,49 @@ next
   then have [simp]: \<open>class.CARD_1 TYPE('b)\<close>
     by (rule not_singleton_vs_CARD_1)
   have \<open>A = 0\<close>
-    apply (rule cblinfun_to_CARD_1_0[internalize_sort 'b])
+    apply (rule cblinfun_to_CARD_1_0[internalize_sort' 'b])
     by (auto intro: complex_normed_vector_class.complex_normed_vector_axioms)
   then show ?thesis
     by auto
 qed
 
-lemma norm_sandwich: \<open>norm (sandwich A) = (norm A)\<^sup>2\<close> for A :: \<open>'a::{chilbert_space,perfect_space} \<Rightarrow>\<^sub>C\<^sub>L 'b::{complex_inner,perfect_space}\<close>
-    (* TODO remove perfect_space *)
-proof (rule norm_cblinfun_eqI)
-  show \<open>(norm A)\<^sup>2 \<le> norm (sandwich A *\<^sub>V id_cblinfun) / norm (id_cblinfun :: 'a \<Rightarrow>\<^sub>C\<^sub>L _)\<close>
-    apply (auto simp: sandwich_apply)
-    by -
-  fix B
-  have \<open>norm (sandwich A *\<^sub>V B) \<le> norm (A o\<^sub>C\<^sub>L B) * norm (A*)\<close>
-    using norm_cblinfun_compose by (auto simp: sandwich_apply simp del: norm_adj)
-  also have \<open>\<dots> \<le> (norm A * norm B) * norm (A*)\<close>
-    by (simp add: mult_right_mono norm_cblinfun_compose)
-  also have \<open>\<dots> \<le> (norm A)\<^sup>2 * norm B\<close>
-    by (simp add: power2_eq_square mult.assoc vector_space_over_itself.scale_left_commute)
-  finally show \<open>norm (sandwich A *\<^sub>V B) \<le> (norm A)\<^sup>2 * norm B\<close>
-    by -
-  show \<open>0 \<le> (norm A)\<^sup>2\<close>
-    by auto
+lemma norm_sandwich: \<open>norm (sandwich A) = (norm A)\<^sup>2\<close> for A :: \<open>'a::{chilbert_space} \<Rightarrow>\<^sub>C\<^sub>L 'b::{complex_inner}\<close>
+proof -
+  have main: \<open>norm (sandwich A) = (norm A)\<^sup>2\<close> for A :: \<open>'c::{chilbert_space,not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'd::{complex_inner}\<close>
+  proof (rule norm_cblinfun_eqI)
+    show \<open>(norm A)\<^sup>2 \<le> norm (sandwich A *\<^sub>V id_cblinfun) / norm (id_cblinfun :: 'c \<Rightarrow>\<^sub>C\<^sub>L _)\<close>
+      apply (auto simp: sandwich_apply)
+      by -
+    fix B
+    have \<open>norm (sandwich A *\<^sub>V B) \<le> norm (A o\<^sub>C\<^sub>L B) * norm (A*)\<close>
+      using norm_cblinfun_compose by (auto simp: sandwich_apply simp del: norm_adj)
+    also have \<open>\<dots> \<le> (norm A * norm B) * norm (A*)\<close>
+      by (simp add: mult_right_mono norm_cblinfun_compose)
+    also have \<open>\<dots> \<le> (norm A)\<^sup>2 * norm B\<close>
+      by (simp add: power2_eq_square mult.assoc vector_space_over_itself.scale_left_commute)
+    finally show \<open>norm (sandwich A *\<^sub>V B) \<le> (norm A)\<^sup>2 * norm B\<close>
+      by -
+    show \<open>0 \<le> (norm A)\<^sup>2\<close>
+      by auto
+  qed
+
+  show ?thesis
+  proof (cases \<open>class.not_singleton TYPE('a)\<close>)
+    case True
+    show ?thesis
+      apply (rule main[internalize_sort' 'c2])
+       apply standard[1]
+      using True by simp
+  next
+    case False
+    have \<open>A = 0\<close>
+      apply (rule cblinfun_from_CARD_1_0[internalize_sort' 'a])
+       apply (rule not_singleton_vs_CARD_1)
+      apply (rule False)
+      by standard
+    then show ?thesis
+      by simp
+  qed
 qed
 
 lemma sandwich_apply_adj: \<open>sandwich A (B*) = (sandwich A B)*\<close>
