@@ -14,8 +14,7 @@ theory Complex_L2
 
     "HOL-Analysis.L2_Norm"
     "HOL-Library.Rewrite"
-    "HOL-Analysis.Infinite_Set_Sum"
-    "Bounded_Operators-Extra.Extra_Infinite_Set_Sum"
+    Infinite_Sums.Infsetsum_Infsum
 begin
 
 unbundle cblinfun_notation
@@ -73,7 +72,7 @@ next
       by auto
   qed 
   thus "(\<lambda>i. (cmod (x i))\<^sup>2) abs_summable_on UNIV"
-  proof (rule_tac abs_summable_finiteI [where B = B])
+  proof (rule_tac abs_summable_finite_sumsI [where B = B])
     show "(\<Sum>t\<in>F. norm ((cmod (x t))\<^sup>2)) \<le> B"
       if "\<And>F. finite F \<Longrightarrow> (\<Sum>s\<in>F. norm ((cmod (x s))\<^sup>2)) < B"
         and "finite F" and "F \<subseteq> UNIV"
@@ -146,7 +145,7 @@ lemma ell2_norm_infsetsum:
   shows "ell2_norm x = sqrt (infsetsum (\<lambda>i. (norm(x i))^2) UNIV)"
 proof-
   have "ell2_norm x = sqrt (\<Sum>\<^sub>ai. (cmod (x i))\<^sup>2)"
-  proof (subst infsetsum_nonneg_is_SUPREMUM)
+  proof (subst infsetsum_nonneg_is_SUPREMUM_real)
     show "(\<lambda>i. (cmod (x i))\<^sup>2) abs_summable_on UNIV"
       using assms has_ell2_norm_infsetsum by fastforce      
     show "0 \<le> (cmod (x t))\<^sup>2"
@@ -632,9 +631,9 @@ proof standard
     hence z: "(\<lambda>i. z i * z i) abs_summable_on UNIV" 
       by (simp add: norm_mult[symmetric] has_ell2_norm_infsetsum power2_eq_square)
     have cnj_x_z:"(\<lambda>i. cnj (x i) * z i) abs_summable_on UNIV"
-      using cnj_x z by (rule abs_summable_product) 
+      using cnj_x z by (rule abs_summable_times) 
     have cnj_y_z:"(\<lambda>i. cnj (y i) * z i) abs_summable_on UNIV"
-      using cnj_y z by (rule abs_summable_product) 
+      using cnj_y z by (rule abs_summable_times) 
     show "(\<Sum>\<^sub>ai. cnj (x i + y i) * z i) = (\<Sum>\<^sub>ai. cnj (x i) * z i) + (\<Sum>\<^sub>ai. cnj (y i) * z i)"
     proof (subst infsetsum_add [symmetric])
       show "(\<lambda>i. cnj (x i) * z i) abs_summable_on UNIV"
@@ -656,7 +655,7 @@ proof standard
     hence y: "(\<lambda>i. y i * y i) abs_summable_on UNIV" 
       by (simp add: norm_mult[symmetric] has_ell2_norm_infsetsum power2_eq_square)
     have cnj_x_y:"(\<lambda>i. cnj (x i) * y i) abs_summable_on UNIV"
-      using cnj_x y by (rule abs_summable_product) 
+      using cnj_x y by (rule abs_summable_times) 
     thus "(\<Sum>\<^sub>ai. cnj (c * x i) * y i) = cnj c * (\<Sum>\<^sub>ai. cnj (x i) * y i)"
     proof (subst infsetsum_cmult_right [symmetric])
       show "(\<lambda>i. cnj (x i) * y i) abs_summable_on UNIV"
@@ -991,18 +990,18 @@ proof -
   
   have \<open>norm \<psi> = (ell2_norm (Rep_ell2 \<psi>))\<close>
     apply transfer by simp
-  also have \<open>\<dots> = sqrt (infsetsum' f UNIV)\<close>
+  also have \<open>\<dots> = sqrt (infsum f UNIV)\<close>
     unfolding ell2_norm_infsetsum[OF has] f_def[symmetric]
-    using summable by (simp add: infsetsum_infsetsum')
-  finally have norm\<psi>: \<open>norm \<psi> = sqrt (infsetsum' f UNIV)\<close>
+    using summable by (simp add: infsetsum_infsum)
+  finally have norm\<psi>: \<open>norm \<psi> = sqrt (infsum f UNIV)\<close>
     by -
 
   have norm_trunc: \<open>norm (trunc_ell2 S \<psi>) = sqrt (sum f S)\<close> if \<open>finite S\<close> for S
     using f_def that norm_trunc_ell2_finite by fastforce
 
-  have \<open>(sum f \<longlongrightarrow> infsetsum' f UNIV) (finite_subsets_at_top UNIV)\<close>
-    by (simp add: abs_summable_infsetsum'_converges infsetsum'_tendsto summable)
-  then have \<open>((\<lambda>S. sqrt (sum f S)) \<longlongrightarrow> sqrt (infsetsum' f UNIV)) (finite_subsets_at_top UNIV)\<close>
+  have \<open>(sum f \<longlongrightarrow> infsum f UNIV) (finite_subsets_at_top UNIV)\<close>
+    by (simp add: abs_summable_infsum_exists infsum_tendsto local.summable)
+  then have \<open>((\<lambda>S. sqrt (sum f S)) \<longlongrightarrow> sqrt (infsum f UNIV)) (finite_subsets_at_top UNIV)\<close>
     using tendsto_real_sqrt by blast
   then have \<open>((\<lambda>S. norm (trunc_ell2 S \<psi>)) \<longlongrightarrow> norm \<psi>) (finite_subsets_at_top UNIV)\<close>
     apply (subst tendsto_cong[where g=\<open>\<lambda>S. sqrt (sum f S)\<close>])
