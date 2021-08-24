@@ -1191,7 +1191,7 @@ qed
 end
 
 lemma canonical_basis_length_ell2[code_unfold, simp]:
-  "canonical_basis_length (_::'a::enum ell2 itself) = CARD('a)"
+  "length (canonical_basis ::'a::enum ell2 list) = CARD('a)"
   unfolding canonical_basis_ell2_def apply simp
     using card_UNIV_length_enum by metis
 

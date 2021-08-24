@@ -137,12 +137,12 @@ end
 
 lemma vec_of_ell2_zero[code]:
   \<comment> \<open>Code equation for computing the zero vector\<close>
-  "vec_of_ell2 (0::'a::enum ell2) = zero_vec (canonical_basis_length TYPE('a ell2))"
+  "vec_of_ell2 (0::'a::enum ell2) = zero_vec (CARD('a))"
   by (simp add: vec_of_ell2_def vec_of_basis_enum_zero)
 
 lemma vec_of_ell2_ket[code]:
   \<comment> \<open>Code equation for computing a standard basis vector\<close>
-  "vec_of_ell2 (ket i) = unit_vec (canonical_basis_length TYPE('a ell2)) (enum_idx i)" 
+  "vec_of_ell2 (ket i) = unit_vec (CARD('a)) (enum_idx i)" 
   for i::"'a::enum"
   using vec_of_ell2_def vec_of_basis_enum_ket by metis
 
@@ -279,7 +279,7 @@ because that would require \<open>SPAN\<close> to be injective.)
 Then all code equations for different operations need to be formulated as
 functions of values of the form \<open>SPAN x\<close>. (E.g., \<open>SPAN x + SPAN y = SPAN (\<dots>)\<close>.)\<close>
 
-definition [code del]: "SPAN x = (let n = canonical_basis_length TYPE('a::onb_enum) in
+definition [code del]: "SPAN x = (let n = length (canonical_basis :: 'a::onb_enum list) in
     ccspan (basis_enum_of_vec ` Set.filter (\<lambda>v. dim_vec v = n) (set x)) :: 'a ccsubspace)"
   \<comment> \<open>The SPAN of vectors x, as a \<^type>\<open>ccsubspace\<close>.
       We filter out vectors of the wrong dimension because \<open>SPAN\<close> needs to have
@@ -305,17 +305,17 @@ lemma mat_of_cblinfun_Proj_code_code[code]:
      as the sum of the "butterflies" \<open>x * x*\<close> of the vectors \<open>x\<in>S\<close>
      (done by \<^term>\<open>mk_projector_orthog\<close>).\<close>
   "mat_of_cblinfun_Proj_code (SPAN S :: 'a::onb_enum ccsubspace) = 
-    (let d = canonical_basis_length TYPE('a) in mk_projector_orthog d 
+    (let d = length (canonical_basis :: 'a list) in mk_projector_orthog d 
               (gram_schmidt0 d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
   (* note [[show_types, show_consts]] *)
-  have *: "map_option vec_of_basis_enum (if dim_vec x = canonical_basis_length TYPE('a) then Some (basis_enum_of_vec x :: 'a) else None)
-      = (if dim_vec x = canonical_basis_length TYPE('a) then Some x else None)" for x
+  have *: "map_option vec_of_basis_enum (if dim_vec x = length (canonical_basis :: 'a list) then Some (basis_enum_of_vec x :: 'a) else None)
+      = (if dim_vec x = length (canonical_basis :: 'a list) then Some x else None)" for x
     by auto
   show ?thesis
     unfolding SPAN_def mat_of_cblinfun_Proj_code_def
     using mat_of_cblinfun_Proj_ccspan[where S = 
-        "map basis_enum_of_vec (filter (\<lambda>v. dim_vec v = (canonical_basis_length TYPE('a))) S) :: 'a list"]
+        "map basis_enum_of_vec (filter (\<lambda>v. dim_vec v = (length (canonical_basis :: 'a list))) S) :: 'a list"]
     apply (simp only: Let_def map_filter_map_filter filter_set image_set map_map_filter o_def)
     unfolding *
     by (simp add: map_filter_map_filter[symmetric])
@@ -325,8 +325,7 @@ lemma top_ccsubspace_code[code]:
   \<comment> \<open>Code equation for \<^term>\<open>top\<close>, the subspace containing everything.
       Top is represented as the span of the standard basis vectors.\<close>
   "(top::'a ccsubspace) =
-  (let n = canonical_basis_length TYPE('a::onb_enum) in
-    SPAN (unit_vecs n))"
+      (let n = length (canonical_basis :: 'a::onb_enum list) in SPAN (unit_vecs n))"
   unfolding SPAN_def
   apply (simp only: index_unit_vec Let_def map_filter_map_filter filter_set image_set map_map_filter 
       map_filter_map o_def unit_vecs_def)
@@ -377,12 +376,12 @@ lemma leq_ccsubspace_code[code]:
      span of B (by orthogonal projection onto an orthonormal basis of B
      which is computed using Gram-Schmidt).\<close>
   "SPAN A \<le> (SPAN B :: 'a::onb_enum ccsubspace)
-      \<longleftrightarrow> (let d = canonical_basis_length TYPE('a) in
+      \<longleftrightarrow> (let d = length (canonical_basis :: 'a list) in
           is_subspace_of_vec_list d
           (filter (\<lambda>v. dim_vec v = d) A)
           (filter (\<lambda>v. dim_vec v = d) B))"
 proof -
-  define d A' B' where "d = canonical_basis_length TYPE('a)"
+  define d A' B' where "d = length (canonical_basis :: 'a list)"
     and "A' = filter (\<lambda>v. dim_vec v = d) A"
     and "B' = filter (\<lambda>v. dim_vec v = d) B"
 
@@ -408,14 +407,14 @@ lemma equal_ccsubspace_code[code]:
 lemma apply_cblinfun_code[code]:
   \<comment> \<open>Code equation for applying an operator \<^term>\<open>A\<close> to a subspace. 
       Simply by multiplying each generator with \<^term>\<open>A\<close>\<close>
-  "A *\<^sub>S SPAN S = (let d = canonical_basis_length TYPE('a) in
+  "A *\<^sub>S SPAN S = (let d = length (canonical_basis :: 'a list) in
          SPAN (map (mult_mat_vec (mat_of_cblinfun A))
                (filter (\<lambda>v. dim_vec v = d) S)))"
   for A::"'a::onb_enum \<Rightarrow>\<^sub>C\<^sub>L'b::onb_enum"
 proof -
   define dA dB S'
-    where "dA = canonical_basis_length TYPE('a)"
-      and "dB = canonical_basis_length TYPE('b)"
+    where "dA = length (canonical_basis :: 'a list)"
+      and "dB = length (canonical_basis :: 'b list)"
       and "S' = filter (\<lambda>v. dim_vec v = dA) S"
 
   have "cblinfun_image A (SPAN S) = A *\<^sub>S ccspan (set (map basis_enum_of_vec S'))"
@@ -454,8 +453,8 @@ lemma range_cblinfun_code[code]:
   shows "range_cblinfun_code A = SPAN (cols (mat_of_cblinfun A))"
 proof -
   define dA dB
-    where "dA = canonical_basis_length TYPE('a)"
-      and "dB = canonical_basis_length TYPE('b)"
+    where "dA = length (canonical_basis :: 'a list)"
+      and "dB = length (canonical_basis :: 'b list)"
   have carrier_A: "mat_of_cblinfun A \<in> carrier_mat dB dA"
     unfolding mat_of_cblinfun_def dA_def dB_def by simp
 
@@ -500,8 +499,8 @@ lemma kernel_code[code]:
   for A::"('a::onb_enum,'b::onb_enum) cblinfun"
 proof -
   define dA dB Am Ag base
-    where "dA = canonical_basis_length TYPE('a)"
-      and "dB = canonical_basis_length TYPE('b)"
+    where "dA = length (canonical_basis :: 'a list)"
+      and "dB = length (canonical_basis :: 'b list)"
       and "Am = mat_of_cblinfun A"
       and "Ag = gauss_jordan_single Am"
       and "base = find_base_vectors Ag"
