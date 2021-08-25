@@ -1,3 +1,5 @@
+section \<open>\<open>Extra_Vector_Spaces\<close> -- Additional facts about vector spaces\<close>
+
 theory Extra_Vector_Spaces
   imports
     "HOL-Analysis.Inner_Product"

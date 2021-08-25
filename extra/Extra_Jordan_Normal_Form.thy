@@ -1,4 +1,4 @@
-section \<open>Missing results for \<^session>\<open>Jordan_Normal_Form\<close>\<close>
+section \<open>\<open>Extra_Jordan_Normal_Form\<close> -- Additional results for \<^session>\<open>Jordan_Normal_Form\<close>\<close>
 (*
 Authors: 
   Dominique Unruh, University of Tartu, unruh@ut.ee      

@@ -1,3 +1,5 @@
+section \<open>\<open>Complex_Bounded_Linear_Function\<close> -- Complex bounded linear functions (bounded operators)\<close>
+
 (*
 Authors:
 

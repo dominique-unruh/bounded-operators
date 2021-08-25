@@ -1,14 +1,14 @@
+section \<open>\<open>One_Dimensional_Spaces\<close> -- One dimensional complex vector spaces\<close>
+
 theory One_Dimensional_Spaces
   imports Complex_Inner_Product
     "Bounded_Operators-Extra.Extra_Operator_Norm"
 begin
 
-(* TODO sort in sections *)
-
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
-Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
-via the canonical isomorphism between a one-dimensional vector space and 
-\<^typ>\<open>complex\<close>.\<close>
+     Those are additionally interpreted as \<^class>\<open>complex_algebra_1\<close>s 
+     via the canonical isomorphism between a one-dimensional vector space and 
+     \<^typ>\<open>complex\<close>.\<close>
 class one_dim = onb_enum + one + times + complex_inner + inverse +
   assumes one_dim_canonical_basis[simp]: "canonical_basis = [1]"
   assumes one_dim_prod_scale1: "(a *\<^sub>C 1) * (b *\<^sub>C 1) = (a*b) *\<^sub>C 1"

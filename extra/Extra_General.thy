@@ -1,4 +1,4 @@
-section \<open>General missing things\<close>
+section \<open>\<open>Extra_General\<close> -- General missing things\<close>
 
 theory Extra_General
   imports
@@ -27,6 +27,101 @@ lemma reals_zero_comparable:
   \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
   (\<open>(_): ((_)/ \<midarrow>uniformly\<rightarrow> (_))\<close> [60, 60, 60] 60)
   where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> ( uniform_limit S f l sequentially )\<close> *)
+
+lemma unique_choice: "\<forall>x. \<exists>!y. Q x y \<Longrightarrow> \<exists>!f. \<forall>x. Q x (f x)"
+  apply (auto intro!: choice ext) by metis
+
+lemma sum_single: 
+  assumes "finite A"
+  assumes "\<And>j. j \<noteq> i \<Longrightarrow> j\<in>A \<Longrightarrow> f j = 0"
+  shows "sum f A = (if i\<in>A then f i else 0)"
+  apply (subst sum.mono_neutral_cong_right[where S=\<open>A \<inter> {i}\<close> and h=f])
+  using assms by auto
+
+lemma image_set_plus: 
+  assumes \<open>linear U\<close>
+  shows \<open>U ` (A + B) = U ` A + U ` B\<close>
+  unfolding image_def set_plus_def
+  using assms by (force simp: linear_add)
+
+consts heterogenous_identity :: \<open>'a \<Rightarrow> 'b\<close>
+overloading heterogenous_identity_id \<equiv> "heterogenous_identity :: 'a \<Rightarrow> 'a" begin
+definition heterogenous_identity_def[simp]: \<open>heterogenous_identity_id = id\<close>
+end
+
+lemma bdd_above_image_mono:
+  assumes \<open>\<And>x. x\<in>S \<Longrightarrow> f x \<le> g x\<close>
+  assumes \<open>bdd_above (g ` S)\<close>
+  shows \<open>bdd_above (f ` S)\<close>
+  by (smt (verit, ccfv_threshold) assms(1) assms(2) bdd_aboveI2 bdd_above_def order_trans rev_image_eqI)
+
+
+lemma L2_set_mono2:
+  assumes a1: "finite L" and a2: "K \<le> L"
+  shows "L2_set f K \<le> L2_set f L"
+proof-
+  have "(\<Sum>i\<in>K. (f i)\<^sup>2) \<le> (\<Sum>i\<in>L. (f i)\<^sup>2)"
+  proof (rule sum_mono2)
+    show "finite L"
+      using a1.
+    show "K \<subseteq> L"
+      using a2.
+    show "0 \<le> (f b)\<^sup>2"
+      if "b \<in> L - K"
+      for b :: 'a
+      using that
+      by simp 
+  qed
+  hence "sqrt (\<Sum>i\<in>K. (f i)\<^sup>2) \<le> sqrt (\<Sum>i\<in>L. (f i)\<^sup>2)"
+    by (rule real_sqrt_le_mono)
+  thus ?thesis
+    unfolding L2_set_def.
+qed
+
+lemma Sup_real_close:
+  fixes e :: real
+  assumes "0 < e"
+    and S: "bdd_above S" "S \<noteq> {}"
+  shows "\<exists>x\<in>S. Sup S - e < x"
+proof -
+  have \<open>Sup (ereal ` S) \<noteq> \<infinity>\<close>
+    by (metis assms(2) bdd_above_def ereal_less_eq(3) less_SUP_iff less_ereal.simps(4) not_le)
+  moreover have \<open>Sup (ereal ` S) \<noteq> -\<infinity>\<close>
+    by (simp add: SUP_eq_iff assms(3))
+  ultimately have Sup_bdd: \<open>\<bar>Sup (ereal ` S)\<bar> \<noteq> \<infinity>\<close>
+    by auto
+  then have \<open>\<exists>x'\<in>ereal ` S. Sup (ereal ` S) - ereal e < x'\<close>
+    apply (rule_tac Sup_ereal_close)
+    using assms by auto
+  then obtain x where \<open>x \<in> S\<close> and Sup_x: \<open>Sup (ereal ` S) - ereal e < ereal x\<close>
+    by auto
+  have \<open>Sup (ereal ` S) = ereal (Sup S)\<close>
+    using Sup_bdd by (rule ereal_Sup[symmetric])
+  with Sup_x have \<open>ereal (Sup S - e) < ereal x\<close>
+    by auto
+  then have \<open>Sup S - e < x\<close>
+    by auto
+  with \<open>x \<in> S\<close> show ?thesis
+    by auto
+qed
+
+text \<open>Improved version of @{attribute internalize_sort}: It is not necessary to specify the sort of the type variable.\<close>
+attribute_setup internalize_sort' = \<open>let
+fun find_tvar thm v = let
+  val tvars = Term.add_tvars (Thm.prop_of thm) []
+  val tv = case find_first (fn (n,sort) => n=v) tvars of
+              SOME tv => tv | NONE => raise THM ("Type variable " ^ string_of_indexname v ^ " not found", 0, [thm])
+in 
+TVar tv
+end
+
+fun internalize_sort_attr (tvar:indexname) =
+  Thm.rule_attribute [] (fn context => fn thm =>
+    (snd (Internalize_Sort.internalize_sort (Thm.ctyp_of (Context.proof_of context) (find_tvar thm tvar)) thm)));
+in
+  Scan.lift Args.var >> internalize_sort_attr
+end\<close>
+  "internalize a sort"
 
 subsection \<open>Not singleton\<close>
 
@@ -89,6 +184,12 @@ proof intro_classes
     by auto
 qed
 
+lemma not_singleton_vs_CARD_1:
+  assumes \<open>\<not> class.not_singleton TYPE('a)\<close>
+  shows \<open>class.CARD_1 TYPE('a)\<close>
+  using assms unfolding class.not_singleton_def class.CARD_1_def
+  by (metis (full_types) One_nat_def UNIV_I card.empty card.insert empty_iff equalityI finite.intros(1) insert_iff subsetI)
+
 subsection \<open>CARD_1\<close>
 
 context CARD_1 begin
@@ -121,6 +222,23 @@ instance prod :: (CARD_1, CARD_1) CARD_1
 instance "fun" :: (CARD_1, CARD_1) CARD_1
   apply intro_classes
   by (auto simp add: card_fun CARD_1)
+
+
+lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
+proof -
+  let ?enum = "Enum.enum :: 'a::{CARD_1,enum} list"
+  have "length ?enum = 1"
+    apply (subst card_UNIV_length_enum[symmetric])
+    by (rule CARD_1)
+  then obtain b where "?enum = [b]"
+    apply atomize_elim
+    apply (cases ?enum, auto)
+    by (metis length_0_conv length_Cons nat.inject)
+  thus "?enum = [a]"
+    by (subst everything_the_same[of _ b], simp)
+qed
+
+
 
 subsection \<open>Topology\<close>
 
@@ -255,8 +373,6 @@ lemma enum_idx_enum:
 
 subsection \<open>Filtering lists/sets\<close>
 
-
-
 lemma map_filter_map: "List.map_filter f (map g l) = List.map_filter (f o g) l"
 proof (induction l)
   show "List.map_filter f (map g []) = List.map_filter (f \<circ> g) []"
@@ -286,124 +402,7 @@ lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filt
 lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
   using that unfolding Set.filter_def by auto
 
-
-subsection \<open>Unsorted\<close>
-
-(* TODO sort from here *)
-lemma unique_choice: "\<forall>x. \<exists>!y. Q x y \<Longrightarrow> \<exists>!f. \<forall>x. Q x (f x)"
-  apply (auto intro!: choice ext) by metis
-
-lemma sum_single: 
-  assumes "finite A"
-  assumes "\<And>j. j \<noteq> i \<Longrightarrow> j\<in>A \<Longrightarrow> f j = 0"
-  shows "sum f A = (if i\<in>A then f i else 0)"
-  apply (subst sum.mono_neutral_cong_right[where S=\<open>A \<inter> {i}\<close> and h=f])
-  using assms by auto
-
-lemma image_set_plus: 
-  assumes \<open>linear U\<close>
-  shows \<open>U ` (A + B) = U ` A + U ` B\<close>
-  unfolding image_def set_plus_def
-  using assms by (force simp: linear_add)
-
-consts heterogenous_identity :: \<open>'a \<Rightarrow> 'b\<close>
-overloading heterogenous_identity_id \<equiv> "heterogenous_identity :: 'a \<Rightarrow> 'a" begin
-definition heterogenous_identity_def[simp]: \<open>heterogenous_identity_id = id\<close>
-end
-
-lemma bdd_above_image_mono:
-  assumes \<open>\<And>x. x\<in>S \<Longrightarrow> f x \<le> g x\<close>
-  assumes \<open>bdd_above (g ` S)\<close>
-  shows \<open>bdd_above (f ` S)\<close>
-  by (smt (verit, ccfv_threshold) assms(1) assms(2) bdd_aboveI2 bdd_above_def order_trans rev_image_eqI)
-
-lemma enum_CARD_1: "(Enum.enum :: 'a::{CARD_1,enum} list) = [a]"
-proof -
-  let ?enum = "Enum.enum :: 'a::{CARD_1,enum} list"
-  have "length ?enum = 1"
-    apply (subst card_UNIV_length_enum[symmetric])
-    by (rule CARD_1)
-  then obtain b where "?enum = [b]"
-    apply atomize_elim
-    apply (cases ?enum, auto)
-    by (metis length_0_conv length_Cons nat.inject)
-  thus "?enum = [a]"
-    by (subst everything_the_same[of _ b], simp)
-qed
-
-lemma L2_set_mono2:
-  assumes a1: "finite L" and a2: "K \<le> L"
-  shows "L2_set f K \<le> L2_set f L"
-proof-
-  have "(\<Sum>i\<in>K. (f i)\<^sup>2) \<le> (\<Sum>i\<in>L. (f i)\<^sup>2)"
-  proof (rule sum_mono2)
-    show "finite L"
-      using a1.
-    show "K \<subseteq> L"
-      using a2.
-    show "0 \<le> (f b)\<^sup>2"
-      if "b \<in> L - K"
-      for b :: 'a
-      using that
-      by simp 
-  qed
-  hence "sqrt (\<Sum>i\<in>K. (f i)\<^sup>2) \<le> sqrt (\<Sum>i\<in>L. (f i)\<^sup>2)"
-    by (rule real_sqrt_le_mono)
-  thus ?thesis
-    unfolding L2_set_def.
-qed
-
-lemma Sup_real_close:
-  fixes e :: real
-  assumes "0 < e"
-    and S: "bdd_above S" "S \<noteq> {}"
-  shows "\<exists>x\<in>S. Sup S - e < x"
-proof -
-  have \<open>Sup (ereal ` S) \<noteq> \<infinity>\<close>
-    by (metis assms(2) bdd_above_def ereal_less_eq(3) less_SUP_iff less_ereal.simps(4) not_le)
-  moreover have \<open>Sup (ereal ` S) \<noteq> -\<infinity>\<close>
-    by (simp add: SUP_eq_iff assms(3))
-  ultimately have Sup_bdd: \<open>\<bar>Sup (ereal ` S)\<bar> \<noteq> \<infinity>\<close>
-    by auto
-  then have \<open>\<exists>x'\<in>ereal ` S. Sup (ereal ` S) - ereal e < x'\<close>
-    apply (rule_tac Sup_ereal_close)
-    using assms by auto
-  then obtain x where \<open>x \<in> S\<close> and Sup_x: \<open>Sup (ereal ` S) - ereal e < ereal x\<close>
-    by auto
-  have \<open>Sup (ereal ` S) = ereal (Sup S)\<close>
-    using Sup_bdd by (rule ereal_Sup[symmetric])
-  with Sup_x have \<open>ereal (Sup S - e) < ereal x\<close>
-    by auto
-  then have \<open>Sup S - e < x\<close>
-    by auto
-  with \<open>x \<in> S\<close> show ?thesis
-    by auto
-qed
-
-text \<open>Improved version of @{attribute internalize_sort}: It is not necessary to specify the sort of the type variable.\<close>
-attribute_setup internalize_sort' = \<open>let
-fun find_tvar thm v = let
-  val tvars = Term.add_tvars (Thm.prop_of thm) []
-  val tv = case find_first (fn (n,sort) => n=v) tvars of
-              SOME tv => tv | NONE => raise THM ("Type variable " ^ string_of_indexname v ^ " not found", 0, [thm])
-in 
-TVar tv
-end
-
-fun internalize_sort_attr (tvar:indexname) =
-  Thm.rule_attribute [] (fn context => fn thm =>
-    (snd (Internalize_Sort.internalize_sort (Thm.ctyp_of (Context.proof_of context) (find_tvar thm tvar)) thm)));
-in
-  Scan.lift Args.var >> internalize_sort_attr
-end\<close>
-  "internalize a sort"
-
-lemma not_singleton_vs_CARD_1:
-  assumes \<open>\<not> class.not_singleton TYPE('a)\<close>
-  shows \<open>class.CARD_1 TYPE('a)\<close>
-  using assms unfolding class.not_singleton_def class.CARD_1_def
-  by (metis (full_types) One_nat_def UNIV_I card.empty card.insert empty_iff equalityI finite.intros(1) insert_iff subsetI)
-
+subsection \<open>Maps\<close>
 
 
 (* Renamed from inj_option *)
@@ -469,6 +468,5 @@ proof (unfold inj_map_def, rule allI, rule allI, rule impI, erule conjE)
   thus "x = y"
     by (meson inv_into_injective option.inject x_pi y_pi)
 qed
-
 
 end

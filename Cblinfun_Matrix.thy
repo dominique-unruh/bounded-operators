@@ -1,3 +1,5 @@
+section \<open>\<open>Cblinfun_Matrix\<close> -- Matrix representation of bounded operators\<close>
+
 theory Cblinfun_Matrix
   imports
     Complex_L2

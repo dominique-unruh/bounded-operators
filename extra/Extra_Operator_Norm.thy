@@ -1,3 +1,5 @@
+section \<open>\<open>Extra_Operator_Norm\<close> -- Additional facts bout the operator norm\<close>
+
 theory Extra_Operator_Norm
   imports "HOL-Analysis.Operator_Norm"
     Extra_General
@@ -5,12 +7,8 @@ theory Extra_Operator_Norm
 begin
 
 
-subsection \<open>\<open>Operator_Norm_Missing\<close> -- Miscellaneous results about the operator norm\<close>
-
 text \<open>This theorem complements \<^theory>\<open>HOL-Analysis.Operator_Norm\<close>
       additional useful facts about operator norms.\<close>
-
-subsection \<open>Characterization of the operator norm\<close>
 
 lemma ex_norm1: 
   assumes \<open>(UNIV::'a::real_normed_vector set) \<noteq> {0}\<close>
@@ -297,8 +295,6 @@ proof-
   thus ?thesis
     by (simp add: onorm_def)
 qed
-
-subsubsection \<open>Misc\<close>
 
 
 lemma onormI:

@@ -2,7 +2,7 @@
     Author:     Fabian Immler, TU München
 *)
 
-section \<open>Bounded Linear Function\<close>
+section \<open>\<open>Complex_Bounded_Linear_Function0\<close> -- Bounded Linear Function\<close>
 
 theory Complex_Bounded_Linear_Function0
 imports

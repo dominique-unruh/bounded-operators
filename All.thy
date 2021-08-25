@@ -1,4 +1,4 @@
-section \<open>All\<close>
+section \<open>\<open>All\<close> -- Including all theories\<close>
 
 (*
 Authors: 

@@ -1,4 +1,4 @@
-section \<open>Lebesgue space of square-summable functions\<close>
+section \<open>\<open>Complex_L2\<close> -- Hilbert space of square-summable functions\<close>
 
 (*
 Authors:

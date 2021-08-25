@@ -44,3 +44,9 @@ bounded-operators-cpp.zip : $(FILES)
 	rm -f /opt/Isabelle2020/heaps/polyml-5.8_x86_64_32-linux/Bounded_Operators
 	cd tmp2 && /opt/Isabelle2020/bin/isabelle build -d . Bounded_Operators
 	rm -rf tmp2
+
+outline.pdf document.pdf : $(wildcard *.thy) $(wildcard extra/*.thy) ROOT bounded_operators.bib document/root.tex
+	/opt/Isabelle2021/bin/isabelle document -d . -P . Bounded_Operators
+
+show : outline.pdf
+	evince outline.pdf &

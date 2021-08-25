@@ -1,3 +1,5 @@
+section \<open>\<open>Cblinfun_Code_Examples\<close> -- Examples and test cases for code generation\<close>
+
 theory Cblinfun_Code_Examples
   imports
     "Bounded_Operators-Extra.Extra_Pretty_Code_Examples"

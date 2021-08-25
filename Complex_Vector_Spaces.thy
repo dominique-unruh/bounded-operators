@@ -1,4 +1,4 @@
-section \<open>Complex Vector Spaces\<close>
+section \<open>\<open>Complex_Vector_Spaces\<close> -- Complex Vector Spaces\<close>
 
 (*
 Authors: 

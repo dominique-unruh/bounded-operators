@@ -1,4 +1,4 @@
-section \<open>\<open>Bounded_Operators_Code\<close> -- Support for code generation\<close>
+section \<open>\<open>Cblinfun_Code\<close> -- Support for code generation\<close>
 
 theory Cblinfun_Code
   imports

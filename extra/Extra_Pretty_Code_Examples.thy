@@ -1,3 +1,5 @@
+section \<open>\<open>Extra_Pretty_Code_Examples\<close> -- Setup for nicer output of \<open>value\<close>\<close>
+
 theory Extra_Pretty_Code_Examples
   imports 
     "HOL-ex.Sqrt"

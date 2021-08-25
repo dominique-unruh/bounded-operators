@@ -6,7 +6,7 @@ Authors:
 
 *)
 
-section \<open>\<open>Complex_Inner_Product\<close> -- Inner Product Spaces and the Gradient Derivative\<close>
+section \<open>\<open>Complex_Inner_Product\<close> -- Complex Inner Product Spaces\<close>
 
 theory Complex_Inner_Product
   imports 

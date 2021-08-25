@@ -1,3 +1,5 @@
+section \<open>\<open>Extra_Ordered_Fields\<close> -- Additional facts about ordered fields\<close>
+
 theory Extra_Ordered_Fields
   imports Complex_Main 
     Jordan_Normal_Form.Conjugate (* Defines ordering for complex. We have to use theirs, otherwise there will be conflicts *)

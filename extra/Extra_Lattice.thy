@@ -1,3 +1,5 @@
+section \<open>\<open>Extra_Lattice\<close> -- Additional results about lattices\<close>
+
 theory Extra_Lattice
   imports Main
 begin

@@ -3,7 +3,7 @@
     Author:     Brian Huffman, Portland State University
 *)
 
-section \<open>Finite-Dimensional Inner Product Spaces\<close>
+section \<open>\<open>Complex_Euclidean_Space0\<close> -- Finite-Dimensional Inner Product Spaces\<close>
 
 theory Complex_Euclidean_Space0
 imports
