@@ -253,7 +253,7 @@ lemma enum_idx_enum:
   unfolding enum_idx_def apply (rule index_of_nth)
   using assms by (simp_all add: card_UNIV_length_enum enum_distinct)
 
-subsubsection \<open>Filtering lists/sets\<close>
+subsection \<open>Filtering lists/sets\<close>
 
 
 
@@ -286,6 +286,10 @@ lemma filter_Un: "Set.filter f (x \<union> y) = Set.filter f x \<union> Set.filt
 lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrightarrow> P x" for P and X :: "'z set"
   using that unfolding Set.filter_def by auto
 
+
+subsection \<open>Unsorted\<close>
+
+(* TODO sort from here *)
 lemma unique_choice: "\<forall>x. \<exists>!y. Q x y \<Longrightarrow> \<exists>!f. \<forall>x. Q x (f x)"
   apply (auto intro!: choice ext) by metis
 
@@ -399,6 +403,72 @@ lemma not_singleton_vs_CARD_1:
   shows \<open>class.CARD_1 TYPE('a)\<close>
   using assms unfolding class.not_singleton_def class.CARD_1_def
   by (metis (full_types) One_nat_def UNIV_I card.empty card.insert empty_iff equalityI finite.intros(1) insert_iff subsetI)
+
+
+
+(* Renamed from inj_option *)
+definition "inj_map \<pi> = (\<forall>x y. \<pi> x = \<pi> y \<and> \<pi> x \<noteq> None \<longrightarrow> x = y)"
+
+(* Renamed from inv_option *)
+definition "inv_map \<pi> = (\<lambda>y. if Some y \<in> range \<pi> then Some (inv \<pi> (Some y)) else None)"
+
+
+(* Renamed from inj_map_Some_pi *)
+lemma inj_map_total[simp]: "inj_map (Some o \<pi>) = inj \<pi>"
+  unfolding inj_map_def inj_def by simp
+
+lemma inj_map_Some[simp]: "inj_map Some"
+  by (simp add: inj_map_def)
+
+(* Renamed from inv_map_Some *)
+lemma inv_map_total: 
+  assumes "surj \<pi>"
+  shows "inv_map (Some o \<pi>) = Some o inv \<pi>"
+proof-
+  have "(if Some y \<in> range (\<lambda>x. Some (\<pi> x))
+          then Some (SOME x. Some (\<pi> x) = Some y)
+          else None) =
+         Some (SOME b. \<pi> b = y)"
+    if "surj \<pi>"
+    for y
+    using that by auto
+  hence  "surj \<pi> \<Longrightarrow>
+    (\<lambda>y. if Some y \<in> range (\<lambda>x. Some (\<pi> x))
+         then Some (SOME x. Some (\<pi> x) = Some y) else None) =
+    (\<lambda>x. Some (SOME xa. \<pi> xa = x))"
+    by (rule ext) 
+  thus ?thesis 
+    unfolding inv_map_def o_def inv_def
+    using assms by linarith
+qed
+
+lemma inj_map_map_comp[simp]: 
+  assumes a1: "inj_map f" and a2: "inj_map g" 
+  shows "inj_map (f \<circ>\<^sub>m g)"
+  using a1 a2
+  unfolding inj_map_def
+  by (metis (mono_tags, lifting) map_comp_def option.case_eq_if option.expand)
+
+lemma inj_map_inv_map[simp]: "inj_map (inv_map \<pi>)"
+proof (unfold inj_map_def, rule allI, rule allI, rule impI, erule conjE)
+  fix x y
+  assume same: "inv_map \<pi> x = inv_map \<pi> y"
+    and pix_not_None: "inv_map \<pi> x \<noteq> None"
+  have x_pi: "Some x \<in> range \<pi>" 
+    using pix_not_None unfolding inv_map_def apply auto
+    by (meson option.distinct(1))
+  have y_pi: "Some y \<in> range \<pi>" 
+    using pix_not_None unfolding same unfolding inv_map_def apply auto
+    by (meson option.distinct(1))
+  have "inv_map \<pi> x = Some (Hilbert_Choice.inv \<pi> (Some x))"
+    unfolding inv_map_def using x_pi by simp
+  moreover have "inv_map \<pi> y = Some (Hilbert_Choice.inv \<pi> (Some y))"
+    unfolding inv_map_def using y_pi by simp
+  ultimately have "Hilbert_Choice.inv \<pi> (Some x) = Hilbert_Choice.inv \<pi> (Some y)"
+    using same by simp
+  thus "x = y"
+    by (meson inv_into_injective option.inject x_pi y_pi)
+qed
 
 
 end

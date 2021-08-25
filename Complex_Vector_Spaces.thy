@@ -799,7 +799,7 @@ qed
 instance ..
 end
 
-subsection \<open>ccspan\<close>
+subsection \<open>Closed spans\<close>
 
 lift_definition ccspan :: "'a::complex_normed_vector set \<Rightarrow> 'a ccsubspace"
   is "\<lambda>G. closure (cspan G)"

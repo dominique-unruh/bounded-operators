@@ -272,6 +272,7 @@ lift_definition uminus_ccsubspace::\<open>'a ccsubspace  \<Rightarrow> 'a ccsubs
 instance ..
 end
 
+
 instantiation ccsubspace :: (complex_inner) minus begin
 lift_definition minus_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace"
   is "\<lambda>A B. A \<inter> (orthogonal_complement B)"
@@ -306,6 +307,80 @@ lemma is_ob_nonzero:
     and \<open>x \<in> S\<close>
   shows \<open>x \<noteq> 0\<close> *)
 
+
+
+lemma orthogonal_complement_of_closure:
+  fixes A ::"('a::complex_inner) set"
+  shows "orthogonal_complement A = orthogonal_complement (closure A)"
+proof-
+  have s1: \<open>\<langle> y, x \<rangle> = 0\<close> 
+    if a1: "x \<in> (orthogonal_complement A)"
+      and a2: \<open>y \<in> closure A\<close>  
+    for x y
+  proof-
+    have \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
+      by (simp add: a1 orthogonal_complement_orthoI')
+    then obtain yy where \<open>\<forall> n. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
+      using a2 closure_sequential by blast
+    have \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
+      by simp
+    hence \<open>(\<lambda> n. \<langle> yy n , x \<rangle>) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
+      using \<open>yy \<longlonglongrightarrow> y\<close> isCont_tendsto_compose
+      by fastforce
+    hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
+      using \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>  \<open>\<forall> n. yy n \<in> A\<close> by simp
+    thus ?thesis 
+      using limI by force
+  qed
+  hence "x \<in> orthogonal_complement (closure A)"
+    if a1: "x \<in> (orthogonal_complement A)"
+    for x
+    using that
+    by (meson orthogonal_complementI is_orthogonal_sym)
+  moreover have \<open>x \<in> (orthogonal_complement A)\<close> 
+    if "x \<in> (orthogonal_complement (closure A))"
+    for x
+    using that
+    by (meson closure_subset orthogonal_complement_orthoI orthogonal_complementI subset_eq)
+  ultimately show ?thesis by blast
+qed
+
+
+lemma is_orthogonal_closure: 
+  assumes \<open>\<And>s. s \<in> S \<Longrightarrow> is_orthogonal a  s\<close>
+  assumes \<open>x \<in> closure S\<close> 
+  shows \<open>is_orthogonal a x\<close>
+  by (metis assms(1) assms(2) orthogonal_complementI orthogonal_complement_of_closure orthogonal_complement_orthoI)
+
+
+lemma is_orthogonal_cspan:
+  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> is_orthogonal a s" and a3: "x \<in> cspan S"
+  shows "\<langle>a, x\<rangle> = 0"
+proof-
+  have "\<exists>t r. finite t \<and> t \<subseteq> S \<and> (\<Sum>a\<in>t. r a *\<^sub>C a) = x"
+    using complex_vector.span_explicit
+    by (smt a3 mem_Collect_eq)
+  then obtain t r where b1: "finite t" and b2: "t \<subseteq> S" and b3: "(\<Sum>a\<in>t. r a *\<^sub>C a) = x"
+    by blast
+  have x1: "\<langle>a, i\<rangle> = 0"
+    if "i\<in>t" for i
+    using b2 a1 that by blast
+  have  "\<langle>a, x\<rangle> = \<langle>a, (\<Sum>i\<in>t. r i *\<^sub>C i)\<rangle>"
+    by (simp add: b3) 
+  also have  "\<dots> = (\<Sum>i\<in>t. r i *\<^sub>C \<langle>a, i\<rangle>)"
+    by (simp add: cinner_sum_right)
+  also have  "\<dots> = 0"
+    using x1 by simp
+  finally show ?thesis.
+qed
+
+
+(* Renamed from span_ortho_span *)
+lemma ccspan_leq_ortho_ccspan:
+  assumes "\<And>s t. s\<in>S \<Longrightarrow> t\<in>T \<Longrightarrow> is_orthogonal s t"
+  shows "ccspan S \<le> - (ccspan T)"
+  using assms apply transfer
+  by (smt (verit, ccfv_threshold) is_orthogonal_closure is_orthogonal_cspan is_orthogonal_sym orthogonal_complementI subsetI) 
 
 subsection \<open>Minimum distance\<close>
 
@@ -1265,43 +1340,6 @@ lemma cinner_isCont_right:
 lemma OrthoClosed:
   fixes A ::"('a::complex_inner) set"
   shows \<open>closed (orthogonal_complement A)\<close> *)
-
-lemma orthogonal_complement_of_closure:
-  fixes A ::"('a::complex_inner) set"
-  shows "orthogonal_complement A = orthogonal_complement (closure A)"
-proof-
-  have s1: \<open>\<langle> y, x \<rangle> = 0\<close> 
-    if a1: "x \<in> (orthogonal_complement A)"
-      and a2: \<open>y \<in> closure A\<close>  
-    for x y
-  proof-
-    have \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>
-      by (simp add: a1 orthogonal_complement_orthoI')
-    then obtain yy where \<open>\<forall> n. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
-      using a2 closure_sequential by blast
-    have \<open>isCont (\<lambda> t. \<langle> t , x \<rangle>) y\<close>
-      by simp
-    hence \<open>(\<lambda> n. \<langle> yy n , x \<rangle>) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
-      using \<open>yy \<longlonglongrightarrow> y\<close> isCont_tendsto_compose
-      by fastforce
-    hence \<open>(\<lambda> n. 0) \<longlonglongrightarrow>  \<langle> y , x \<rangle>\<close>
-      using \<open>\<forall> y \<in> A. \<langle> y , x \<rangle> = 0\<close>  \<open>\<forall> n. yy n \<in> A\<close> by simp
-    thus ?thesis 
-      using limI by force
-  qed
-  hence "x \<in> orthogonal_complement (closure A)"
-    if a1: "x \<in> (orthogonal_complement A)"
-    for x
-    using that
-    by (meson orthogonal_complementI is_orthogonal_sym)
-  moreover have \<open>x \<in> (orthogonal_complement A)\<close> 
-    if "x \<in> (orthogonal_complement (closure A))"
-    for x
-    using that
-    by (meson closure_subset orthogonal_complement_orthoI orthogonal_complementI subset_eq)
-  ultimately show ?thesis by blast
-qed
-
 
 lemma de_morgan_orthogonal_complement_plus:        
   fixes A B::"('a::complex_inner) set"
@@ -2355,35 +2393,6 @@ qed
 lemma projection_singleton:
   assumes "(a::'a::chilbert_space) \<noteq> 0"
   shows "projection (cspan {a}) u = (\<langle>a, u\<rangle>/\<langle>a, a\<rangle>) *\<^sub>C a" *)
-
-
-lemma is_orthogonal_closure: 
-  assumes \<open>\<And>s. s \<in> S \<Longrightarrow> is_orthogonal a  s\<close>
-  assumes \<open>x \<in> closure S\<close> 
-  shows \<open>is_orthogonal a x\<close>
-  by (metis assms(1) assms(2) orthogonal_complementI orthogonal_complement_of_closure orthogonal_complement_orthoI)
-
-
-lemma is_orthogonal_cspan:
-  assumes a1: "\<And>s. s \<in> S \<Longrightarrow> is_orthogonal a s" and a3: "x \<in> cspan S"
-  shows "\<langle>a, x\<rangle> = 0"
-proof-
-  have "\<exists>t r. finite t \<and> t \<subseteq> S \<and> (\<Sum>a\<in>t. r a *\<^sub>C a) = x"
-    using complex_vector.span_explicit
-    by (smt a3 mem_Collect_eq)
-  then obtain t r where b1: "finite t" and b2: "t \<subseteq> S" and b3: "(\<Sum>a\<in>t. r a *\<^sub>C a) = x"
-    by blast
-  have x1: "\<langle>a, i\<rangle> = 0"
-    if "i\<in>t" for i
-    using b2 a1 that by blast
-  have  "\<langle>a, x\<rangle> = \<langle>a, (\<Sum>i\<in>t. r i *\<^sub>C i)\<rangle>"
-    by (simp add: b3) 
-  also have  "\<dots> = (\<Sum>i\<in>t. r i *\<^sub>C \<langle>a, i\<rangle>)"
-    by (simp add: cinner_sum_right)
-  also have  "\<dots> = 0"
-    using x1 by simp
-  finally show ?thesis.
-qed
 
 
 lemma is_projection_on_plus:

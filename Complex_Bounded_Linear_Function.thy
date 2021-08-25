@@ -64,6 +64,13 @@ qed
 lemma id_cblinfun_not_0[simp]: \<open>(id_cblinfun :: 'a::{complex_normed_vector, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L _) \<noteq> 0\<close>
   by (metis (full_types) Extra_General.UNIV_not_singleton cblinfun.zero_left cblinfun_id_cblinfun_apply ex_norm1 norm_zero one_neq_zero)
 
+lemma cblinfun_norm_geqI:
+  assumes \<open>norm (f *\<^sub>V x) / norm x \<ge> K\<close>
+  shows \<open>norm f \<ge> K\<close>
+  using assms apply transfer
+  by (smt (z3) bounded_clinear.bounded_linear le_onorm)
+
+
 subsection \<open>Relationship to real bounded operators (\<^typ>\<open>_ \<Rightarrow>\<^sub>L _\<close>)\<close>
 
 instantiation blinfun :: (real_normed_vector, complex_normed_vector) "complex_normed_vector"
@@ -271,8 +278,6 @@ proof (rule blinfun_eqI)
     by auto
 qed *)
 
-subsection \<open>Topological properties of real cblinfun operators\<close>
-
 instantiation blinfun :: (real_normed_vector, cbanach) "cbanach"
 begin
 instance..
@@ -376,8 +381,6 @@ proof-
   thus ?thesis
     by (simp add: rscalar_op_op)  
 qed *)
-
-subsection \<open>Complex cblinfun operators\<close>
 
 (* typedef\<^marker>\<open>tag important\<close> (overloaded) ('a, 'b) cblinfun ("(_ \<Rightarrow>\<^sub>C\<^sub>L /_)" [22, 21] 21) =
   "{f::'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector. bounded_clinear f}"
@@ -663,20 +666,8 @@ lemma blinfun_of_cblinfun_norm:
 
 subsection \<open>Composition\<close>
 
+(* TODO remove *)
 abbreviation (input) "timesOp == cblinfun_compose"
-
-(* Closure is necessary. See email 47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
-lift_definition cblinfun_image :: \<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector
-\<Rightarrow> 'a ccsubspace \<Rightarrow> 'b ccsubspace\<close>  (infixr "*\<^sub>S" 70)
-  is "\<lambda>A S. closure (A ` S)"
-  using  bounded_clinear_def closed_closure  closed_csubspace.intro
-  by (simp add: bounded_clinear_def complex_vector.linear_subspace_image closure_is_closed_csubspace) 
-
-lemma cblinfun_image_mono:
-  assumes a1: "S \<le> T"
-  shows "A *\<^sub>S S \<le> A *\<^sub>S T"
-  using a1
-  by (simp add: cblinfun_image.rep_eq closure_mono image_mono less_eq_ccsubspace.rep_eq)
 
 lemma blinfun_of_cblinfun_cblinfun_compose:
   fixes f::\<open>'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector\<close>
@@ -714,13 +705,6 @@ lemma cblinfun_compose_zero_right[simp]: "U o\<^sub>C\<^sub>L 0 = 0"
 lemma cblinfun_compose_zero_left[simp]: "0 o\<^sub>C\<^sub>L U = 0"
   using bounded_cbilinear.zero_left bounded_cbilinear_cblinfun_compose by blast
 
-(* Renamed from applyOp_0 *)
-lemma cblinfun_image_0[simp]:  
-  shows "U *\<^sub>S 0 = 0"
-  thm zero_ccsubspace_def
-  apply transfer
-  by (simp add: bounded_clinear_def complex_vector.linear_0)
-
 (* lemma times_comp:
   fixes A B \<psi>
   assumes a1: "bounded_clinear A" and a2: "bounded_clinear B" and a3: "closed_csubspace \<psi>"
@@ -736,19 +720,6 @@ proof rule
 qed *)
 
 
-(* Renamed from cblinfun_apply_assoc_clinear_space *)
-lemma cblinfun_compose_image: 
-  \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *\<^sub>S (B *\<^sub>S S)\<close>
-  apply transfer unfolding image_comp[symmetric]
-  apply (rule closure_bounded_linear_image_subset_eq[symmetric])
-  by (simp add: bounded_clinear.bounded_linear)
-
-(* Renamed from assoc_left, assoc_right *)
-lemmas cblinfun_assoc_left = cblinfun_compose_assoc[symmetric] cblinfun_compose_image[symmetric] 
-  add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space", symmetric]
-lemmas cblinfun_assoc_right = cblinfun_compose_assoc cblinfun_compose_image
-  add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"]
-
 (* Use complex_vector.scale_right_distrib instead *)
 (* lemma scalar_times_op_add[simp]: "a *\<^sub>C (A + B) = a *\<^sub>C A + a *\<^sub>C B" 
   for A B :: "_::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L _::complex_normed_vector" *)
@@ -756,10 +727,6 @@ lemmas cblinfun_assoc_right = cblinfun_compose_assoc cblinfun_compose_image
 (* Use complex_vector.scale_right_diff_distrib instead *)
 (* lemma scalar_times_op_minus[simp]: "a *\<^sub>C (A-B) =  a *\<^sub>C A - a *\<^sub>C B" 
   for A B :: "_::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L _::complex_normed_vector" *)
-
-(* Renamed from applyOp_bot *)
-lemma cblinfun_image_bot[simp]: "U *\<^sub>S bot = bot"
-  using cblinfun_image_0 by auto
 
 (* Use closure_image_closed_sum instead *)
 (* lemma cbounded_minkowski_sum_exchange:
@@ -873,43 +840,6 @@ proof-
 qed *)
 
 
-(* Renamed from cblinfun_image_sup_exchange *)
-lemma cblinfun_image_sup[simp]:   
-  fixes A B :: \<open>'a::chilbert_space ccsubspace\<close> and U :: "'a \<Rightarrow>\<^sub>C\<^sub>L'b::chilbert_space"
-  shows \<open>U *\<^sub>S (sup A B) = sup (U *\<^sub>S A) (U *\<^sub>S B)\<close>  
-  apply transfer using bounded_clinear.bounded_linear closure_image_closed_sum by blast 
-
-
-
-(* Renamed from scalar_op_clinear_space_assoc *)
-lemma scaleC_cblinfun_image[simp]:
-  fixes A :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b :: chilbert_space\<close>
-    and S :: \<open>'a ccsubspace\<close> and \<alpha> :: complex
-  shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>S S  = \<alpha> *\<^sub>C (A *\<^sub>S S)\<close>
-proof-
-  have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (cblinfun_apply A) ) ` space_as_set S) =
-   ((*\<^sub>C) \<alpha>) ` (closure (cblinfun_apply A ` space_as_set S))\<close>
-    by (metis closure_scaleC image_comp)    
-  hence \<open>(closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
-   ((*\<^sub>C) \<alpha>) ` (closure (cblinfun_apply A ` space_as_set S))\<close>
-    by (metis (mono_tags, lifting) comp_apply image_cong scaleC_cblinfun.rep_eq)
-  hence \<open>Abs_clinear_space (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
-            \<alpha> *\<^sub>C Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
-    by (metis space_as_set_inverse cblinfun_image.rep_eq scaleC_ccsubspace.rep_eq)    
-  have x1: "Abs_clinear_space (closure ((*\<^sub>V) (\<alpha> *\<^sub>C A) ` space_as_set S)) =
-            \<alpha> *\<^sub>C Abs_clinear_space (closure ((*\<^sub>V) A ` space_as_set S))"
-    using \<open>Abs_clinear_space (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
-            \<alpha> *\<^sub>C Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
-    by blast
-  show ?thesis
-    unfolding cblinfun_image_def using x1 by force
-qed
-
-lemma cblinfun_image_id[simp]: 
-  "id_cblinfun *\<^sub>S \<psi> = \<psi>"
-  apply transfer
-  by (simp add: closed_csubspace.closed) 
-
 (* Renamed from scalar_op_op *)
 lemma cblinfun_compose_scaleC_left[simp]:
   fixes A::"'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector"
@@ -946,26 +876,6 @@ lemma cblinfun_compose_id_left[simp]:
   shows "id_cblinfun o\<^sub>C\<^sub>L U  = U"
   apply transfer by auto
 
-(* Renamed from mult_INF1 *)
-lemma cblinfun_image_INF_leq[simp]:
-  fixes U :: "'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::cbanach"
-    and V :: "'a \<Rightarrow> 'b ccsubspace" 
-  shows \<open>U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S (V i))\<close>
-  apply transfer
-  by (simp add: INT_greatest Inter_lower closure_mono image_mono) 
-
-(* Renamed from mult_inf_distrib' *)
-lemma mult_inf_distrib':
-  fixes U::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::cbanach\<close> and B C::"'a ccsubspace"
-  shows "U *\<^sub>S (inf B C) \<le> inf (U *\<^sub>S B) (U *\<^sub>S C)"
-proof -
-  define V where \<open>V b = (if b then B else C)\<close> for b
-  have \<open>U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S (V i))\<close>
-    by auto
-  then show ?thesis
-    unfolding V_def
-    by (metis (mono_tags, lifting) INF_UNIV_bool_expand)
-qed
 
 (* Use complex_vector.linear_eq_on instead *)
 (* lemma equal_span:
@@ -993,56 +903,6 @@ lemma cblinfun_eq_gen_eqI:
   by (metis ccspan.rep_eq iso_tuple_UNIV_I top_ccsubspace.rep_eq)
 
 
-lemma cblinfun_image_eq:
-  fixes S :: "'a::cbanach ccsubspace" 
-    and A B :: "'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L'b::cbanach"
-  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "ccspan G \<ge> S"
-  shows "A *\<^sub>S S = B *\<^sub>S S"
-proof (use assms in transfer)
-  fix G :: "'a set" and A :: "'a \<Rightarrow> 'b" and B :: "'a \<Rightarrow> 'b" and S :: "'a set"
-  assume a1: "bounded_clinear A"
-  assume a2: "bounded_clinear B"
-  assume a3: "\<And>x. x \<in> G \<Longrightarrow> A x = B x"
-  assume a4: "S \<subseteq> closure (cspan G)"
-
-  have "A ` closure S = B ` closure S"
-    by (smt (verit, best) UnCI a1 a2 a3 a4 bounded_clinear_eq_on closure_Un closure_closure image_cong sup.absorb_iff1)
-  then show "closure (A ` S) = closure (B ` S)"
-    by (metis Complex_Vector_Spaces0.bounded_clinear.bounded_linear a1 a2 closure_bounded_linear_image_subset_eq)
-qed
-
-(* Renamed from apply_left_neutral *)
-lemma cblinfun_fixes_range:
-  assumes "A o\<^sub>C\<^sub>L B = B" and "\<psi> \<in> space_as_set (B *\<^sub>S top)"
-  shows "A *\<^sub>V \<psi> = \<psi>" 
-proof-
-  define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>S top)" 
-    and "rangeB' = range (cblinfun_apply B)"
-  from assms have "\<psi> \<in> closure rangeB'"
-    by (simp add: cblinfun_image.rep_eq rangeB'_def top_ccsubspace.rep_eq)
-
-  then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
-    using closure_sequential by blast
-  have A_invariant: "A *\<^sub>V \<psi>i i = \<psi>i i" 
-    for i
-  proof-
-    from \<psi>i_B obtain \<phi> where \<phi>: "\<psi>i i = B *\<^sub>V \<phi>"
-      using rangeB'_def by blast      
-    hence "A *\<^sub>V \<psi>i i = (A o\<^sub>C\<^sub>L B) *\<^sub>V \<phi>"
-      by (simp add: cblinfun_compose.rep_eq)
-    also have "\<dots> = B *\<^sub>V \<phi>"
-      by (simp add: assms)
-    also have "\<dots> = \<psi>i i"
-      by (simp add: \<phi>)
-    finally show ?thesis.
-  qed
-  from \<psi>i_lim have "(\<lambda>i. A *\<^sub>V (\<psi>i i)) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
-    by (rule isCont_tendsto_compose[rotated], simp)
-  with A_invariant have "(\<lambda>i. \<psi>i i) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
-    by auto
-  with \<psi>i_lim show "A *\<^sub>V \<psi> = \<psi>"
-    using LIMSEQ_unique by blast
-qed
 
 lemma cblinfun_compose_add_left: \<open>(a + b) o\<^sub>C\<^sub>L c = (a o\<^sub>C\<^sub>L c) + (b o\<^sub>C\<^sub>L c)\<close>
   by (simp add: bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose)
@@ -1249,7 +1109,7 @@ proof -
     by (simp add: adjoint_eqI cinner_adj_right)
 qed
 
-subsection \<open>Unitary\<close>
+subsection \<open>Unitaries / isometries\<close>
 
 
 definition isometry::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner \<Rightarrow> bool\<close> where
@@ -1306,13 +1166,6 @@ lemma unitary_surj:
   using assms unfolding unitary_def apply transfer
   using comp_eq_dest_lhs by force
 
-(* Renamed from unitary_image *)
-lemma unitary_range[simp]: 
-  assumes "unitary U"
-  shows "U *\<^sub>S top = top"
-  using assms unfolding unitary_def apply transfer
-  by (metis closure_UNIV comp_apply surj_def) 
-
 lemma unitary_id[simp]: "unitary id_cblinfun"
   by (simp add: unitary_def) 
 
@@ -1338,6 +1191,332 @@ proof -
   then show \<open>isometry U\<close>
     using isometry_def by blast
 qed
+
+
+
+subsection \<open>Images\<close>
+
+
+(* Closure is necessary. See email 47a3bb3d-3cc3-0934-36eb-3ef0f7b70a85@ut.ee *)
+lift_definition cblinfun_image :: \<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector
+\<Rightarrow> 'a ccsubspace \<Rightarrow> 'b ccsubspace\<close>  (infixr "*\<^sub>S" 70)
+  is "\<lambda>A S. closure (A ` S)"
+  using  bounded_clinear_def closed_closure  closed_csubspace.intro
+  by (simp add: bounded_clinear_def complex_vector.linear_subspace_image closure_is_closed_csubspace) 
+
+lemma cblinfun_image_mono:
+  assumes a1: "S \<le> T"
+  shows "A *\<^sub>S S \<le> A *\<^sub>S T"
+  using a1
+  by (simp add: cblinfun_image.rep_eq closure_mono image_mono less_eq_ccsubspace.rep_eq)
+
+
+(* Renamed from applyOp_0 *)
+lemma cblinfun_image_0[simp]:  
+  shows "U *\<^sub>S 0 = 0"
+  thm zero_ccsubspace_def
+  apply transfer
+  by (simp add: bounded_clinear_def complex_vector.linear_0)
+
+
+(* Renamed from applyOp_bot *)
+lemma cblinfun_image_bot[simp]: "U *\<^sub>S bot = bot"
+  using cblinfun_image_0 by auto
+
+
+(* Renamed from cblinfun_image_sup_exchange *)
+lemma cblinfun_image_sup[simp]:   
+  fixes A B :: \<open>'a::chilbert_space ccsubspace\<close> and U :: "'a \<Rightarrow>\<^sub>C\<^sub>L'b::chilbert_space"
+  shows \<open>U *\<^sub>S (sup A B) = sup (U *\<^sub>S A) (U *\<^sub>S B)\<close>  
+  apply transfer using bounded_clinear.bounded_linear closure_image_closed_sum by blast 
+
+
+
+(* Renamed from scalar_op_clinear_space_assoc *)
+lemma scaleC_cblinfun_image[simp]:
+  fixes A :: \<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b :: chilbert_space\<close>
+    and S :: \<open>'a ccsubspace\<close> and \<alpha> :: complex
+  shows \<open>(\<alpha> *\<^sub>C A) *\<^sub>S S  = \<alpha> *\<^sub>C (A *\<^sub>S S)\<close>
+proof-
+  have \<open>closure ( ( ((*\<^sub>C) \<alpha>) \<circ> (cblinfun_apply A) ) ` space_as_set S) =
+   ((*\<^sub>C) \<alpha>) ` (closure (cblinfun_apply A ` space_as_set S))\<close>
+    by (metis closure_scaleC image_comp)    
+  hence \<open>(closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+   ((*\<^sub>C) \<alpha>) ` (closure (cblinfun_apply A ` space_as_set S))\<close>
+    by (metis (mono_tags, lifting) comp_apply image_cong scaleC_cblinfun.rep_eq)
+  hence \<open>Abs_clinear_space (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+            \<alpha> *\<^sub>C Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
+    by (metis space_as_set_inverse cblinfun_image.rep_eq scaleC_ccsubspace.rep_eq)    
+  have x1: "Abs_clinear_space (closure ((*\<^sub>V) (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+            \<alpha> *\<^sub>C Abs_clinear_space (closure ((*\<^sub>V) A ` space_as_set S))"
+    using \<open>Abs_clinear_space (closure (cblinfun_apply (\<alpha> *\<^sub>C A) ` space_as_set S)) =
+            \<alpha> *\<^sub>C Abs_clinear_space (closure (cblinfun_apply A ` space_as_set S))\<close>
+    by blast
+  show ?thesis
+    unfolding cblinfun_image_def using x1 by force
+qed
+
+lemma cblinfun_image_id[simp]: 
+  "id_cblinfun *\<^sub>S \<psi> = \<psi>"
+  apply transfer
+  by (simp add: closed_csubspace.closed) 
+
+(* Renamed from cblinfun_apply_assoc_clinear_space *)
+lemma cblinfun_compose_image: 
+  \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *\<^sub>S (B *\<^sub>S S)\<close>
+  apply transfer unfolding image_comp[symmetric]
+  apply (rule closure_bounded_linear_image_subset_eq[symmetric])
+  by (simp add: bounded_clinear.bounded_linear)
+
+(* Renamed from assoc_left, assoc_right *)
+lemmas cblinfun_assoc_left = cblinfun_compose_assoc[symmetric] cblinfun_compose_image[symmetric] 
+  add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space", symmetric]
+lemmas cblinfun_assoc_right = cblinfun_compose_assoc cblinfun_compose_image
+  add.assoc[where ?'a="'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space"]
+
+(* Renamed from mult_INF1 *)
+lemma cblinfun_image_INF_leq[simp]:
+  fixes U :: "'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::cbanach"
+    and V :: "'a \<Rightarrow> 'b ccsubspace" 
+  shows \<open>U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S (V i))\<close>
+  apply transfer
+  by (simp add: INT_greatest Inter_lower closure_mono image_mono) 
+
+(* Renamed from mult_inf_distrib' *)
+lemma mult_inf_distrib':
+  fixes U::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::cbanach\<close> and B C::"'a ccsubspace"
+  shows "U *\<^sub>S (inf B C) \<le> inf (U *\<^sub>S B) (U *\<^sub>S C)"
+proof -
+  define V where \<open>V b = (if b then B else C)\<close> for b
+  have \<open>U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S (V i))\<close>
+    by auto
+  then show ?thesis
+    unfolding V_def
+    by (metis (mono_tags, lifting) INF_UNIV_bool_expand)
+qed
+
+lemma cblinfun_image_eq:
+  fixes S :: "'a::cbanach ccsubspace" 
+    and A B :: "'a::cbanach \<Rightarrow>\<^sub>C\<^sub>L'b::cbanach"
+  assumes "\<And>x. x \<in> G \<Longrightarrow> A *\<^sub>V x = B *\<^sub>V x" and "ccspan G \<ge> S"
+  shows "A *\<^sub>S S = B *\<^sub>S S"
+proof (use assms in transfer)
+  fix G :: "'a set" and A :: "'a \<Rightarrow> 'b" and B :: "'a \<Rightarrow> 'b" and S :: "'a set"
+  assume a1: "bounded_clinear A"
+  assume a2: "bounded_clinear B"
+  assume a3: "\<And>x. x \<in> G \<Longrightarrow> A x = B x"
+  assume a4: "S \<subseteq> closure (cspan G)"
+
+  have "A ` closure S = B ` closure S"
+    by (smt (verit, best) UnCI a1 a2 a3 a4 bounded_clinear_eq_on closure_Un closure_closure image_cong sup.absorb_iff1)
+  then show "closure (A ` S) = closure (B ` S)"
+    by (metis Complex_Vector_Spaces0.bounded_clinear.bounded_linear a1 a2 closure_bounded_linear_image_subset_eq)
+qed
+
+(* Renamed from apply_left_neutral *)
+lemma cblinfun_fixes_range:
+  assumes "A o\<^sub>C\<^sub>L B = B" and "\<psi> \<in> space_as_set (B *\<^sub>S top)"
+  shows "A *\<^sub>V \<psi> = \<psi>" 
+proof-
+  define rangeB rangeB' where "rangeB = space_as_set (B *\<^sub>S top)" 
+    and "rangeB' = range (cblinfun_apply B)"
+  from assms have "\<psi> \<in> closure rangeB'"
+    by (simp add: cblinfun_image.rep_eq rangeB'_def top_ccsubspace.rep_eq)
+
+  then obtain \<psi>i where \<psi>i_lim: "\<psi>i \<longlonglongrightarrow> \<psi>" and \<psi>i_B: "\<psi>i i \<in> rangeB'" for i
+    using closure_sequential by blast
+  have A_invariant: "A *\<^sub>V \<psi>i i = \<psi>i i" 
+    for i
+  proof-
+    from \<psi>i_B obtain \<phi> where \<phi>: "\<psi>i i = B *\<^sub>V \<phi>"
+      using rangeB'_def by blast      
+    hence "A *\<^sub>V \<psi>i i = (A o\<^sub>C\<^sub>L B) *\<^sub>V \<phi>"
+      by (simp add: cblinfun_compose.rep_eq)
+    also have "\<dots> = B *\<^sub>V \<phi>"
+      by (simp add: assms)
+    also have "\<dots> = \<psi>i i"
+      by (simp add: \<phi>)
+    finally show ?thesis.
+  qed
+  from \<psi>i_lim have "(\<lambda>i. A *\<^sub>V (\<psi>i i)) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
+    by (rule isCont_tendsto_compose[rotated], simp)
+  with A_invariant have "(\<lambda>i. \<psi>i i) \<longlonglongrightarrow> A *\<^sub>V \<psi>"
+    by auto
+  with \<psi>i_lim show "A *\<^sub>V \<psi> = \<psi>"
+    using LIMSEQ_unique by blast
+qed
+
+
+(* TODO: rename (does not involve scaleC) *)
+lemma zero_scaleC_ccsubspace[simp]: "0 *\<^sub>S S = (0::_ ccsubspace)"
+  apply transfer by (simp add: complex_vector.subspace_0 image_constant[where x=0])
+
+
+(* Renamed from mult_INF_general *)
+lemma cblinfun_image_INF_eq_general:
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace"
+    and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L'c::chilbert_space"
+    and Uinv :: "'c \<Rightarrow>\<^sub>C\<^sub>L'b" 
+  assumes UinvUUinv: "Uinv o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L Uinv = Uinv" and UUinvU: "U o\<^sub>C\<^sub>L Uinv o\<^sub>C\<^sub>L U = U"
+      \<comment> \<open>Meaning: \<^term>\<open>Uinv\<close> is a Pseudoinverse of \<^term>\<open>U\<close>\<close>
+    and V: "\<And>i. V i \<le> Uinv *\<^sub>S top"
+  shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
+proof (rule antisym)
+  show "U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S V i)"
+    by (rule cblinfun_image_INF_leq)
+next
+  define rangeU rangeUinv where "rangeU = U *\<^sub>S top" and "rangeUinv = Uinv *\<^sub>S top"
+  define INFUV INFV where INFUV_def: "INFUV = (INF i. U *\<^sub>S V i)" and INFV_def: "INFV = (INF i. V i)"
+  from assms have "V i \<le> rangeUinv" 
+    for i
+    unfolding rangeUinv_def by simp
+  moreover have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeUinv" 
+    for \<psi>
+    using UinvUUinv cblinfun_fixes_range rangeUinv_def that by fastforce
+  ultimately have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" 
+    for \<psi> i
+    using less_eq_ccsubspace.rep_eq that by blast
+  hence d1: "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>S (V i) = (V i)" for i
+  proof transfer
+    show "closure ((Uinv \<circ> U) ` V i) = V i"
+      if "pred_fun \<top> closed_csubspace V"
+        and "bounded_clinear Uinv"
+        and "bounded_clinear U"
+        and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> (Uinv \<circ> U) \<psi> = \<psi>"
+      for V :: "'a \<Rightarrow> 'b set"
+        and Uinv :: "'c \<Rightarrow> 'b"
+        and U :: "'b \<Rightarrow> 'c"
+        and i :: 'a
+      using that proof auto
+      show "x \<in> V i"
+        if "\<forall>x. closed_csubspace (V x)"
+          and "bounded_clinear Uinv"
+          and "bounded_clinear U"
+          and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> Uinv (U \<psi>) = \<psi>"
+          and "x \<in> closure (V i)"
+        for x :: 'b
+        using that
+        by (metis orthogonal_complement_of_closure closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
+      show "x \<in> closure (V i)"
+        if "\<forall>x. closed_csubspace (V x)"
+          and "bounded_clinear Uinv"
+          and "bounded_clinear U"
+          and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> Uinv (U \<psi>) = \<psi>"
+          and "x \<in> V i"
+        for x :: 'b
+        using that
+        using setdist_eq_0_sing_1 setdist_sing_in_set
+        by blast  
+    qed
+  qed     
+  have "U *\<^sub>S V i \<le> rangeU" for i
+    by (simp add: cblinfun_image_mono rangeU_def)
+  hence "INFUV \<le> rangeU"
+    unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
+  moreover have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
+    using UUinvU cblinfun_fixes_range rangeU_def that by fastforce
+  ultimately have x: "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
+    by (simp add: in_mono less_eq_ccsubspace.rep_eq that)
+
+  have "closure ((U \<circ> Uinv) ` INFUV) = INFUV"
+    if "closed_csubspace INFUV"
+      and "bounded_clinear U"
+      and "bounded_clinear Uinv"
+      and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> (U \<circ> Uinv) \<psi> = \<psi>"
+    for INFUV :: "'c set"
+      and U :: "'b \<Rightarrow> 'c"
+      and Uinv :: "'c \<Rightarrow> 'b"
+    using that proof auto
+    show "x \<in> INFUV"
+      if "closed_csubspace INFUV"
+        and "bounded_clinear U"
+        and "bounded_clinear Uinv"
+        and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> U (Uinv \<psi>) = \<psi>"
+        and "x \<in> closure INFUV"
+      for x :: 'c
+      using that
+      by (metis orthogonal_complement_of_closure closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
+    show "x \<in> closure INFUV"
+      if "closed_csubspace INFUV"
+        and "bounded_clinear U"
+        and "bounded_clinear Uinv"
+        and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> U (Uinv \<psi>) = \<psi>"
+        and "x \<in> INFUV"
+      for x :: 'c
+      using that
+      using setdist_eq_0_sing_1 setdist_sing_in_set
+      by (simp add: closed_csubspace.closed)  
+  qed
+  hence "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>S INFUV = INFUV"
+    by (metis (mono_tags, hide_lams) x cblinfun_image.rep_eq cblinfun_image_id id_cblinfun_apply image_cong 
+        space_as_set_inject)
+  hence "INFUV = U *\<^sub>S Uinv *\<^sub>S INFUV"
+    by (simp add: cblinfun_compose_image)
+  also have "\<dots> \<le> U *\<^sub>S (INF i. Uinv *\<^sub>S U *\<^sub>S V i)"
+    unfolding INFUV_def
+    by (metis cblinfun_image_mono cblinfun_image_INF_leq)    
+  also have "\<dots> = U *\<^sub>S INFV"
+    using d1
+    by (metis (no_types, lifting) INFV_def cblinfun_assoc_left(2) image_cong)
+  finally show "INFUV \<le> U *\<^sub>S INFV".
+qed
+
+(* Renamed from unitary_image *)
+lemma unitary_range[simp]: 
+  assumes "unitary U"
+  shows "U *\<^sub>S top = top"
+  using assms unfolding unitary_def apply transfer
+  by (metis closure_UNIV comp_apply surj_def) 
+
+
+lemma range_adjoint_isometry:
+  assumes "isometry U"
+  shows "U* *\<^sub>S top = top"
+proof-
+  from assms have "top = U* *\<^sub>S U *\<^sub>S top"
+    by (simp add: cblinfun_assoc_left(2))
+  also have "\<dots> \<le> U* *\<^sub>S top"
+    by (simp add: cblinfun_image_mono)
+  finally show ?thesis
+    using top.extremum_unique by blast
+qed
+
+
+(* Renamed from mult_INF *)
+lemma cblinfun_image_INF_eq[simp]: 
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace" 
+    and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L 'c::chilbert_space"
+  assumes \<open>isometry U\<close>
+  shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
+proof -
+  from \<open>isometry U\<close> have "U* o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L U* = U*"
+    unfolding isometry_def by simp
+  moreover from \<open>isometry U\<close> have "U o\<^sub>C\<^sub>L U* o\<^sub>C\<^sub>L U = U"
+    unfolding isometry_def
+    by (simp add: cblinfun_compose_assoc)
+  moreover have "V i \<le> U* *\<^sub>S top" for i
+    by (simp add: range_adjoint_isometry assms)
+  ultimately show ?thesis
+    by (rule cblinfun_image_INF_eq_general)
+qed
+
+
+(* TODO rename *)
+lemma mult_inf_distrib[simp]:
+  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
+    and X Y::"'a ccsubspace"
+  assumes "isometry U"
+  shows "U *\<^sub>S (inf X Y) = inf (U *\<^sub>S X) (U *\<^sub>S Y)"
+  using cblinfun_image_INF_eq[where V="\<lambda>b. if b then X else Y" and U=U]
+  unfolding INF_UNIV_bool_expand
+  using assms by auto
+
+
+(* Renamed from cblinfun_image_Span *)
+lemma cblinfun_image_ccspan: 
+  shows "A *\<^sub>S ccspan G = ccspan ((*\<^sub>V) A ` G)"
+  apply transfer
+  by (simp add: bounded_clinear.bounded_linear bounded_clinear_def closure_bounded_linear_image_subset_eq complex_vector.linear_span_image)
 
 subsection \<open>Sandwiches\<close>
 
@@ -1792,442 +1971,28 @@ proof -
     by blast
 qed
 
-subsection \<open>Option\<close>
 
-(* Renamed from inj_option *)
-definition "inj_map \<pi> = (\<forall>x y. \<pi> x = \<pi> y \<and> \<pi> x \<noteq> None \<longrightarrow> x = y)"
+(* Renamed from eigenspace_memberE *)
+lemma eigenspace_memberD:
+  assumes "x \<in> space_as_set (eigenspace e A)"
+  shows "A *\<^sub>V x = e *\<^sub>C x"
+  using assms unfolding eigenspace_def apply transfer by auto
 
-(* Renamed from inv_option *)
-definition "inv_map \<pi> = (\<lambda>y. if Some y \<in> range \<pi> then Some (inv \<pi> (Some y)) else None)"
+(* Renamed from kernel_memberE *)
+lemma kernel_memberD:
+  assumes "x \<in> space_as_set (kernel A)"
+  shows "A *\<^sub>V x = 0"
+  using assms apply transfer by auto
 
+lemma eigenspace_memberI:
+  assumes "A *\<^sub>V x = e *\<^sub>C x"
+  shows "x \<in> space_as_set (eigenspace e A)"
+  using assms unfolding eigenspace_def apply transfer by auto
 
-(* Renamed from inj_map_Some_pi *)
-lemma inj_map_total[simp]: "inj_map (Some o \<pi>) = inj \<pi>"
-  unfolding inj_map_def inj_def by simp
-
-lemma inj_map_Some[simp]: "inj_map Some"
-  by (simp add: inj_map_def)
-
-(* Renamed from inv_map_Some *)
-lemma inv_map_total: 
-  assumes "surj \<pi>"
-  shows "inv_map (Some o \<pi>) = Some o inv \<pi>"
-proof-
-  have "(if Some y \<in> range (\<lambda>x. Some (\<pi> x))
-          then Some (SOME x. Some (\<pi> x) = Some y)
-          else None) =
-         Some (SOME b. \<pi> b = y)"
-    if "surj \<pi>"
-    for y
-    using that by auto
-  hence  "surj \<pi> \<Longrightarrow>
-    (\<lambda>y. if Some y \<in> range (\<lambda>x. Some (\<pi> x))
-         then Some (SOME x. Some (\<pi> x) = Some y) else None) =
-    (\<lambda>x. Some (SOME xa. \<pi> xa = x))"
-    by (rule ext) 
-  thus ?thesis 
-    unfolding inv_map_def o_def inv_def
-    using assms by linarith
-qed
-
-lemma inj_map_map_comp[simp]: 
-  assumes a1: "inj_map f" and a2: "inj_map g" 
-  shows "inj_map (f \<circ>\<^sub>m g)"
-  using a1 a2
-  unfolding inj_map_def
-  by (metis (mono_tags, lifting) map_comp_def option.case_eq_if option.expand)
-
-lemma inj_map_inv_map[simp]: "inj_map (inv_map \<pi>)"
-proof (unfold inj_map_def, rule allI, rule allI, rule impI, erule conjE)
-  fix x y
-  assume same: "inv_map \<pi> x = inv_map \<pi> y"
-    and pix_not_None: "inv_map \<pi> x \<noteq> None"
-  have x_pi: "Some x \<in> range \<pi>" 
-    using pix_not_None unfolding inv_map_def apply auto
-    by (meson option.distinct(1))
-  have y_pi: "Some y \<in> range \<pi>" 
-    using pix_not_None unfolding same unfolding inv_map_def apply auto
-    by (meson option.distinct(1))
-  have "inv_map \<pi> x = Some (Hilbert_Choice.inv \<pi> (Some x))"
-    unfolding inv_map_def using x_pi by simp
-  moreover have "inv_map \<pi> y = Some (Hilbert_Choice.inv \<pi> (Some y))"
-    unfolding inv_map_def using y_pi by simp
-  ultimately have "Hilbert_Choice.inv \<pi> (Some x) = Hilbert_Choice.inv \<pi> (Some y)"
-    using same by simp
-  thus "x = y"
-    by (meson inv_into_injective option.inject x_pi y_pi)
-qed
-
-subsection \<open>New/restored things\<close>
-
-
-
-(* lemma rel_interior_sing_generalized:
-  fixes a :: "'n::chilbert_space"
-  shows "rel_interior {a} = {a}"
-  apply (auto simp: rel_interior_ball)
-  by (metis affine_sing gt_ex le_infI2 subset_hull subset_singleton_iff) *)
-
-
-
-
-
-lemma range_adjoint_isometry:
-  assumes "isometry U"
-  shows "U* *\<^sub>S top = top"
-proof-
-  from assms have "top = U* *\<^sub>S U *\<^sub>S top"
-    by (simp add: cblinfun_assoc_left(2))
-  also have "\<dots> \<le> U* *\<^sub>S top"
-    by (simp add: cblinfun_image_mono)
-  finally show ?thesis
-    using top.extremum_unique by blast
-qed
-
-(* Renamed from mult_INF_general *)
-lemma cblinfun_image_INF_eq_general:
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace"
-    and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L'c::chilbert_space"
-    and Uinv :: "'c \<Rightarrow>\<^sub>C\<^sub>L'b" 
-  assumes UinvUUinv: "Uinv o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L Uinv = Uinv" and UUinvU: "U o\<^sub>C\<^sub>L Uinv o\<^sub>C\<^sub>L U = U"
-      \<comment> \<open>Meaning: \<^term>\<open>Uinv\<close> is a Pseudoinverse of \<^term>\<open>U\<close>\<close>
-    and V: "\<And>i. V i \<le> Uinv *\<^sub>S top"
-  shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
-proof (rule antisym)
-  show "U *\<^sub>S (INF i. V i) \<le> (INF i. U *\<^sub>S V i)"
-    by (rule cblinfun_image_INF_leq)
-next
-  define rangeU rangeUinv where "rangeU = U *\<^sub>S top" and "rangeUinv = Uinv *\<^sub>S top"
-  define INFUV INFV where INFUV_def: "INFUV = (INF i. U *\<^sub>S V i)" and INFV_def: "INFV = (INF i. V i)"
-  from assms have "V i \<le> rangeUinv" 
-    for i
-    unfolding rangeUinv_def by simp
-  moreover have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeUinv" 
-    for \<psi>
-    using UinvUUinv cblinfun_fixes_range rangeUinv_def that by fastforce
-  ultimately have "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set (V i)" 
-    for \<psi> i
-    using less_eq_ccsubspace.rep_eq that by blast
-  hence d1: "(Uinv o\<^sub>C\<^sub>L U) *\<^sub>S (V i) = (V i)" for i
-  proof transfer
-    show "closure ((Uinv \<circ> U) ` V i) = V i"
-      if "pred_fun \<top> closed_csubspace V"
-        and "bounded_clinear Uinv"
-        and "bounded_clinear U"
-        and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> (Uinv \<circ> U) \<psi> = \<psi>"
-      for V :: "'a \<Rightarrow> 'b set"
-        and Uinv :: "'c \<Rightarrow> 'b"
-        and U :: "'b \<Rightarrow> 'c"
-        and i :: 'a
-      using that proof auto
-      show "x \<in> V i"
-        if "\<forall>x. closed_csubspace (V x)"
-          and "bounded_clinear Uinv"
-          and "bounded_clinear U"
-          and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> Uinv (U \<psi>) = \<psi>"
-          and "x \<in> closure (V i)"
-        for x :: 'b
-        using that
-        by (metis orthogonal_complement_of_closure closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
-      show "x \<in> closure (V i)"
-        if "\<forall>x. closed_csubspace (V x)"
-          and "bounded_clinear Uinv"
-          and "bounded_clinear U"
-          and "\<And>\<psi> i. \<psi> \<in> V i \<Longrightarrow> Uinv (U \<psi>) = \<psi>"
-          and "x \<in> V i"
-        for x :: 'b
-        using that
-        using setdist_eq_0_sing_1 setdist_sing_in_set
-        by blast  
-    qed
-  qed     
-  have "U *\<^sub>S V i \<le> rangeU" for i
-    by (simp add: cblinfun_image_mono rangeU_def)
-  hence "INFUV \<le> rangeU"
-    unfolding INFUV_def by (meson INF_lower UNIV_I order_trans)
-  moreover have "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set rangeU" for \<psi>
-    using UUinvU cblinfun_fixes_range rangeU_def that by fastforce
-  ultimately have x: "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>V \<psi> = \<psi>" if "\<psi> \<in> space_as_set INFUV" for \<psi>
-    by (simp add: in_mono less_eq_ccsubspace.rep_eq that)
-
-  have "closure ((U \<circ> Uinv) ` INFUV) = INFUV"
-    if "closed_csubspace INFUV"
-      and "bounded_clinear U"
-      and "bounded_clinear Uinv"
-      and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> (U \<circ> Uinv) \<psi> = \<psi>"
-    for INFUV :: "'c set"
-      and U :: "'b \<Rightarrow> 'c"
-      and Uinv :: "'c \<Rightarrow> 'b"
-    using that proof auto
-    show "x \<in> INFUV"
-      if "closed_csubspace INFUV"
-        and "bounded_clinear U"
-        and "bounded_clinear Uinv"
-        and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> U (Uinv \<psi>) = \<psi>"
-        and "x \<in> closure INFUV"
-      for x :: 'c
-      using that
-      by (metis orthogonal_complement_of_closure closed_csubspace.subspace double_orthogonal_complement_id closure_is_closed_csubspace) 
-    show "x \<in> closure INFUV"
-      if "closed_csubspace INFUV"
-        and "bounded_clinear U"
-        and "bounded_clinear Uinv"
-        and "\<And>\<psi>. \<psi> \<in> INFUV \<Longrightarrow> U (Uinv \<psi>) = \<psi>"
-        and "x \<in> INFUV"
-      for x :: 'c
-      using that
-      using setdist_eq_0_sing_1 setdist_sing_in_set
-      by (simp add: closed_csubspace.closed)  
-  qed
-  hence "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>S INFUV = INFUV"
-    by (metis (mono_tags, hide_lams) x cblinfun_image.rep_eq cblinfun_image_id id_cblinfun_apply image_cong 
-        space_as_set_inject)
-  hence "INFUV = U *\<^sub>S Uinv *\<^sub>S INFUV"
-    by (simp add: cblinfun_compose_image)
-  also have "\<dots> \<le> U *\<^sub>S (INF i. Uinv *\<^sub>S U *\<^sub>S V i)"
-    unfolding INFUV_def
-    by (metis cblinfun_image_mono cblinfun_image_INF_leq)    
-  also have "\<dots> = U *\<^sub>S INFV"
-    using d1
-    by (metis (no_types, lifting) INFV_def cblinfun_assoc_left(2) image_cong)
-  finally show "INFUV \<le> U *\<^sub>S INFV".
-qed
-
-(* Renamed from mult_INF *)
-lemma cblinfun_image_INF_eq[simp]: 
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace" 
-    and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L 'c::chilbert_space"
-  assumes \<open>isometry U\<close>
-  shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
-proof -
-  from \<open>isometry U\<close> have "U* o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L U* = U*"
-    unfolding isometry_def by simp
-  moreover from \<open>isometry U\<close> have "U o\<^sub>C\<^sub>L U* o\<^sub>C\<^sub>L U = U"
-    unfolding isometry_def
-    by (simp add: cblinfun_compose_assoc)
-  moreover have "V i \<le> U* *\<^sub>S top" for i
-    by (simp add: range_adjoint_isometry assms)
-  ultimately show ?thesis
-    by (rule cblinfun_image_INF_eq_general)
-qed
-
-
-(* Use le_Inf_iff instead *)
-(* lemma leq_INF[simp]:
-  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace"
-  shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)" *)
-
-(* Use cblinfun_apply_cblinfun_compose instead *)
-(* lemma times_applyOp: "(A o\<^sub>C\<^sub>L B) *\<^sub>V \<psi> = A *\<^sub>V (B *\<^sub>V \<psi>)" *)
-
-lemma mult_inf_distrib[simp]:
-  fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
-    and X Y::"'a ccsubspace"
-  assumes "isometry U"
-  shows "U *\<^sub>S (inf X Y) = inf (U *\<^sub>S X) (U *\<^sub>S Y)"
-  using cblinfun_image_INF_eq[where V="\<lambda>b. if b then X else Y" and U=U]
-  unfolding INF_UNIV_bool_expand
-  using assms by auto
-
-(* Use cblinfun.scaleC_left instead *)
-(* lemma applyOp_scaleC1[simp]: "(c *\<^sub>C A) *\<^sub>V \<psi> = c *\<^sub>C (A *\<^sub>V \<psi>)" *)
-
-(* Use cblinfun.scaleC_right instead *)
-(* lemma applyOp_scaleC2[simp]: "A *\<^sub>V (c *\<^sub>C \<psi>) = c *\<^sub>C (A *\<^sub>V \<psi>)" *)
-
-(* definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where
-  \<open>bifunctional x = (\<lambda>f. f x)\<close> *)
-
-(* lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) cblinfun \<Rightarrow> complex)\<close>
-  is bifunctional. *)
-
-lift_definition bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L (('a \<Rightarrow>\<^sub>C\<^sub>L complex) \<Rightarrow>\<^sub>C\<^sub>L complex)\<close>
-  is \<open>\<lambda>x f. f *\<^sub>V x\<close>
-  by (simp add: cblinfun.flip)
-
-lemma bifunctional_apply[simp]: \<open>(bifunctional *\<^sub>V x) *\<^sub>V f = f *\<^sub>V x\<close>
-  by (transfer fixing: x f, simp)
-
-lemma cblinfun_norm_geqI:
-  assumes \<open>norm (f *\<^sub>V x) / norm x \<ge> K\<close>
-  shows \<open>norm f \<ge> K\<close>
-  using assms apply transfer
-  by (smt (z3) bounded_clinear.bounded_linear le_onorm)
-
-lemma bifunctional_isometric[simp]: \<open>norm (bifunctional *\<^sub>V x) = norm x\<close> for x :: \<open>'a::complex_inner\<close>
-proof -
-  define f :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L complex\<close> where \<open>f = cBlinfun (\<lambda>y. cinner x y)\<close>
-  then have [simp]: \<open>f *\<^sub>V y = cinner x y\<close> for y
-    by (simp add: bounded_clinear_cBlinfun_apply bounded_clinear_cinner_right)
-  then have [simp]: \<open>norm f = norm x\<close>
-    apply (auto intro!: norm_cblinfun_eqI[where x=x] simp: power2_norm_eq_cinner[symmetric])
-    apply (smt (verit, best) norm_eq_sqrt_cinner norm_ge_zero power2_norm_eq_cinner real_div_sqrt)
-    using Cauchy_Schwarz_ineq2 by blast
-  show ?thesis
-    apply (auto intro!: norm_cblinfun_eqI[where x=f])
-    apply (metis norm_eq_sqrt_cinner norm_imp_pos_and_ge real_div_sqrt)
-    by (metis norm_cblinfun ordered_field_class.sign_simps(33))
-qed
-
-lemma norm_bifunctional[simp]: \<open>norm (bifunctional :: 'a::{complex_inner, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L _) = 1\<close>
-proof -
-  obtain x :: 'a where [simp]: \<open>norm x = 1\<close>
-    by (meson UNIV_not_singleton ex_norm1)
-  show ?thesis
-    by (auto intro!: norm_cblinfun_eqI[where x=x])
-qed
-
-(* Use norm_cblinfun instead *)
-(* lemma norm_of_cblinfun:
-  \<open>norm (L *\<^sub>V z) \<le> norm z * norm L\<close> *)
-
-(* Use norm_cblinfun instead *)
-(* lemma norm_of_cblinfun1:
-  assumes a1: "norm z = 1"
-  shows  "norm (L *\<^sub>V z) \<le> norm L" *)
-
-(* Use norm_cblinfun instead *)
-(* lemma norm_of_cblinfun2:
-  assumes a1: "norm z \<le> 1"
-  shows "norm (L *\<^sub>V z) \<le> norm L" *)
-
-(* lemma onormless1: 
-  assumes a1: "norm x < 1" and a2: "bounded_clinear f"
-  shows "norm (f x) \<le> onorm f"
-proof-
-  have "norm (f x) \<le> onorm f * norm x"
-    using a2 onorm
-    by (simp add: onorm bounded_clinear.bounded_linear)    
-  also have "\<dots> \<le> onorm f"
-    using a1 a2 mult_right_le_one_le onorm_pos_le
-    by (smt bounded_clinear.bounded_linear norm_not_less_zero) 
-  finally show ?thesis by blast
-qed *)
-
-(* lemma norm1_normless1_approx:
-  assumes a1: "norm t = 1" and a2: "e > 0"
-  shows "\<exists>s. norm s < 1 \<and> norm (t - s) < e"
-proof(cases "e > 1")
-  case True
-  thus ?thesis
-    by (smt a1 diff_zero norm_zero)     
-next
-  case False
-  define s where "s = (1-e/2) *\<^sub>R t"
-  have a1:"1-e/2 < 1"
-    by (simp add: a2)
-  moreover have "norm s = abs (1-e/2) * norm t"
-    unfolding s_def by auto
-  ultimately have b1: "norm s < 1"
-    using a1 False assms(1) by auto 
-
-  have "t - s = (e/2) *\<^sub>R t"
-    unfolding s_def
-    by (smt diff_eq_eq scaleR_collapse) 
-  hence "norm (t - s) = abs (e/2) * norm t"
-    by simp    
-  hence b2: "norm (t - s) < e"
-    using a1 assms(1) by auto 
-  from b1 b2 show ?thesis by blast
-qed *)
-
-(* lemma norm_of_cblinfun3:
-  fixes S::"'a::{complex_normed_vector,not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector"
-  shows "norm S = Sup {norm (S *\<^sub>V x)| x. norm x < 1}"
-proof transfer 
-  have a1: \<open>(UNIV::'a set) \<noteq> 0\<close>
-    by simp
-  fix S::\<open>'a \<Rightarrow> 'b\<close>
-  assume a2: \<open>bounded_clinear S\<close>
-  define X where X_def: "X = {norm (S x) |x. norm x < 1}"
-  define a where a_def: "a = onorm S"
-  have "x \<le> a"
-    if "x \<in> X"
-    for x
-  proof-
-    obtain x' where x2: "x = norm (S x')" and x3: "norm x' < 1"
-      using that X_def \<open>x \<in> X\<close> by auto 
-    have "norm (S x') \<le> onorm S"
-      using x3 a2 onormless1 bounded_clinear.bounded_linear by auto
-    hence "x \<le> onorm S"
-      by (simp add: x2) 
-    thus ?thesis
-      unfolding X_def a_def
-      by simp 
-  qed
-  moreover have "a \<le> y" 
-    if b1: "\<And>x. x \<in> X \<Longrightarrow> x \<le> y"
-    for y
-  proof-
-    have f1: "norm t < 1 \<Longrightarrow> norm (S t) \<le> y" for t
-      using b1
-      unfolding X_def by blast 
-    have "onorm S \<le> y+e" 
-      if e0:"e>0"      
-      for e
-    proof-
-      have \<open>bounded_clinear S\<close>
-        using a2
-        by (simp add: bounded_clinear.bounded_linear)
-      hence "onorm S = Sup { norm (S t) |t. norm t = 1 }"
-        using a1 onorm_sphere[where f = S]
-        by (simp add: bounded_clinear.bounded_linear)
-      hence u1: "onorm S - e/2 < Sup { norm (S t) |t. norm t = 1 }"
-        by (simp add: e0)        
-      moreover have u2: "{ norm (S t) |t. norm t = 1 } \<noteq> {}"
-      proof-
-        have "\<exists>t::'a. norm t = 1"
-          using a1 ex_norm1
-          by (simp add: ex_norm1) 
-        thus ?thesis
-          by simp 
-      qed
-      ultimately have u3: "\<exists>T\<in>{ norm (S t) |t. norm t = 1 }. onorm S - e/2 \<le> T"
-        using e0 Sup_real_def
-        by (meson less_cSupE less_eq_real_def)
-      hence "\<exists>t. norm t = 1 \<and> onorm S - e/2 \<le> norm (S t)"
-        by auto
-      then obtain t where s1: "norm t = 1" and s2: "onorm S - e/2 \<le> norm (S t)"
-        by blast
-      have "isCont S w" for w
-        using linear_continuous_at
-        by (simp add: a2 clinear_continuous_at)
-      hence "isCont (\<lambda>x. norm (S x)) w" for w
-        by simp
-      hence "e > 0 \<Longrightarrow> \<exists>\<delta>>0. \<forall>s. norm (t - s) < \<delta> \<longrightarrow>  norm (norm (S t) - norm (S s)) < e" for e
-        unfolding isCont_def LIM_def using dist_norm
-        by (metis dist_commute eq_iff_diff_eq_0 norm_eq_zero) 
-      hence "\<exists>\<delta>>0. \<forall>s. norm (t - s) < \<delta> \<longrightarrow> norm (norm (S t) - norm (S s)) < e/2"
-        using e0 half_gt_zero by blast
-      then obtain \<delta> where delta1: "\<delta>>0" and 
-        delta2: "\<forall>s. norm (t - s) < \<delta> \<longrightarrow> norm (norm (S t) - norm (S s)) < e/2"
-        by blast
-      have "\<exists>s. norm s < 1 \<and> norm (t - s) < \<delta>"        
-        by (simp add: norm1_normless1_approx delta1 s1) 
-      then obtain s where b1:"norm s < 1" and b2:"norm (t - s) < \<delta>"
-        by blast
-      have w:"norm (norm (S t) - norm (S s)) < e/2"
-        using b2 delta2 by auto
-      have "norm (S t) \<le> norm (S s) + norm (norm (S t) - norm (S s))"
-        by auto
-      hence "norm (S t) \<le> norm (S s) + e/2"
-        using w by linarith        
-      moreover have "norm (S s) \<le> y"
-        using f1
-        by (simp add: b1)         
-      ultimately show "onorm S \<le> y+e"
-        using s2 by linarith        
-    qed
-    hence "onorm S \<le> y"
-      using linordered_field_class.field_le_epsilon by blast      
-    thus "a \<le> y"
-      unfolding a_def by blast
-  qed
-  ultimately have "Sup X = a"
-    using cSup_eq by blast
-  thus "onorm S = Sup {norm (S x) |x. norm x < 1}"
-    unfolding X_def a_def by simp
-qed *)
+lemma kernel_memberI:
+  assumes "A *\<^sub>V x = 0"
+  shows "x \<in> space_as_set (kernel A)"
+  using assms apply transfer by auto
 
 subsection \<open>Isomorphisms and inverses\<close>
 
@@ -2256,41 +2021,158 @@ proof -
     by auto
 qed
 
-(* lemma cblinfun_inv_well_defined:
-  assumes a1: "iso_cblinfun A"
-  shows "\<exists>!B. A o\<^sub>C\<^sub>L B = id_cblinfun \<and> B o\<^sub>C\<^sub>L A = id_cblinfun"
-proof-
-  have \<open>B *\<^sub>V x = B' *\<^sub>V x\<close>
-    if \<open>A o\<^sub>C\<^sub>L B = id_cblinfun\<close> and \<open>B o\<^sub>C\<^sub>L A = id_cblinfun\<close> and \<open>A o\<^sub>C\<^sub>L B' = id_cblinfun\<close> and \<open>B' o\<^sub>C\<^sub>L A = id_cblinfun\<close>
-    for A::"'a \<Rightarrow>\<^sub>C\<^sub>L 'b" and B B' and x
-  proof-
-    have \<open>(A o\<^sub>C\<^sub>L B) *\<^sub>V x = x\<close>
-      using \<open>A o\<^sub>C\<^sub>L B = id_cblinfun\<close>
-      by simp
-    hence u1: \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B' *\<^sub>V x\<close>
-      by simp
-    have \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B' *\<^sub>V (A *\<^sub>V (B *\<^sub>V x))\<close>
-      by simp
-    also have \<open>\<dots> = (B' o\<^sub>C\<^sub>L A) *\<^sub>V (B *\<^sub>V x)\<close>
-      by simp
-    also have \<open>\<dots> = id_cblinfun *\<^sub>V (B *\<^sub>V x)\<close>
-      by (simp add: \<open>B' o\<^sub>C\<^sub>L A = id_cblinfun\<close>)
-    also have \<open>\<dots> = B *\<^sub>V x\<close>
-      by simp
-    finally have u2: \<open>B' *\<^sub>V ((A o\<^sub>C\<^sub>L B) *\<^sub>V x) = B *\<^sub>V x\<close>
-      by blast
-    show ?thesis
-      using u1 u2
-      by auto
-  qed
-  thus ?thesis
-    by (meson assms cblinfun_eqI iso_cblinfun_def)
-qed *)
 
 lemma cblinfun_inv_uniq:
   assumes "A o\<^sub>C\<^sub>L B = id_cblinfun" and "B o\<^sub>C\<^sub>L A = id_cblinfun"
   shows "cblinfun_inv A = B"
   using assms by (metis cblinfun_compose_assoc cblinfun_compose_id_right cblinfun_inv_left iso_cblinfun_def)
+
+subsection \<open>One-dimensional spaces\<close>
+
+
+instantiation cblinfun :: (one_dim, one_dim) complex_inner begin
+text \<open>Once we have a theory for the trace, we could instead define the Hilbert-Schmidt inner product
+  and relax the \<^class>\<open>one_dim\<close>-sort constraint to (\<^class>\<open>cfinite_dim\<close>,\<^class>\<open>complex_normed_vector\<close>) or similar\<close>
+definition "cinner_cblinfun (A::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) (B::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)
+             = cnj (one_dim_iso (A *\<^sub>V 1)) * one_dim_iso (B *\<^sub>V 1)"
+instance
+proof intro_classes
+  fix A B C :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    and c c' :: complex
+  show "\<langle>A, B\<rangle> = cnj \<langle>B, A\<rangle>"
+    unfolding cinner_cblinfun_def by auto
+  show "\<langle>A + B, C\<rangle> = \<langle>A, C\<rangle> + \<langle>B, C\<rangle>"
+    by (simp add: cinner_cblinfun_def algebra_simps plus_cblinfun.rep_eq) 
+  show "\<langle>c *\<^sub>C A, B\<rangle> = cnj c * \<langle>A, B\<rangle>"
+    by (simp add: cblinfun.scaleC_left cinner_cblinfun_def)
+  show "0 \<le> \<langle>A, A\<rangle>"
+    unfolding cinner_cblinfun_def by auto
+  have "bounded_clinear A \<Longrightarrow> A 1 = 0 \<Longrightarrow> A = (\<lambda>_. 0)"
+    for A::"'a \<Rightarrow> 'b"
+  proof (rule one_dim_clinear_eqI [where x = 1] , auto)
+    show "clinear A"
+      if "bounded_clinear A"
+        and "A 1 = 0"
+      for A :: "'a \<Rightarrow> 'b"
+      using that
+      by (simp add: bounded_clinear.clinear)
+    show "clinear ((\<lambda>_. 0)::'a \<Rightarrow> 'b)"
+      if "bounded_clinear A"
+        and "A 1 = 0"
+      for A :: "'a \<Rightarrow> 'b"
+      using that
+      by (simp add: complex_vector.module_hom_zero) 
+  qed
+  hence "A *\<^sub>V 1 = 0 \<Longrightarrow> A = 0"
+    by transfer
+  hence "one_dim_iso (A *\<^sub>V 1) = 0 \<Longrightarrow> A = 0"
+    by (metis one_dim_iso_of_zero one_dim_iso_inj)    
+  thus "(\<langle>A, A\<rangle> = 0) = (A = 0)"
+    by (auto simp: cinner_cblinfun_def)
+
+  show "norm A = sqrt (cmod \<langle>A, A\<rangle>)"
+    unfolding cinner_cblinfun_def 
+    apply transfer 
+    by (simp add: norm_mult abs_complex_def one_dim_onorm' cnj_x_x power2_eq_square bounded_clinear.clinear)
+qed
+end
+
+instantiation cblinfun :: (one_dim, one_dim) one_dim begin
+lift_definition one_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is "one_dim_iso"
+  by (rule bounded_clinear_one_dim_iso)
+lift_definition times_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+  is "\<lambda>f g. f o one_dim_iso o g"
+  by (simp add: comp_bounded_clinear)
+lift_definition inverse_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is
+  "\<lambda>f. ((*) (one_dim_iso (inverse (f 1)))) o one_dim_iso"
+  by (auto intro!: comp_bounded_clinear bounded_clinear_mult_right)
+definition divide_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" where
+  "divide_cblinfun A B = A * inverse B"
+definition "canonical_basis_cblinfun = [1 :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b]"
+instance
+proof intro_classes
+  let ?basis = "canonical_basis :: ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) list"
+  fix A B C :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
+    and c c' :: complex
+  show "distinct ?basis"
+    unfolding canonical_basis_cblinfun_def by simp
+  have "(1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<noteq> (0::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
+    by (metis cblinfun.zero_left one_cblinfun.rep_eq one_dim_iso_of_one zero_neq_one)
+  thus "cindependent (set ?basis)"
+    unfolding canonical_basis_cblinfun_def by simp
+
+  have "A \<in> cspan (set ?basis)" for A
+  proof -
+    define c :: complex where "c = one_dim_iso (A *\<^sub>V 1)"
+    have "A x = one_dim_iso (A 1) *\<^sub>C one_dim_iso x" for x
+      by (smt (z3) cblinfun.scaleC_right complex_vector.scale_left_commute one_dim_iso_idem one_dim_scaleC_1)
+    hence "A = one_dim_iso (A *\<^sub>V 1) *\<^sub>C 1"
+      apply transfer by metis
+    thus "A \<in> cspan (set ?basis)"
+      unfolding canonical_basis_cblinfun_def
+      by (smt complex_vector.span_base complex_vector.span_scale list.set_intros(1))
+  qed
+  thus "cspan (set ?basis) = UNIV" by auto
+
+  have "A = (1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Longrightarrow>
+    norm (1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = (1::real)"
+    apply transfer by simp
+  thus "A \<in> set ?basis \<Longrightarrow> norm A = 1"
+    unfolding canonical_basis_cblinfun_def 
+    by simp
+
+  show "?basis = [1]"
+    unfolding canonical_basis_cblinfun_def by simp
+  show "c *\<^sub>C 1 * c' *\<^sub>C 1 = (c * c') *\<^sub>C (1::'a\<Rightarrow>\<^sub>C\<^sub>L'b)"
+    apply transfer by auto
+  have "(1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = (0::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Longrightarrow> False"
+    by (metis cblinfun.zero_left one_cblinfun.rep_eq one_dim_iso_of_zero' zero_neq_neg_one)
+  thus "is_ortho_set (set ?basis)"
+    unfolding is_ortho_set_def canonical_basis_cblinfun_def by auto
+  show "A div B = A * inverse B"
+    by (simp add: divide_cblinfun_def)
+  show "inverse (c *\<^sub>C 1) = (1::'a\<Rightarrow>\<^sub>C\<^sub>L'b) /\<^sub>C c"
+    apply transfer by (simp add: o_def one_dim_inverse)
+qed
+end
+
+lemma id_cblinfun_eq_1[simp]: \<open>id_cblinfun = 1\<close>
+  apply transfer by auto
+
+(* Use id_cblinfun_eq_1 instead *)
+(* lemma one_dim_id_cblinfun: "1 = id_cblinfun" *)
+
+(* Renamed from one_dim_times[symmetric] *)
+lemma one_dim_apply_is_times[simp]: 
+  fixes A :: "'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'a" and B :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'a"
+  shows "A o\<^sub>C\<^sub>L B = A * B"
+  apply transfer by simp
+
+(* lemmas one_dim_apply_is_times_complex[simp] = one_dim_apply_is_times[where 'a=complex] *)
+
+lemma one_comp_one_cblinfun[simp]: "1 o\<^sub>C\<^sub>L 1 = 1"
+  apply transfer unfolding o_def by simp
+
+lemma one_cblinfun_adj[simp]: "1* = 1"
+  apply transfer by simp 
+
+
+lemma scaleC_1_right[simp]: \<open>scaleC x (1::'a::one_dim) = of_complex x\<close>
+  unfolding of_complex_def by simp
+
+(* Renamed from scaleC_1_left *)
+lemma scaleC_of_complex[simp]: \<open>scaleC x (of_complex y) = of_complex (x * y)\<close>
+  unfolding of_complex_def using scaleC_scaleC by blast
+
+lemma scaleC_1_apply[simp]: \<open>(x *\<^sub>C 1) *\<^sub>V y = x *\<^sub>C y\<close>
+  by (metis cblinfun.scaleC_left cblinfun_id_cblinfun_apply id_cblinfun_eq_1)
+
+lemma cblinfun_apply_1_left[simp]: \<open>1 *\<^sub>V y = y\<close>
+  by (metis cblinfun_id_cblinfun_apply id_cblinfun_eq_1)
+
+lemma of_complex_cblinfun_apply[simp]: \<open>of_complex x *\<^sub>V y = x *\<^sub>C y\<close>
+  unfolding of_complex_def
+  by (metis cblinfun.scaleC_left cblinfun_id_cblinfun_apply id_cblinfun_eq_1)
 
 subsection \<open>Loewner order\<close>
 
@@ -2443,20 +2325,7 @@ lemma positive_cblinfun_squareI: \<open>A = B* o\<^sub>C\<^sub>L B \<Longrightar
   apply (rule positive_cblinfunI)
   by (metis cblinfun_apply_cblinfun_compose cinner_adj_right cinner_ge_zero)
 
-
-
-subsection \<open>Recovered theorems\<close>
-
-
-lemma zero_scaleC_ccsubspace[simp]: "0 *\<^sub>S S = (0::_ ccsubspace)"
-  apply transfer by (simp add: complex_vector.subspace_0 image_constant[where x=0])
-
-(* Use ccsubspace_scaleC_invariant instead *)
-(* lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
-  for B::\<open>'a::complex_normed_vector ccsubspace\<close> *)
-
-(* Use cblinfun_compose_image instead *)
-(* lemma cblinfun_apply_assoc_subspace: "(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *\<^sub>S (B *\<^sub>S S)" *)
+subsection \<open>Embedding vectors to operators\<close>
 
 lift_definition vector_to_cblinfun :: \<open>'a::complex_normed_vector \<Rightarrow> 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'a\<close> is
   \<open>\<lambda>\<psi> \<phi>. one_dim_iso \<phi> *\<^sub>C \<psi>\<close>
@@ -2503,22 +2372,383 @@ proof (subst asm_rl [of "a *\<^sub>C \<psi> = (a *\<^sub>C id_cblinfun) *\<^sub>
 qed
 
 
-(* Use blinfun_of_cblinfun instead *)
-(* lift_definition cblinfun_to_blinfun::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
-  is \<open>(\<lambda>f. (( *\<^sub>V ) f))\<close>
-  apply transfer
-  by (simp add: bounded_clinear.bounded_linear)
+(* Renamed from vector_to_cblinfun_times_vec *)
+lemma vector_to_cblinfun_apply_one_dim[simp]:
+  shows "vector_to_cblinfun \<phi> *\<^sub>V \<gamma> = one_dim_iso \<gamma> *\<^sub>C \<phi>"
+  apply transfer by (rule refl)
 
-lemma cblinfun_to_blinfun_transfer[cblinfun_blinfun_transfer]:
-  includes lifting_syntax
-  shows "(blinfun_cblinfun_eq ===> (=)) (\<lambda>x. x) cblinfun_to_blinfun"
-  unfolding rel_fun_def blinfun_cblinfun_eq.rep_eq
-  apply transfer by auto
+(* Renamed from vector_to_cblinfun_adj_times_vec *)
+lemma vector_to_cblinfun_adj_apply[simp]:
+  shows "vector_to_cblinfun \<psi>* *\<^sub>V \<phi> = of_complex (cinner \<psi> \<phi>)"
+  by (simp add: cinner_adj_right one_dim_iso_def one_dim_iso_inj) 
 
-lemma cblinfun_to_blinfun_norm: "norm (cblinfun_to_blinfun F) = norm F"
-  using cblinfun_blinfun_transfer[transfer_rule] apply (rule TrueI)? (* Deletes current facts *)
-  apply transfer by simp *)
 
+(* Renamed from one_vector_to_cblinfun *)
+lemma vector_to_cblinfun_comp_one[simp]: 
+  "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L 1 
+     = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
+  apply (transfer fixing: s)
+  by fastforce
+
+
+lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
+  by (metis cblinfun.zero_left cblinfun_compose_zero_left vector_to_cblinfun_cblinfun_apply)
+
+lemma isometry_vector_to_cblinfun[simp]:
+  assumes "norm x = 1"
+  shows "isometry (vector_to_cblinfun x)"
+  using assms cnorm_eq_1 isometry_def by force
+
+lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = ccspan {x}"
+proof transfer
+  show "closure (range (\<lambda>\<phi>::'b. one_dim_iso \<phi> *\<^sub>C x)) = closure (cspan {x})"
+    for x :: 'a
+  proof (rule arg_cong [where f = closure])
+    have "k *\<^sub>C x \<in> range (\<lambda>\<phi>. one_dim_iso \<phi> *\<^sub>C x)" for k
+      by (smt (z3) id_apply one_dim_iso_id one_dim_iso_idem range_eqI)
+    thus "range (\<lambda>\<phi>. one_dim_iso (\<phi>::'b) *\<^sub>C x) = cspan {x}"
+      unfolding complex_vector.span_singleton
+      by auto
+  qed
+qed
+
+
+(* Renamed from vector_to_cblinfun_adj_applytor_to_cblinfun *)
+lemma vector_to_cblinfun_adj_comp_vector_to_cblinfun[simp]:
+  shows "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi> = cinner \<psi> \<phi> *\<^sub>C id_cblinfun"
+proof -
+  have "one_dim_iso \<gamma> *\<^sub>C one_dim_iso (of_complex \<langle>\<psi>, \<phi>\<rangle>) =
+    \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C one_dim_iso \<gamma>"
+    for \<gamma> :: "'c::one_dim"      
+    by (metis complex_vector.scale_left_commute of_complex_def one_dim_iso_of_one one_dim_iso_scaleC one_dim_scaleC_1)
+  hence "one_dim_iso ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>)
+      = one_dim_iso ((cinner \<psi> \<phi> *\<^sub>C id_cblinfun) *\<^sub>V \<gamma>)" 
+    for \<gamma> :: "'c::one_dim"
+    by simp
+  hence "((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C id_cblinfun) *\<^sub>V \<gamma>)" 
+    for \<gamma> :: "'c::one_dim"
+    by (rule one_dim_iso_inj)
+  thus ?thesis
+    using cblinfun_eqI[where x = "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>"
+        and y = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C id_cblinfun"]
+    by auto
+qed
+
+
+subsection \<open>Butterflies (rank-1 projectors)\<close>
+
+
+(* Renamed from butterfly_def' *)
+definition butterfly_def: "butterfly (s::'a::complex_normed_vector) (t::'b::chilbert_space)
+   = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun t :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
+
+abbreviation "selfbutter s \<equiv> butterfly s s"
+
+lemma butterfly_add_left: \<open>butterfly (a + a') b = butterfly a b + butterfly a' b\<close>
+  by (simp add: butterfly_def vector_to_cblinfun_add cbilinear_add_left bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose)
+
+lemma butterfly_add_right: \<open>butterfly a (b + b') = butterfly a b + butterfly a b'\<close>
+  by (simp add: butterfly_def adj_plus vector_to_cblinfun_add cblinfun_compose_add_right)
+
+(* Renamed from butterfly_def *)
+lemma butterfly_def_one_dim: "butterfly s t = (vector_to_cblinfun s :: 'c::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)
+                                          o\<^sub>C\<^sub>L (vector_to_cblinfun t :: 'c \<Rightarrow>\<^sub>C\<^sub>L _)*"
+  (is "_ = ?rhs") for s :: "'a::complex_normed_vector" and t :: "'b::chilbert_space"
+proof -
+  let ?isoAC = "1 :: 'c \<Rightarrow>\<^sub>C\<^sub>L complex"
+  let ?isoCA = "1 :: complex \<Rightarrow>\<^sub>C\<^sub>L 'c"
+  let ?vector = "vector_to_cblinfun :: _ \<Rightarrow> ('c \<Rightarrow>\<^sub>C\<^sub>L _)"
+
+  have "butterfly s t =
+    (?vector s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (?vector t o\<^sub>C\<^sub>L ?isoCA)*"
+    unfolding butterfly_def vector_to_cblinfun_comp_one by simp
+  also have "\<dots> = ?vector s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (?vector t)*"
+    by (metis (no_types, lifting) cblinfun_compose_assoc adj_cblinfun_compose)
+  also have "\<dots> = ?rhs"
+    by simp
+  finally show ?thesis
+    by simp
+qed
+
+
+(* Renamed from butterfly_comp_butterfly_right *)
+lemma butterfly_comp_cblinfun: "butterfly \<psi> \<phi> o\<^sub>C\<^sub>L a = butterfly \<psi> (a* *\<^sub>V \<phi>)"
+  unfolding butterfly_def
+  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_cblinfun_apply)  
+
+lemma cblinfun_comp_butterfly: "a o\<^sub>C\<^sub>L butterfly \<psi> \<phi> = butterfly (a *\<^sub>V \<psi>) \<phi>"
+  unfolding butterfly_def
+  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_cblinfun_apply)  
+
+lemma butterfly_apply[simp]: "butterfly \<psi> \<psi>' *\<^sub>V \<phi> = \<langle>\<psi>', \<phi>\<rangle> *\<^sub>C \<psi>"
+  by (simp add: butterfly_def scaleC_cblinfun.rep_eq)
+
+(* Renamed from butterfly_scaleC1 *)
+lemma butterfly_scaleC_left[simp]: "butterfly (c *\<^sub>C \<psi>) \<phi> = c *\<^sub>C butterfly \<psi> \<phi>"
+  unfolding butterfly_def vector_to_cblinfun_scaleC scaleC_adj
+  by (simp add: cnj_x_x)
+
+(* Renamed from butterfly_scaleC2 *)
+lemma butterfly_scaleC_right[simp]: "butterfly \<psi> (c *\<^sub>C \<phi>) = cnj c *\<^sub>C butterfly \<psi> \<phi>"
+  unfolding butterfly_def vector_to_cblinfun_scaleC scaleC_adj
+  by (simp add: cnj_x_x)
+
+(* Renamed from butterfly_scaleR1 *)
+lemma butterfly_scaleR_left[simp]: "butterfly (r *\<^sub>R \<psi>) \<phi> = r *\<^sub>C butterfly \<psi> \<phi>"
+  by (simp add: scaleR_scaleC)
+
+(* Renamed from butterfly_scaleR2 *)
+lemma butterfly_scaleR_right[simp]: "butterfly \<psi> (r *\<^sub>R \<phi>) = r *\<^sub>C butterfly \<psi> \<phi>"
+  by (simp add: butterfly_scaleC_right scaleR_scaleC)
+
+lemma butterfly_adjoint[simp]: "(butterfly \<psi> \<phi>)* = butterfly \<phi> \<psi>"
+  unfolding butterfly_def by auto
+
+(* Renamed from butterfly_times *)
+lemma butterfly_comp_butterfly[simp]: "butterfly \<psi>1 \<psi>2 o\<^sub>C\<^sub>L butterfly \<psi>3 \<psi>4 = \<langle>\<psi>2, \<psi>3\<rangle> *\<^sub>C butterfly \<psi>1 \<psi>4"
+  by (simp add: butterfly_comp_cblinfun)
+
+
+(* Renamed from butterfly_0 *)
+lemma butterfly_0_left[simp]: "butterfly 0 a = 0"
+  by (simp add: butterfly_def)
+
+(* Renamed from butterfly_0' *)
+lemma butterfly_0_right[simp]: "butterfly a 0 = 0"
+  by (simp add: butterfly_def)
+
+lemma norm_butterfly: "norm (butterfly \<psi> \<phi>) = norm \<psi> * norm \<phi>"
+proof (cases "\<phi>=0")
+  case True
+  then show ?thesis by simp
+next
+  case False
+  show ?thesis 
+    unfolding norm_cblinfun.rep_eq
+    thm onormI[OF _ False]
+  proof (rule onormI[OF _ False])
+    fix x 
+
+    have "cmod \<langle>\<phi>, x\<rangle> * norm \<psi> \<le> norm \<psi> * norm \<phi> * norm x"
+      by (metis ab_semigroup_mult_class.mult_ac(1) complex_inner_class.Cauchy_Schwarz_ineq2 mult.commute mult_left_mono norm_ge_zero)
+    thus "norm (butterfly \<psi> \<phi> *\<^sub>V x) \<le> norm \<psi> * norm \<phi> * norm x"
+      by (simp add: power2_eq_square)
+
+    show "norm (butterfly \<psi> \<phi> *\<^sub>V \<phi>) = norm \<psi> * norm \<phi> * norm \<phi>"
+      by (smt (z3) ab_semigroup_mult_class.mult_ac(1) butterfly_apply mult.commute norm_eq_sqrt_cinner norm_ge_zero norm_scaleC power2_eq_square real_sqrt_abs real_sqrt_eq_iff)
+  qed
+qed
+
+lemma bounded_sesquilinear_butterfly[bounded_sesquilinear]: \<open>bounded_sesquilinear (\<lambda>(b::'b::chilbert_space) (a::'a::chilbert_space). butterfly a b)\<close>
+proof standard
+  fix a a' :: 'a and b b' :: 'b and r :: complex
+  show \<open>butterfly (a + a') b = butterfly a b + butterfly a' b\<close>
+    by (rule butterfly_add_left)
+  show \<open>butterfly a (b + b') = butterfly a b + butterfly a b'\<close>  
+    by (rule butterfly_add_right)
+  show \<open>butterfly (r *\<^sub>C a) b = r *\<^sub>C butterfly a b\<close>
+    by simp
+  show \<open>butterfly a (r *\<^sub>C b) = cnj r *\<^sub>C butterfly a b\<close>
+    by simp
+  show \<open>\<exists>K. \<forall>b a. norm (butterfly a b) \<le> norm b * norm a * K \<close>
+    apply (rule exI[of _ 1])
+    by (simp add: norm_butterfly)
+qed
+
+(* Renamed from inj_selfbutter *)
+lemma inj_selfbutter_upto_phase: 
+  assumes "selfbutter x = selfbutter y"
+  shows "\<exists>c. cmod c = 1 \<and> x = c *\<^sub>C y"
+proof (cases "x = 0")
+  case True
+  from assms have "y = 0"
+    using norm_butterfly
+    by (metis True butterfly_0_left divisors_zero norm_eq_zero)
+  with True show ?thesis
+    using norm_one by fastforce
+next
+  case False
+  define c where "c = \<langle>y, x\<rangle> / \<langle>x, x\<rangle>"
+  have "\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x"
+    by (simp add: butterfly_apply)
+  also have "\<dots> = selfbutter y *\<^sub>V x"
+    using assms by simp
+  also have "\<dots> = \<langle>y, x\<rangle> *\<^sub>C y"
+    by (simp add: butterfly_apply)
+  finally have xcy: "x = c *\<^sub>C y"
+    by (simp add: c_def ceq_vector_fraction_iff)
+  have "cmod c * norm x = cmod c * norm y"
+    using assms norm_butterfly
+    by (smt (verit, ccfv_SIG) \<open>\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x\<close> \<open>selfbutter y *\<^sub>V x = \<langle>y, x\<rangle> *\<^sub>C y\<close> cinner_scaleC_right complex_vector.scale_left_commute complex_vector.scale_right_imp_eq mult_cancel_left norm_eq_sqrt_cinner norm_eq_zero scaleC_scaleC xcy)
+  also have "cmod c * norm y = norm (c *\<^sub>C y)"
+    by simp
+  also have "\<dots> = norm x"
+    unfolding xcy[symmetric] by simp
+  finally have c: "cmod c = 1"
+    by (simp add: False)
+  from c xcy show ?thesis
+    by auto
+qed
+
+
+(* Renamed from butterfly_proj *)
+lemma butterfly_eq_proj:
+  assumes "norm x = 1"
+  shows "selfbutter x = proj x"
+proof -
+  define B and \<phi> :: "complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
+    where "B = selfbutter x" and "\<phi> = vector_to_cblinfun x"
+  then have B: "B = \<phi> o\<^sub>C\<^sub>L \<phi>*"
+    unfolding butterfly_def by simp
+  have \<phi>adj\<phi>: "\<phi>* o\<^sub>C\<^sub>L \<phi> = id_cblinfun"    
+    using \<phi>_def assms isometry_def isometry_vector_to_cblinfun by blast
+  have "B o\<^sub>C\<^sub>L B = \<phi> o\<^sub>C\<^sub>L (\<phi>* o\<^sub>C\<^sub>L \<phi>) o\<^sub>C\<^sub>L \<phi>*"
+    by (simp add: B cblinfun_assoc_left(1))
+  also have "\<dots> = B"
+    unfolding \<phi>adj\<phi> by (simp add: B)
+  finally have idem: "B o\<^sub>C\<^sub>L B = B".
+  have herm: "B = B*"
+    unfolding B by simp
+  from idem herm have BProj: "B = Proj (B *\<^sub>S top)"
+    by (rule Proj_on_own_range'[symmetric])
+  have "B *\<^sub>S top = ccspan {x}"
+    by (simp add: B \<phi>_def assms cblinfun_compose_image range_adjoint_isometry)
+  with BProj show "B = proj x"
+    by simp
+qed
+
+lemma butterfly_is_Proj:
+  \<open>norm x = 1 \<Longrightarrow> is_Proj (selfbutter x)\<close>
+  by (subst butterfly_eq_proj, simp_all)
+
+lemma cspan_butterfly_UNIV:
+  assumes \<open>cspan basisA = UNIV\<close>
+  assumes \<open>cspan basisB = UNIV\<close>
+  assumes \<open>is_ortho_set basisB\<close>
+  assumes \<open>\<And>b. b \<in> basisB \<Longrightarrow> norm b = 1\<close>
+  shows \<open>cspan {butterfly a b| (a::'a::{complex_normed_vector}) (b::'b::{chilbert_space,cfinite_dim}). a \<in> basisA \<and> b \<in> basisB} = UNIV\<close>
+proof -
+  have F: \<open>\<exists>F\<in>{butterfly a b |a b. a \<in> basisA \<and> b \<in> basisB}. \<forall>b'\<in>basisB. F *\<^sub>V b' = (if b' = b then a else 0)\<close>
+    if \<open>a \<in> basisA\<close> and \<open>b \<in> basisB\<close> for a b
+    apply (rule bexI[where x=\<open>butterfly a b\<close>])
+    using assms that by (auto simp: is_ortho_set_def cnorm_eq_1)
+  show ?thesis
+    apply (rule cblinfun_cspan_UNIV[where basisA=basisB and basisB=basisA])
+    using assms apply auto[2]
+    using F by (smt (verit, ccfv_SIG) image_iff)
+qed
+
+lemma cindependent_butterfly: 
+  fixes basisA :: \<open>'a::chilbert_space set\<close> and basisB :: \<open>'b::chilbert_space set\<close>
+  assumes \<open>is_ortho_set basisA\<close> \<open>is_ortho_set basisB\<close>
+  assumes normA: \<open>\<And>a. a\<in>basisA \<Longrightarrow> norm a = 1\<close> and normB: \<open>\<And>b. b\<in>basisB \<Longrightarrow> norm b = 1\<close>
+  shows \<open>cindependent {butterfly a b| a b. a\<in>basisA \<and> b\<in>basisB}\<close>
+proof (unfold complex_vector.independent_explicit_module, intro allI impI, rename_tac T f g)
+  fix T :: \<open>('b \<Rightarrow>\<^sub>C\<^sub>L 'a) set\<close> and f :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'a \<Rightarrow> complex\<close> and g :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'a\<close>
+  assume \<open>finite T\<close>
+  assume T_subset: \<open>T \<subseteq> {butterfly a b |a b. a \<in> basisA \<and> b \<in> basisB}\<close>
+  define lin where \<open>lin = (\<Sum>g\<in>T. f g *\<^sub>C g)\<close>
+  assume \<open>lin = 0\<close>
+  assume \<open>g \<in> T\<close>
+  (* To show: f g = 0 *)
+  then obtain a b where g: \<open>g = butterfly a b\<close> and [simp]: \<open>a \<in> basisA\<close> \<open>b \<in> basisB\<close>
+    using T_subset by auto
+
+  have *: "(vector_to_cblinfun a)* *\<^sub>V f g *\<^sub>C g *\<^sub>V b = 0"
+    if \<open>g \<in> T - {butterfly a b}\<close> for g 
+  proof -
+    from that
+    obtain a' b' where g: \<open>g = butterfly a' b'\<close> and [simp]: \<open>a' \<in> basisA\<close> \<open>b' \<in> basisB\<close>
+      using T_subset by auto
+    from that have \<open>g \<noteq> butterfly a b\<close> by auto
+    with g consider (a) \<open>a\<noteq>a'\<close> | (b) \<open>b\<noteq>b'\<close>
+      by auto
+    then show \<open>(vector_to_cblinfun a)* *\<^sub>V f g *\<^sub>C g *\<^sub>V b = 0\<close>
+    proof cases
+      case a
+      then show ?thesis 
+        using  \<open>is_ortho_set basisA\<close> unfolding g 
+        by (auto simp: is_ortho_set_def butterfly_def scaleC_cblinfun.rep_eq)
+    next
+      case b
+      then show ?thesis
+        using  \<open>is_ortho_set basisB\<close> unfolding g 
+        by (auto simp: is_ortho_set_def butterfly_def scaleC_cblinfun.rep_eq)
+    qed
+  qed
+
+  have \<open>0 = (vector_to_cblinfun a)* *\<^sub>V lin *\<^sub>V b\<close>
+    using \<open>lin = 0\<close> by auto
+  also have \<open>\<dots> = (\<Sum>g\<in>T. (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b)\<close>
+    unfolding lin_def
+    apply (rule complex_vector.linear_sum)
+    by (smt (z3) cblinfun.scaleC_left cblinfun.scaleC_right cblinfun.add_right clinearI plus_cblinfun.rep_eq)
+  also have \<open>\<dots> = (\<Sum>g\<in>{butterfly a b}. (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b)\<close>
+    apply (rule sum.mono_neutral_right)
+    using \<open>finite T\<close> * \<open>g \<in> T\<close> g by auto
+  also have \<open>\<dots> = (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b\<close>
+    by (simp add: g)
+  also have \<open>\<dots> = f g\<close>
+    unfolding g 
+    using normA normB by (auto simp: butterfly_def scaleC_cblinfun.rep_eq cnorm_eq_1)
+  finally show \<open>f g = 0\<close>
+    by simp
+qed
+
+lemma clinear_eq_butterflyI:
+  fixes F G :: \<open>('a::{chilbert_space,cfinite_dim} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner) \<Rightarrow> 'c::complex_vector\<close>
+  assumes "clinear F" and "clinear G"
+  assumes \<open>cspan basisA = UNIV\<close> \<open>cspan basisB = UNIV\<close>
+  assumes \<open>is_ortho_set basisA\<close> \<open>is_ortho_set basisB\<close>
+  assumes "\<And>a b. a\<in>basisA \<Longrightarrow> b\<in>basisB \<Longrightarrow> F (butterfly a b) = G (butterfly a b)"
+  assumes \<open>\<And>b. b\<in>basisB \<Longrightarrow> norm b = 1\<close>
+  shows "F = G"
+  apply (rule complex_vector.linear_eq_on_span[where f=F, THEN ext, rotated 3])
+     apply (subst cspan_butterfly_UNIV)
+  using assms by auto
+
+subsection \<open>Bifunctionals\<close>
+
+lift_definition bifunctional :: \<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L (('a \<Rightarrow>\<^sub>C\<^sub>L complex) \<Rightarrow>\<^sub>C\<^sub>L complex)\<close>
+  is \<open>\<lambda>x f. f *\<^sub>V x\<close>
+  by (simp add: cblinfun.flip)
+
+lemma bifunctional_apply[simp]: \<open>(bifunctional *\<^sub>V x) *\<^sub>V f = f *\<^sub>V x\<close>
+  by (transfer fixing: x f, simp)
+
+
+(* definition bifunctional :: \<open>'a \<Rightarrow> (('a \<Rightarrow> complex) \<Rightarrow> complex)\<close> where
+  \<open>bifunctional x = (\<lambda>f. f x)\<close> *)
+
+(* lift_definition Bifunctional' :: \<open>'a::complex_normed_vector \<Rightarrow> (('a, complex) cblinfun \<Rightarrow> complex)\<close>
+  is bifunctional. *)
+
+lemma bifunctional_isometric[simp]: \<open>norm (bifunctional *\<^sub>V x) = norm x\<close> for x :: \<open>'a::complex_inner\<close>
+proof -
+  define f :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L complex\<close> where \<open>f = cBlinfun (\<lambda>y. cinner x y)\<close>
+  then have [simp]: \<open>f *\<^sub>V y = cinner x y\<close> for y
+    by (simp add: bounded_clinear_cBlinfun_apply bounded_clinear_cinner_right)
+  then have [simp]: \<open>norm f = norm x\<close>
+    apply (auto intro!: norm_cblinfun_eqI[where x=x] simp: power2_norm_eq_cinner[symmetric])
+    apply (smt (verit, best) norm_eq_sqrt_cinner norm_ge_zero power2_norm_eq_cinner real_div_sqrt)
+    using Cauchy_Schwarz_ineq2 by blast
+  show ?thesis
+    apply (auto intro!: norm_cblinfun_eqI[where x=f])
+    apply (metis norm_eq_sqrt_cinner norm_imp_pos_and_ge real_div_sqrt)
+    by (metis norm_cblinfun ordered_field_class.sign_simps(33))
+qed
+
+lemma norm_bifunctional[simp]: \<open>norm (bifunctional :: 'a::{complex_inner, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L _) = 1\<close>
+proof -
+  obtain x :: 'a where [simp]: \<open>norm x = 1\<close>
+    by (meson UNIV_not_singleton ex_norm1)
+  show ?thesis
+    by (auto intro!: norm_cblinfun_eqI[where x=x])
+qed
+
+subsection \<open>Recovered theorems\<close>
+
+(* TODO sort into sections *)
 
 (* Renamed from banach_steinhaus_cblinfun *)
 theorem cbanach_steinhaus:
@@ -2602,196 +2832,7 @@ proof transfer
     by (simp add: onorm_def) 
 qed
 
-(* Use cblinfun.sum_right instead *)
-(* lemma clinear_finite_sum:
-  shows "F *\<^sub>V (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>V a))" *)
-
-(* Renamed from vector_to_cblinfun_times_vec *)
-lemma vector_to_cblinfun_apply_one_dim[simp]:
-  shows "vector_to_cblinfun \<phi> *\<^sub>V \<gamma> = one_dim_iso \<gamma> *\<^sub>C \<phi>"
-  apply transfer by (rule refl)
-
-(* Renamed from vector_to_cblinfun_adj_times_vec *)
-lemma vector_to_cblinfun_adj_apply[simp]:
-  shows "vector_to_cblinfun \<psi>* *\<^sub>V \<phi> = of_complex (cinner \<psi> \<phi>)"
-  by (simp add: cinner_adj_right one_dim_iso_def one_dim_iso_inj) 
-
-instantiation cblinfun :: (one_dim, one_dim) complex_inner begin
-text \<open>Once we have a theory for the trace, we could instead define the Hilbert-Schmidt inner product
-  and relax the \<^class>\<open>one_dim\<close>-sort constraint to (\<^class>\<open>cfinite_dim\<close>,\<^class>\<open>complex_normed_vector\<close>) or similar\<close>
-definition "cinner_cblinfun (A::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) (B::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)
-             = cnj (one_dim_iso (A *\<^sub>V 1)) * one_dim_iso (B *\<^sub>V 1)"
-instance
-proof intro_classes
-  fix A B C :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
-    and c c' :: complex
-  show "\<langle>A, B\<rangle> = cnj \<langle>B, A\<rangle>"
-    unfolding cinner_cblinfun_def by auto
-  show "\<langle>A + B, C\<rangle> = \<langle>A, C\<rangle> + \<langle>B, C\<rangle>"
-    by (simp add: cinner_cblinfun_def algebra_simps plus_cblinfun.rep_eq) 
-  show "\<langle>c *\<^sub>C A, B\<rangle> = cnj c * \<langle>A, B\<rangle>"
-    by (simp add: cblinfun.scaleC_left cinner_cblinfun_def)
-  show "0 \<le> \<langle>A, A\<rangle>"
-    unfolding cinner_cblinfun_def by auto
-  have "bounded_clinear A \<Longrightarrow> A 1 = 0 \<Longrightarrow> A = (\<lambda>_. 0)"
-    for A::"'a \<Rightarrow> 'b"
-  proof (rule one_dim_clinear_eqI [where x = 1] , auto)
-    show "clinear A"
-      if "bounded_clinear A"
-        and "A 1 = 0"
-      for A :: "'a \<Rightarrow> 'b"
-      using that
-      by (simp add: bounded_clinear.clinear)
-    show "clinear ((\<lambda>_. 0)::'a \<Rightarrow> 'b)"
-      if "bounded_clinear A"
-        and "A 1 = 0"
-      for A :: "'a \<Rightarrow> 'b"
-      using that
-      by (simp add: complex_vector.module_hom_zero) 
-  qed
-  hence "A *\<^sub>V 1 = 0 \<Longrightarrow> A = 0"
-    by transfer
-  hence "one_dim_iso (A *\<^sub>V 1) = 0 \<Longrightarrow> A = 0"
-    by (metis one_dim_iso_of_zero one_dim_iso_inj)    
-  thus "(\<langle>A, A\<rangle> = 0) = (A = 0)"
-    by (auto simp: cinner_cblinfun_def)
-
-  show "norm A = sqrt (cmod \<langle>A, A\<rangle>)"
-    unfolding cinner_cblinfun_def 
-    apply transfer 
-    by (simp add: norm_mult abs_complex_def one_dim_onorm' cnj_x_x power2_eq_square bounded_clinear.clinear)
-qed
-end
-
-instantiation cblinfun :: (one_dim, one_dim) one_dim begin
-lift_definition one_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is "one_dim_iso"
-  by (rule bounded_clinear_one_dim_iso)
-lift_definition times_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
-  is "\<lambda>f g. f o one_dim_iso o g"
-  by (simp add: comp_bounded_clinear)
-lift_definition inverse_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" is
-  "\<lambda>f. ((*) (one_dim_iso (inverse (f 1)))) o one_dim_iso"
-  by (auto intro!: comp_bounded_clinear bounded_clinear_mult_right)
-definition divide_cblinfun :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b" where
-  "divide_cblinfun A B = A * inverse B"
-definition "canonical_basis_cblinfun = [1 :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b]"
-instance
-proof intro_classes
-  let ?basis = "canonical_basis :: ('a \<Rightarrow>\<^sub>C\<^sub>L 'b) list"
-  fix A B C :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
-    and c c' :: complex
-  show "distinct ?basis"
-    unfolding canonical_basis_cblinfun_def by simp
-  have "(1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<noteq> (0::'a \<Rightarrow>\<^sub>C\<^sub>L 'b)"
-    by (metis cblinfun.zero_left one_cblinfun.rep_eq one_dim_iso_of_one zero_neq_one)
-  thus "cindependent (set ?basis)"
-    unfolding canonical_basis_cblinfun_def by simp
-
-  have "A \<in> cspan (set ?basis)" for A
-  proof -
-    define c :: complex where "c = one_dim_iso (A *\<^sub>V 1)"
-    have "A x = one_dim_iso (A 1) *\<^sub>C one_dim_iso x" for x
-      by (smt (z3) cblinfun.scaleC_right complex_vector.scale_left_commute one_dim_iso_idem one_dim_scaleC_1)
-    hence "A = one_dim_iso (A *\<^sub>V 1) *\<^sub>C 1"
-      apply transfer by metis
-    thus "A \<in> cspan (set ?basis)"
-      unfolding canonical_basis_cblinfun_def
-      by (smt complex_vector.span_base complex_vector.span_scale list.set_intros(1))
-  qed
-  thus "cspan (set ?basis) = UNIV" by auto
-
-  have "A = (1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Longrightarrow>
-    norm (1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = (1::real)"
-    apply transfer by simp
-  thus "A \<in> set ?basis \<Longrightarrow> norm A = 1"
-    unfolding canonical_basis_cblinfun_def 
-    by simp
-
-  show "?basis = [1]"
-    unfolding canonical_basis_cblinfun_def by simp
-  show "c *\<^sub>C 1 * c' *\<^sub>C 1 = (c * c') *\<^sub>C (1::'a\<Rightarrow>\<^sub>C\<^sub>L'b)"
-    apply transfer by auto
-  have "(1::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) = (0::'a \<Rightarrow>\<^sub>C\<^sub>L 'b) \<Longrightarrow> False"
-    by (metis cblinfun.zero_left one_cblinfun.rep_eq one_dim_iso_of_zero' zero_neq_neg_one)
-  thus "is_ortho_set (set ?basis)"
-    unfolding is_ortho_set_def canonical_basis_cblinfun_def by auto
-  show "A div B = A * inverse B"
-    by (simp add: divide_cblinfun_def)
-  show "inverse (c *\<^sub>C 1) = (1::'a\<Rightarrow>\<^sub>C\<^sub>L'b) /\<^sub>C c"
-    apply transfer by (simp add: o_def one_dim_inverse)
-qed
-end
-
-lemma id_cblinfun_eq_1[simp]: \<open>id_cblinfun = 1\<close>
-  apply transfer by auto
-
-(* Use id_cblinfun_eq_1 instead *)
-(* lemma one_dim_id_cblinfun: "1 = id_cblinfun" *)
-
-(* Renamed from one_dim_times[symmetric] *)
-lemma one_dim_apply_is_times[simp]: 
-  fixes A :: "'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L 'a" and B :: "'a \<Rightarrow>\<^sub>C\<^sub>L 'a"
-  shows "A o\<^sub>C\<^sub>L B = A * B"
-  apply transfer by simp
-
-(* lemmas one_dim_apply_is_times_complex[simp] = one_dim_apply_is_times[where 'a=complex] *)
-
-lemma one_comp_one_cblinfun[simp]: "1 o\<^sub>C\<^sub>L 1 = 1"
-  apply transfer unfolding o_def by simp
-
-lemma one_cblinfun_adj[simp]: "1* = 1"
-  apply transfer by simp 
-
-(* Renamed from one_vector_to_cblinfun *)
-lemma vector_to_cblinfun_comp_one[simp]: 
-  "(vector_to_cblinfun s :: 'a::one_dim \<Rightarrow>\<^sub>C\<^sub>L _) o\<^sub>C\<^sub>L 1 
-     = (vector_to_cblinfun s :: 'b::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)"
-  apply (transfer fixing: s)
-  by fastforce
-
-(* Use norm_cblinfun_compose instead *)
-(* lemma norm_cblinfun_times: "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B" *)
-
-(* Use cblinfun_eqI instead *)
-(* lemma cblinfun_ext: 
-  includes cblinfun_notation
-  assumes "\<And>x::'a::chilbert_space. A *\<^sub>V x = B *\<^sub>V x"
-  shows "A = B"  *)
-
-(* Renamed from eigenspace_memberE *)
-lemma eigenspace_memberD:
-  assumes "x \<in> space_as_set (eigenspace e A)"
-  shows "A *\<^sub>V x = e *\<^sub>C x"
-  using assms unfolding eigenspace_def apply transfer by auto
-
-(* Renamed from kernel_memberE *)
-lemma kernel_memberD:
-  assumes "x \<in> space_as_set (kernel A)"
-  shows "A *\<^sub>V x = 0"
-  using assms apply transfer by auto
-
-lemma eigenspace_memberI:
-  assumes "A *\<^sub>V x = e *\<^sub>C x"
-  shows "x \<in> space_as_set (eigenspace e A)"
-  using assms unfolding eigenspace_def apply transfer by auto
-
-lemma kernel_memberI:
-  assumes "A *\<^sub>V x = 0"
-  shows "x \<in> space_as_set (kernel A)"
-  using assms apply transfer by auto
-
-(* Renamed from cblinfun_image_Span *)
-lemma cblinfun_image_ccspan: 
-  shows "A *\<^sub>S ccspan G = ccspan ((*\<^sub>V) A ` G)"
-  apply transfer
-  by (simp add: bounded_clinear.bounded_linear bounded_clinear_def closure_bounded_linear_image_subset_eq complex_vector.linear_span_image)
-
-(* Renamed from span_ortho_span *)
-lemma ccspan_leq_ortho_ccspan:
-  assumes "\<And>s t. s\<in>S \<Longrightarrow> t\<in>T \<Longrightarrow> is_orthogonal s t"
-  shows "ccspan S \<le> - (ccspan T)"
-  using assms apply transfer
-  by (smt (verit, ccfv_threshold) is_orthogonal_closure is_orthogonal_cspan is_orthogonal_sym orthogonal_complementI subsetI) 
+thm uminus_ccsubspace_def
 
 (* definition "positive_op A = (\<exists>B::'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L'a. A = B* o\<^sub>C\<^sub>L B)" *)
 
@@ -2817,49 +2858,10 @@ lemma ccspan_leq_ortho_ccspan:
   fixes A B
   shows "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B" *)
 
-lemma scaleC_1_right[simp]: \<open>scaleC x (1::'a::one_dim) = of_complex x\<close>
-  unfolding of_complex_def by simp
-
-(* Renamed from scaleC_1_left *)
-lemma scaleC_of_complex[simp]: \<open>scaleC x (of_complex y) = of_complex (x * y)\<close>
-  unfolding of_complex_def using scaleC_scaleC by blast
-
-lemma scaleC_1_apply[simp]: \<open>(x *\<^sub>C 1) *\<^sub>V y = x *\<^sub>C y\<close>
-  by (metis cblinfun.scaleC_left cblinfun_id_cblinfun_apply id_cblinfun_eq_1)
-
-lemma cblinfun_apply_1_left[simp]: \<open>1 *\<^sub>V y = y\<close>
-  by (metis cblinfun_id_cblinfun_apply id_cblinfun_eq_1)
-
-lemma of_complex_cblinfun_apply[simp]: \<open>of_complex x *\<^sub>V y = x *\<^sub>C y\<close>
-  unfolding of_complex_def
-  by (metis cblinfun.scaleC_left cblinfun_id_cblinfun_apply id_cblinfun_eq_1)
-
 (* This lemma is proven in Complex_Bounded_Linear_Function0 but we add the [simp]
    only here because we try to keep Complex_Bounded_Linear_Function0 as close to
    Bounded_Linear_Function as possible. *)
 declare scaleC_conv_of_complex[simp]
-
-(* Renamed from vector_to_cblinfun_adj_applytor_to_cblinfun *)
-lemma vector_to_cblinfun_adj_comp_vector_to_cblinfun[simp]:
-  shows "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi> = cinner \<psi> \<phi> *\<^sub>C id_cblinfun"
-proof -
-  have "one_dim_iso \<gamma> *\<^sub>C one_dim_iso (of_complex \<langle>\<psi>, \<phi>\<rangle>) =
-    \<langle>\<psi>, \<phi>\<rangle> *\<^sub>C one_dim_iso \<gamma>"
-    for \<gamma> :: "'c::one_dim"      
-    by (metis complex_vector.scale_left_commute of_complex_def one_dim_iso_of_one one_dim_iso_scaleC one_dim_scaleC_1)
-  hence "one_dim_iso ((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>)
-      = one_dim_iso ((cinner \<psi> \<phi> *\<^sub>C id_cblinfun) *\<^sub>V \<gamma>)" 
-    for \<gamma> :: "'c::one_dim"
-    by simp
-  hence "((vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>) *\<^sub>V \<gamma>) = ((cinner \<psi> \<phi> *\<^sub>C id_cblinfun) *\<^sub>V \<gamma>)" 
-    for \<gamma> :: "'c::one_dim"
-    by (rule one_dim_iso_inj)
-  thus ?thesis
-    using cblinfun_eqI[where x = "vector_to_cblinfun \<psi>* o\<^sub>C\<^sub>L vector_to_cblinfun \<phi>"
-        and y = "\<langle>\<psi>, \<phi>\<rangle> *\<^sub>C id_cblinfun"]
-    by auto
-qed
-
 
 lemma scaleC_cindependent:
   assumes a1: "cindependent (B::'a::complex_vector set)" and a3: "c \<noteq> 0"
@@ -3331,213 +3333,11 @@ subsection \<open>Unsorted\<close>
   assumes a1: "is_ortho_set (set (a#S))" and a2: "distinct (a#S)"
   shows "Proj (ccspan (set (a#S))) = Proj (ccspan {a}) + Proj (ccspan (set S))" *)
 
-(* Renamed from butterfly_def' *)
-definition butterfly_def: "butterfly (s::'a::complex_normed_vector) (t::'b::chilbert_space)
-   = vector_to_cblinfun s o\<^sub>C\<^sub>L (vector_to_cblinfun t :: complex \<Rightarrow>\<^sub>C\<^sub>L _)*"
-
-abbreviation "selfbutter s \<equiv> butterfly s s"
-
-lemma butterfly_add_left: \<open>butterfly (a + a') b = butterfly a b + butterfly a' b\<close>
-  by (simp add: butterfly_def vector_to_cblinfun_add cbilinear_add_left bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose)
-
-lemma butterfly_add_right: \<open>butterfly a (b + b') = butterfly a b + butterfly a b'\<close>
-  by (simp add: butterfly_def adj_plus vector_to_cblinfun_add cblinfun_compose_add_right)
-
-(* Renamed from butterfly_def *)
-lemma butterfly_def_one_dim: "butterfly s t = (vector_to_cblinfun s :: 'c::one_dim \<Rightarrow>\<^sub>C\<^sub>L _)
-                                          o\<^sub>C\<^sub>L (vector_to_cblinfun t :: 'c \<Rightarrow>\<^sub>C\<^sub>L _)*"
-  (is "_ = ?rhs") for s :: "'a::complex_normed_vector" and t :: "'b::chilbert_space"
-proof -
-  let ?isoAC = "1 :: 'c \<Rightarrow>\<^sub>C\<^sub>L complex"
-  let ?isoCA = "1 :: complex \<Rightarrow>\<^sub>C\<^sub>L 'c"
-  let ?vector = "vector_to_cblinfun :: _ \<Rightarrow> ('c \<Rightarrow>\<^sub>C\<^sub>L _)"
-
-  have "butterfly s t =
-    (?vector s o\<^sub>C\<^sub>L ?isoCA) o\<^sub>C\<^sub>L (?vector t o\<^sub>C\<^sub>L ?isoCA)*"
-    unfolding butterfly_def vector_to_cblinfun_comp_one by simp
-  also have "\<dots> = ?vector s o\<^sub>C\<^sub>L (?isoCA o\<^sub>C\<^sub>L ?isoCA*) o\<^sub>C\<^sub>L (?vector t)*"
-    by (metis (no_types, lifting) cblinfun_compose_assoc adj_cblinfun_compose)
-  also have "\<dots> = ?rhs"
-    by simp
-  finally show ?thesis
-    by simp
-qed
-
-
-(* Renamed from butterfly_comp_butterfly_right *)
-lemma butterfly_comp_cblinfun: "butterfly \<psi> \<phi> o\<^sub>C\<^sub>L a = butterfly \<psi> (a* *\<^sub>V \<phi>)"
-  unfolding butterfly_def
-  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_cblinfun_apply)  
-
-lemma cblinfun_comp_butterfly: "a o\<^sub>C\<^sub>L butterfly \<psi> \<phi> = butterfly (a *\<^sub>V \<psi>) \<phi>"
-  unfolding butterfly_def
-  by (simp add: cblinfun_compose_assoc vector_to_cblinfun_cblinfun_apply)  
-
-lemma butterfly_apply[simp]: "butterfly \<psi> \<psi>' *\<^sub>V \<phi> = \<langle>\<psi>', \<phi>\<rangle> *\<^sub>C \<psi>"
-  by (simp add: butterfly_def scaleC_cblinfun.rep_eq)
-
-(* Renamed from butterfly_scaleC1 *)
-lemma butterfly_scaleC_left[simp]: "butterfly (c *\<^sub>C \<psi>) \<phi> = c *\<^sub>C butterfly \<psi> \<phi>"
-  unfolding butterfly_def vector_to_cblinfun_scaleC scaleC_adj
-  by (simp add: cnj_x_x)
-
-(* Renamed from butterfly_scaleC2 *)
-lemma butterfly_scaleC_right[simp]: "butterfly \<psi> (c *\<^sub>C \<phi>) = cnj c *\<^sub>C butterfly \<psi> \<phi>"
-  unfolding butterfly_def vector_to_cblinfun_scaleC scaleC_adj
-  by (simp add: cnj_x_x)
-
-(* Renamed from butterfly_scaleR1 *)
-lemma butterfly_scaleR_left[simp]: "butterfly (r *\<^sub>R \<psi>) \<phi> = r *\<^sub>C butterfly \<psi> \<phi>"
-  by (simp add: scaleR_scaleC)
-
-(* Renamed from butterfly_scaleR2 *)
-lemma butterfly_scaleR_right[simp]: "butterfly \<psi> (r *\<^sub>R \<phi>) = r *\<^sub>C butterfly \<psi> \<phi>"
-  by (simp add: butterfly_scaleC_right scaleR_scaleC)
-
-lemma butterfly_adjoint[simp]: "(butterfly \<psi> \<phi>)* = butterfly \<phi> \<psi>"
-  unfolding butterfly_def by auto
-
-(* Renamed from butterfly_times *)
-lemma butterfly_comp_butterfly[simp]: "butterfly \<psi>1 \<psi>2 o\<^sub>C\<^sub>L butterfly \<psi>3 \<psi>4 = \<langle>\<psi>2, \<psi>3\<rangle> *\<^sub>C butterfly \<psi>1 \<psi>4"
-  by (simp add: butterfly_comp_cblinfun)
-
-lemma vector_to_cblinfun_0[simp]: "vector_to_cblinfun 0 = 0"
-  by (metis cblinfun.zero_left cblinfun_compose_zero_left vector_to_cblinfun_cblinfun_apply)
-
-(* Renamed from butterfly_0 *)
-lemma butterfly_0_left[simp]: "butterfly 0 a = 0"
-  by (simp add: butterfly_def)
-
-(* Renamed from butterfly_0' *)
-lemma butterfly_0_right[simp]: "butterfly a 0 = 0"
-  by (simp add: butterfly_def)
-
-lemma norm_butterfly: "norm (butterfly \<psi> \<phi>) = norm \<psi> * norm \<phi>"
-proof (cases "\<phi>=0")
-  case True
-  then show ?thesis by simp
-next
-  case False
-  show ?thesis 
-    unfolding norm_cblinfun.rep_eq
-    thm onormI[OF _ False]
-  proof (rule onormI[OF _ False])
-    fix x 
-
-    have "cmod \<langle>\<phi>, x\<rangle> * norm \<psi> \<le> norm \<psi> * norm \<phi> * norm x"
-      by (metis ab_semigroup_mult_class.mult_ac(1) complex_inner_class.Cauchy_Schwarz_ineq2 mult.commute mult_left_mono norm_ge_zero)
-    thus "norm (butterfly \<psi> \<phi> *\<^sub>V x) \<le> norm \<psi> * norm \<phi> * norm x"
-      by (simp add: power2_eq_square)
-
-    show "norm (butterfly \<psi> \<phi> *\<^sub>V \<phi>) = norm \<psi> * norm \<phi> * norm \<phi>"
-      by (smt (z3) ab_semigroup_mult_class.mult_ac(1) butterfly_apply mult.commute norm_eq_sqrt_cinner norm_ge_zero norm_scaleC power2_eq_square real_sqrt_abs real_sqrt_eq_iff)
-  qed
-qed
-
-lemma bounded_sesquilinear_butterfly[bounded_sesquilinear]: \<open>bounded_sesquilinear (\<lambda>(b::'b::chilbert_space) (a::'a::chilbert_space). butterfly a b)\<close>
-proof standard
-  fix a a' :: 'a and b b' :: 'b and r :: complex
-  show \<open>butterfly (a + a') b = butterfly a b + butterfly a' b\<close>
-    by (rule butterfly_add_left)
-  show \<open>butterfly a (b + b') = butterfly a b + butterfly a b'\<close>  
-    by (rule butterfly_add_right)
-  show \<open>butterfly (r *\<^sub>C a) b = r *\<^sub>C butterfly a b\<close>
-    by simp
-  show \<open>butterfly a (r *\<^sub>C b) = cnj r *\<^sub>C butterfly a b\<close>
-    by simp
-  show \<open>\<exists>K. \<forall>b a. norm (butterfly a b) \<le> norm b * norm a * K \<close>
-    apply (rule exI[of _ 1])
-    by (simp add: norm_butterfly)
-qed
-
-(* Renamed from inj_selfbutter *)
-lemma inj_selfbutter_upto_phase: 
-  assumes "selfbutter x = selfbutter y"
-  shows "\<exists>c. cmod c = 1 \<and> x = c *\<^sub>C y"
-proof (cases "x = 0")
-  case True
-  from assms have "y = 0"
-    using norm_butterfly
-    by (metis True butterfly_0_left divisors_zero norm_eq_zero)
-  with True show ?thesis
-    using norm_one by fastforce
-next
-  case False
-  define c where "c = \<langle>y, x\<rangle> / \<langle>x, x\<rangle>"
-  have "\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x"
-    by (simp add: butterfly_apply)
-  also have "\<dots> = selfbutter y *\<^sub>V x"
-    using assms by simp
-  also have "\<dots> = \<langle>y, x\<rangle> *\<^sub>C y"
-    by (simp add: butterfly_apply)
-  finally have xcy: "x = c *\<^sub>C y"
-    by (simp add: c_def ceq_vector_fraction_iff)
-  have "cmod c * norm x = cmod c * norm y"
-    using assms norm_butterfly
-    by (smt (verit, ccfv_SIG) \<open>\<langle>x, x\<rangle> *\<^sub>C x = selfbutter x *\<^sub>V x\<close> \<open>selfbutter y *\<^sub>V x = \<langle>y, x\<rangle> *\<^sub>C y\<close> cinner_scaleC_right complex_vector.scale_left_commute complex_vector.scale_right_imp_eq mult_cancel_left norm_eq_sqrt_cinner norm_eq_zero scaleC_scaleC xcy)
-  also have "cmod c * norm y = norm (c *\<^sub>C y)"
-    by simp
-  also have "\<dots> = norm x"
-    unfolding xcy[symmetric] by simp
-  finally have c: "cmod c = 1"
-    by (simp add: False)
-  from c xcy show ?thesis
-    by auto
-qed
-
-lemma isometry_vector_to_cblinfun[simp]:
-  assumes "norm x = 1"
-  shows "isometry (vector_to_cblinfun x)"
-  using assms cnorm_eq_1 isometry_def by force
-
-lemma image_vector_to_cblinfun[simp]: "vector_to_cblinfun x *\<^sub>S top = ccspan {x}"
-proof transfer
-  show "closure (range (\<lambda>\<phi>::'b. one_dim_iso \<phi> *\<^sub>C x)) = closure (cspan {x})"
-    for x :: 'a
-  proof (rule arg_cong [where f = closure])
-    have "k *\<^sub>C x \<in> range (\<lambda>\<phi>. one_dim_iso \<phi> *\<^sub>C x)" for k
-      by (smt (z3) id_apply one_dim_iso_id one_dim_iso_idem range_eqI)
-    thus "range (\<lambda>\<phi>. one_dim_iso (\<phi>::'b) *\<^sub>C x) = cspan {x}"
-      unfolding complex_vector.span_singleton
-      by auto
-  qed
-qed
-
 lemma cblinfun_compose_1_left[simp]: \<open>1 o\<^sub>C\<^sub>L x = x\<close>
   apply transfer by auto
 
 lemma cblinfun_compose_1_right[simp]: \<open>x o\<^sub>C\<^sub>L 1 = x\<close>
   apply transfer by auto
-
-(* Renamed from butterfly_proj *)
-lemma butterfly_eq_proj:
-  assumes "norm x = 1"
-  shows "selfbutter x = proj x"
-proof -
-  define B and \<phi> :: "complex \<Rightarrow>\<^sub>C\<^sub>L 'a"
-    where "B = selfbutter x" and "\<phi> = vector_to_cblinfun x"
-  then have B: "B = \<phi> o\<^sub>C\<^sub>L \<phi>*"
-    unfolding butterfly_def by simp
-  have \<phi>adj\<phi>: "\<phi>* o\<^sub>C\<^sub>L \<phi> = id_cblinfun"    
-    using \<phi>_def assms isometry_def isometry_vector_to_cblinfun by blast
-  have "B o\<^sub>C\<^sub>L B = \<phi> o\<^sub>C\<^sub>L (\<phi>* o\<^sub>C\<^sub>L \<phi>) o\<^sub>C\<^sub>L \<phi>*"
-    by (simp add: B cblinfun_assoc_left(1))
-  also have "\<dots> = B"
-    unfolding \<phi>adj\<phi> by (simp add: B)
-  finally have idem: "B o\<^sub>C\<^sub>L B = B".
-  have herm: "B = B*"
-    unfolding B by simp
-  from idem herm have BProj: "B = Proj (B *\<^sub>S top)"
-    by (rule Proj_on_own_range'[symmetric])
-  have "B *\<^sub>S top = ccspan {x}"
-    by (simp add: B \<phi>_def assms cblinfun_compose_image range_adjoint_isometry)
-  with BProj show "B = proj x"
-    by simp
-qed
-
-lemma butterfly_is_Proj:
-  \<open>norm x = 1 \<Longrightarrow> is_Proj (selfbutter x)\<close>
-  by (subst butterfly_eq_proj, simp_all)
 
 lemma Proj_bot[simp]: "Proj bot = 0"
   by (metis zero_scaleC_ccsubspace Proj_on_own_range' is_Proj_0 is_Proj_algebraic 
@@ -3857,91 +3657,6 @@ proof -
     by auto
 qed
 
-lemma cspan_butterfly_UNIV:
-  assumes \<open>cspan basisA = UNIV\<close>
-  assumes \<open>cspan basisB = UNIV\<close>
-  assumes \<open>is_ortho_set basisB\<close>
-  assumes \<open>\<And>b. b \<in> basisB \<Longrightarrow> norm b = 1\<close>
-  shows \<open>cspan {butterfly a b| (a::'a::{complex_normed_vector}) (b::'b::{chilbert_space,cfinite_dim}). a \<in> basisA \<and> b \<in> basisB} = UNIV\<close>
-proof -
-  have F: \<open>\<exists>F\<in>{butterfly a b |a b. a \<in> basisA \<and> b \<in> basisB}. \<forall>b'\<in>basisB. F *\<^sub>V b' = (if b' = b then a else 0)\<close>
-    if \<open>a \<in> basisA\<close> and \<open>b \<in> basisB\<close> for a b
-    apply (rule bexI[where x=\<open>butterfly a b\<close>])
-    using assms that by (auto simp: is_ortho_set_def cnorm_eq_1)
-  show ?thesis
-    apply (rule cblinfun_cspan_UNIV[where basisA=basisB and basisB=basisA])
-    using assms apply auto[2]
-    using F by (smt (verit, ccfv_SIG) image_iff)
-qed
-
-lemma cindependent_butterfly: 
-  fixes basisA :: \<open>'a::chilbert_space set\<close> and basisB :: \<open>'b::chilbert_space set\<close>
-  assumes \<open>is_ortho_set basisA\<close> \<open>is_ortho_set basisB\<close>
-  assumes normA: \<open>\<And>a. a\<in>basisA \<Longrightarrow> norm a = 1\<close> and normB: \<open>\<And>b. b\<in>basisB \<Longrightarrow> norm b = 1\<close>
-  shows \<open>cindependent {butterfly a b| a b. a\<in>basisA \<and> b\<in>basisB}\<close>
-proof (unfold complex_vector.independent_explicit_module, intro allI impI, rename_tac T f g)
-  fix T :: \<open>('b \<Rightarrow>\<^sub>C\<^sub>L 'a) set\<close> and f :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'a \<Rightarrow> complex\<close> and g :: \<open>'b \<Rightarrow>\<^sub>C\<^sub>L 'a\<close>
-  assume \<open>finite T\<close>
-  assume T_subset: \<open>T \<subseteq> {butterfly a b |a b. a \<in> basisA \<and> b \<in> basisB}\<close>
-  define lin where \<open>lin = (\<Sum>g\<in>T. f g *\<^sub>C g)\<close>
-  assume \<open>lin = 0\<close>
-  assume \<open>g \<in> T\<close>
-  (* To show: f g = 0 *)
-  then obtain a b where g: \<open>g = butterfly a b\<close> and [simp]: \<open>a \<in> basisA\<close> \<open>b \<in> basisB\<close>
-    using T_subset by auto
-
-  have *: "(vector_to_cblinfun a)* *\<^sub>V f g *\<^sub>C g *\<^sub>V b = 0"
-    if \<open>g \<in> T - {butterfly a b}\<close> for g 
-  proof -
-    from that
-    obtain a' b' where g: \<open>g = butterfly a' b'\<close> and [simp]: \<open>a' \<in> basisA\<close> \<open>b' \<in> basisB\<close>
-      using T_subset by auto
-    from that have \<open>g \<noteq> butterfly a b\<close> by auto
-    with g consider (a) \<open>a\<noteq>a'\<close> | (b) \<open>b\<noteq>b'\<close>
-      by auto
-    then show \<open>(vector_to_cblinfun a)* *\<^sub>V f g *\<^sub>C g *\<^sub>V b = 0\<close>
-    proof cases
-      case a
-      then show ?thesis 
-        using  \<open>is_ortho_set basisA\<close> unfolding g 
-        by (auto simp: is_ortho_set_def butterfly_def scaleC_cblinfun.rep_eq)
-    next
-      case b
-      then show ?thesis
-        using  \<open>is_ortho_set basisB\<close> unfolding g 
-        by (auto simp: is_ortho_set_def butterfly_def scaleC_cblinfun.rep_eq)
-    qed
-  qed
-
-  have \<open>0 = (vector_to_cblinfun a)* *\<^sub>V lin *\<^sub>V b\<close>
-    using \<open>lin = 0\<close> by auto
-  also have \<open>\<dots> = (\<Sum>g\<in>T. (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b)\<close>
-    unfolding lin_def
-    apply (rule complex_vector.linear_sum)
-    by (smt (z3) cblinfun.scaleC_left cblinfun.scaleC_right cblinfun.add_right clinearI plus_cblinfun.rep_eq)
-  also have \<open>\<dots> = (\<Sum>g\<in>{butterfly a b}. (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b)\<close>
-    apply (rule sum.mono_neutral_right)
-    using \<open>finite T\<close> * \<open>g \<in> T\<close> g by auto
-  also have \<open>\<dots> = (vector_to_cblinfun a)* *\<^sub>V (f g *\<^sub>C g) *\<^sub>V b\<close>
-    by (simp add: g)
-  also have \<open>\<dots> = f g\<close>
-    unfolding g 
-    using normA normB by (auto simp: butterfly_def scaleC_cblinfun.rep_eq cnorm_eq_1)
-  finally show \<open>f g = 0\<close>
-    by simp
-qed
-
-lemma clinear_eq_butterflyI:
-  fixes F G :: \<open>('a::{chilbert_space,cfinite_dim} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_inner) \<Rightarrow> 'c::complex_vector\<close>
-  assumes "clinear F" and "clinear G"
-  assumes \<open>cspan basisA = UNIV\<close> \<open>cspan basisB = UNIV\<close>
-  assumes \<open>is_ortho_set basisA\<close> \<open>is_ortho_set basisB\<close>
-  assumes "\<And>a b. a\<in>basisA \<Longrightarrow> b\<in>basisB \<Longrightarrow> F (butterfly a b) = G (butterfly a b)"
-  assumes \<open>\<And>b. b\<in>basisB \<Longrightarrow> norm b = 1\<close>
-  shows "F = G"
-  apply (rule complex_vector.linear_eq_on_span[where f=F, THEN ext, rotated 3])
-     apply (subst cspan_butterfly_UNIV)
-  using assms by auto
 
 instance cblinfun :: (\<open>{cfinite_dim,complex_normed_vector}\<close>, \<open>{cfinite_dim,complex_normed_vector}\<close>) cfinite_dim
 proof intro_classes
@@ -4003,5 +3718,95 @@ no_notation blinfun_apply (infixr "*\<^sub>V" 70)
 end
 
 unbundle no_cblinfun_notation
+
+
+
+(* lemma rel_interior_sing_generalized:
+  fixes a :: "'n::chilbert_space"
+  shows "rel_interior {a} = {a}"
+  apply (auto simp: rel_interior_ball)
+  by (metis affine_sing gt_ex le_infI2 subset_hull subset_singleton_iff) *)
+
+(* Use le_Inf_iff instead *)
+(* lemma leq_INF[simp]:
+  fixes V :: "'a \<Rightarrow> 'b::chilbert_space ccsubspace"
+  shows "(A \<le> (INF x. V x)) = (\<forall>x. A \<le> V x)" *)
+
+(* Use cblinfun_apply_cblinfun_compose instead *)
+(* lemma times_applyOp: "(A o\<^sub>C\<^sub>L B) *\<^sub>V \<psi> = A *\<^sub>V (B *\<^sub>V \<psi>)" *)
+
+(* Use cblinfun.scaleC_left instead *)
+(* lemma applyOp_scaleC1[simp]: "(c *\<^sub>C A) *\<^sub>V \<psi> = c *\<^sub>C (A *\<^sub>V \<psi>)" *)
+
+(* Use cblinfun.scaleC_right instead *)
+(* lemma applyOp_scaleC2[simp]: "A *\<^sub>V (c *\<^sub>C \<psi>) = c *\<^sub>C (A *\<^sub>V \<psi>)" *)
+
+(* Use norm_cblinfun instead *)
+(* lemma norm_of_cblinfun:
+  \<open>norm (L *\<^sub>V z) \<le> norm z * norm L\<close> *)
+
+(* Use norm_cblinfun instead *)
+(* lemma norm_of_cblinfun1:
+  assumes a1: "norm z = 1"
+  shows  "norm (L *\<^sub>V z) \<le> norm L" *)
+
+(* Use norm_cblinfun instead *)
+(* lemma norm_of_cblinfun2:
+  assumes a1: "norm z \<le> 1"
+  shows "norm (L *\<^sub>V z) \<le> norm L" *)
+
+(* lemma onormless1: 
+  assumes a1: "norm x < 1" and a2: "bounded_clinear f"
+  shows "norm (f x) \<le> onorm f" *)
+
+(* lemma norm1_normless1_approx:
+  assumes a1: "norm t = 1" and a2: "e > 0"
+  shows "\<exists>s. norm s < 1 \<and> norm (t - s) < e" *)
+
+(* lemma norm_of_cblinfun3:
+  fixes S::"'a::{complex_normed_vector,not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector"
+  shows "norm S = Sup {norm (S *\<^sub>V x)| x. norm x < 1}" *)
+
+
+(* Use ccsubspace_scaleC_invariant instead *)
+(* lemma one_times_op[simp]: "(1::complex) *\<^sub>C B = B"
+  for B::\<open>'a::complex_normed_vector ccsubspace\<close> *)
+
+(* Use cblinfun_compose_image instead *)
+(* lemma cblinfun_apply_assoc_subspace: "(A o\<^sub>C\<^sub>L B) *\<^sub>S S =  A *\<^sub>S (B *\<^sub>S S)" *)
+
+
+(* Use blinfun_of_cblinfun instead *)
+(* lift_definition cblinfun_to_blinfun::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector \<Rightarrow> ('a \<Rightarrow>\<^sub>L 'b)\<close> 
+  is \<open>(\<lambda>f. (( *\<^sub>V ) f))\<close>
+  apply transfer
+  by (simp add: bounded_clinear.bounded_linear)
+
+lemma cblinfun_to_blinfun_transfer[cblinfun_blinfun_transfer]:
+  includes lifting_syntax
+  shows "(blinfun_cblinfun_eq ===> (=)) (\<lambda>x. x) cblinfun_to_blinfun"
+  unfolding rel_fun_def blinfun_cblinfun_eq.rep_eq
+  apply transfer by auto
+
+lemma cblinfun_to_blinfun_norm: "norm (cblinfun_to_blinfun F) = norm F"
+  using cblinfun_blinfun_transfer[transfer_rule] apply (rule TrueI)? (* Deletes current facts *)
+  apply transfer by simp *)
+
+(* Use cblinfun.sum_right instead *)
+(* lemma clinear_finite_sum:
+  shows "F *\<^sub>V (\<Sum>a\<in>S. r a *\<^sub>C a) = (\<Sum>a\<in>S. r a *\<^sub>C (F *\<^sub>V a))" *)
+
+(* Use norm_cblinfun_compose instead *)
+(* lemma norm_cblinfun_times: "norm (A o\<^sub>C\<^sub>L B) \<le> norm A * norm B" *)
+
+(* Use cblinfun_eqI instead *)
+(* lemma cblinfun_ext: 
+  includes cblinfun_notation
+  assumes "\<And>x::'a::chilbert_space. A *\<^sub>V x = B *\<^sub>V x"
+  shows "A = B"  *)
+
+(* lemma cblinfun_inv_well_defined:
+  assumes a1: "iso_cblinfun A"
+  shows "\<exists>!B. A o\<^sub>C\<^sub>L B = id_cblinfun \<and> B o\<^sub>C\<^sub>L A = id_cblinfun" *)
 
 end
