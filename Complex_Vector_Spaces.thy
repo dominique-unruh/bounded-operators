@@ -3214,5 +3214,79 @@ lemma CARD_1_vec_0[simp]: \<open>(\<psi> :: _ ::{complex_vector,CARD_1}) = 0\<cl
   by auto
 
 
+lemma scaleC_cindependent:
+  assumes a1: "cindependent (B::'a::complex_vector set)" and a3: "c \<noteq> 0"
+  shows "cindependent ((*\<^sub>C) c ` B)"
+proof-
+  have "u y = 0"
+    if g1: "y\<in>S" and g2: "(\<Sum>x\<in>S. u x *\<^sub>C x) = 0" and g3: "finite S" and g4: "S\<subseteq>(*\<^sub>C) c ` B"
+    for u y S
+  proof-
+    define v where "v x = u (c *\<^sub>C x)" for x
+    obtain S' where "S'\<subseteq>B" and S_S': "S = (*\<^sub>C) c ` S'"
+      by (meson g4 subset_imageE)      
+    have "inj ((*\<^sub>C) c::'a\<Rightarrow>_)"
+      unfolding inj_def
+      using a3 by auto 
+    hence "finite S'"
+      using S_S' finite_imageD g3 subset_inj_on by blast            
+    have "t \<in> (*\<^sub>C) (inverse c) ` S"
+      if "t \<in> S'" for t
+    proof-
+      have "c *\<^sub>C t \<in> S"
+        using \<open>S = (*\<^sub>C) c ` S'\<close> that by blast
+      hence "(inverse c) *\<^sub>C (c *\<^sub>C t) \<in> (*\<^sub>C) (inverse c) ` S"
+        by blast
+      moreover have "(inverse c) *\<^sub>C (c *\<^sub>C t) = t"
+        by (simp add: a3)
+      ultimately show ?thesis by simp
+    qed
+    moreover have "t \<in> S'"
+      if "t \<in> (*\<^sub>C) (inverse c) ` S" for t
+    proof-
+      obtain t' where "t = (inverse c) *\<^sub>C t'" and "t' \<in> S"
+        using \<open>t \<in> (*\<^sub>C) (inverse c) ` S\<close> by auto
+      have "c *\<^sub>C t = c *\<^sub>C ((inverse c) *\<^sub>C t')"
+        using \<open>t = (inverse c) *\<^sub>C t'\<close> by simp
+      also have "\<dots> = (c * (inverse c)) *\<^sub>C t'"
+        by simp
+      also have "\<dots> = t'"
+        by (simp add: a3)
+      finally have "c *\<^sub>C t = t'".
+      thus ?thesis using \<open>t' \<in> S\<close>
+        using \<open>S = (*\<^sub>C) c ` S'\<close> a3 complex_vector.scale_left_imp_eq by blast 
+    qed
+    ultimately have "S' = (*\<^sub>C) (inverse c) ` S"
+      by blast 
+    hence "inverse c *\<^sub>C y \<in> S'"
+      using that(1) by blast 
+    have t: "inj (((*\<^sub>C) c)::'a \<Rightarrow> _)"
+      using a3 complex_vector.injective_scale[where c = c]
+      by blast
+    have "0 = (\<Sum>x\<in>(*\<^sub>C) c ` S'. u x *\<^sub>C x)"
+      using \<open>S = (*\<^sub>C) c ` S'\<close> that(2) by auto
+    also have "\<dots> = (\<Sum>x\<in>S'. v x *\<^sub>C (c *\<^sub>C x))"
+      unfolding v_def
+      using t Groups_Big.comm_monoid_add_class.sum.reindex[where h = "((*\<^sub>C) c)" and A = S' 
+          and g = "\<lambda>x. u x *\<^sub>C x"] subset_inj_on by auto     
+    also have "\<dots> = c *\<^sub>C (\<Sum>x\<in>S'. v x *\<^sub>C x)"
+      by (metis (mono_tags, lifting) complex_vector.scale_left_commute scaleC_right.sum sum.cong)
+    finally have "0 = c *\<^sub>C (\<Sum>x\<in>S'. v x *\<^sub>C x)".
+    hence "(\<Sum>x\<in>S'. v x *\<^sub>C x) = 0"
+      using a3 by auto
+    hence "v (inverse c *\<^sub>C y) = 0"
+      using \<open>inverse c *\<^sub>C y \<in> S'\<close> \<open>finite S'\<close> \<open>S' \<subseteq> B\<close> a1
+        complex_vector.independentD
+      by blast 
+    thus "u y = 0"
+      unfolding v_def
+      by (simp add: a3) 
+  qed
+  thus ?thesis
+    using complex_vector.dependent_explicit
+    by (simp add: complex_vector.dependent_explicit ) 
+qed
+
+
 
 end

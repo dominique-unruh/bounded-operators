@@ -1510,7 +1510,7 @@ lemma projection_rank1:
   apply (rule fun_cong, rule projection_eqI', simp)
   by (rule is_projection_on_rank1)
 
-subsection \<open>Riesz Representation\<close>
+subsection \<open>Riesz-representation theorem\<close>
 
 (* definition proportion :: \<open>'a::complex_vector set \<Rightarrow> bool\<close> where
   \<open>proportion S =  (
