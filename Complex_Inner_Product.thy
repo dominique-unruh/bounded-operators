@@ -382,6 +382,19 @@ lemma ccspan_leq_ortho_ccspan:
   using assms apply transfer
   by (smt (verit, ccfv_threshold) is_orthogonal_closure is_orthogonal_cspan is_orthogonal_sym orthogonal_complementI subsetI) 
 
+
+lemma double_orthogonal_complement_increasing[simp]:
+  shows "M \<subseteq> orthogonal_complement (orthogonal_complement M)"
+proof (rule subsetI)
+  fix x assume s1: "x \<in> M"
+  have \<open>\<forall> y \<in> (orthogonal_complement M). \<langle> x, y \<rangle> = 0\<close>
+    using s1 orthogonal_complement_orthoI' by auto
+  hence \<open>x \<in> orthogonal_complement (orthogonal_complement M)\<close>
+    by (simp add: orthogonal_complement_def)
+  then show "x \<in> orthogonal_complement (orthogonal_complement M)"
+    by blast
+qed
+
 subsection \<open>Minimum distance\<close>
 
 lemma smallest_norm_exists:
@@ -600,70 +613,7 @@ qed
 (* Use closed_translation instead
 lemma TransClosed:
   assumes t1:  \<open>closed (S::('a::{topological_ab_group_add,t2_space,first_countable_topology}) set)\<close>
-  shows "closed {s + h| s. s \<in> S}"
-proof-
-  have \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in> S) \<longrightarrow> lim r \<in> S\<close>
-    using closed_sequentially convergent_LIMSEQ_iff t1 by blast
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. r n \<in>  {s | s. s \<in> S}) 
-          \<longrightarrow> lim (\<lambda> n. (r n)) \<in>  {s | s. s \<in> S}\<close>
-    by simp
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n) \<in>  {s | s. s \<in> S}) 
-          \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
-    by blast
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) 
-            \<longrightarrow> lim (\<lambda> n. (r n))+h \<in>  {s+h | s. s \<in> S}\<close>
-    by simp
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) 
-            \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in>  {s+h | s. s \<in> S}\<close>
-    by auto
-  have \<open>(lim r) + h = lim (\<lambda> n. (r n)+h)\<close> 
-    if r1: \<open>convergent r\<close>    
-    for r::\<open>nat \<Rightarrow> 'a\<close>
-  proof-
-    obtain R where \<open>r \<longlonglongrightarrow> R\<close>
-      using convergent_def r1 by auto
-    have \<open>(\<lambda> n. h) \<longlonglongrightarrow> h\<close>
-      by simp
-    have \<open>(\<lambda> n. (r n)+h) \<longlonglongrightarrow> R + h\<close>  
-      using  \<open>r \<longlonglongrightarrow> R\<close>  \<open>(\<lambda> n. h) \<longlonglongrightarrow> h\<close> tendsto_add
-      by fastforce
-    thus ?thesis 
-      by (metis \<open>r \<longlonglongrightarrow> R\<close> limI)
-  qed
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in>  {s+h | s. s \<in> S}\<close>
-    using  \<open>\<forall> r::nat \<Rightarrow> 'a. convergent r \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n))+lim (\<lambda> n. h) \<in> {s+h | s. s \<in> S}\<close>
-      add_diff_cancel_left' by auto
-  hence \<open>\<forall> r::nat \<Rightarrow> 'a. convergent (\<lambda> n. (r n)+h) \<and> (\<forall> n::nat. (r n)+h \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. (r n)+h) \<in> {s+h | s. s \<in> S}\<close>
-    using convergent_add_const_right_iff by blast
-  have \<open>\<exists>s. lim t = s + h \<and> s \<in> S \<close> 
-    if t1: \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S) \<close>
-      and t2: \<open>convergent t\<close> and t3: \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
-    for t
-  proof-
-    obtain r::\<open>nat \<Rightarrow> 'a\<close> where \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close> using  \<open>\<forall>n. \<exists>s. t n = s + h \<and> s \<in> S\<close>
-      by metis
-    from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
-    have  \<open>\<forall>n. t n = (r n) + h\<close> by simp
-    from  \<open>\<forall>n. t n = (r n) + h \<and> r n \<in> S\<close>
-    have  \<open>\<forall>n. r n \<in> S\<close> by simp
-    have \<open>convergent (\<lambda>n. t n) \<close>
-      by (simp add: t2) 
-    hence \<open>convergent (\<lambda>n. (r n) + h)\<close> using   \<open>\<forall>n. t n = (r n) + h\<close> 
-      by simp
-    have \<open>\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S\<close> 
-      using \<open>\<forall>n. t n = r n + h \<and> r n \<in> S\<close> \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n \<in> S) \<longrightarrow> (\<exists>s. lim (\<lambda>n. r n + h) = s + h \<and> s \<in> S)\<close> \<open>convergent (\<lambda>n. r n + h)\<close> by auto
-    hence \<open>\<exists>s. lim (\<lambda>n. t n) = s + h \<and> s \<in> S\<close> using  \<open>\<forall>n. t n = (r n) + h\<close> by simp
-    hence \<open>\<exists>s. lim t = s + h \<and> s \<in> S\<close> by simp
-    thus ?thesis by blast
-  qed
-  hence \<open>\<forall> t::nat \<Rightarrow> 'a. convergent (\<lambda> n. t n) \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim (\<lambda> n. t n) \<in> {s+h | s. s \<in> S}\<close>
-    using \<open>\<forall>r. convergent (\<lambda>n. r n + h) \<and> (\<forall>n. r n + h \<in> {s + h |s. s \<in> S}) \<longrightarrow> lim (\<lambda>n. r n + h) \<in> {s + h |s. s \<in> S}\<close> by auto   
-  hence \<open>\<forall> t::nat \<Rightarrow> 'a. convergent t \<and> (\<forall> n::nat. t n \<in>  {s+h | s. s \<in> S}) \<longrightarrow> lim t \<in> {s+h | s. s \<in> S}\<close>
-    by simp
-  thus ?thesis unfolding convergent_LIMSEQ_iff 
-    by (metis (no_types, lifting) closed_sequential_limits limI)
-qed
-*)
+  shows "closed {s + h| s. s \<in> S}" *)
 
 theorem smallest_dist_exists:
   \<comment> \<open>Theorem 2.5 in @{cite conway2013course}\<close> 
@@ -1213,20 +1163,6 @@ theorem projectionPropertiesE:
   assumes a1: "closed_csubspace M"
   shows "range (projection M) = M"
 *)
-
-(* TODO: move orthogonal_complement into corresponding section where possible *)
-
-lemma double_orthogonal_complement_increasing[simp]:
-  shows "M \<subseteq> orthogonal_complement (orthogonal_complement M)"
-proof (rule subsetI)
-  fix x assume s1: "x \<in> M"
-  have \<open>\<forall> y \<in> (orthogonal_complement M). \<langle> x, y \<rangle> = 0\<close>
-    using s1 orthogonal_complement_orthoI' by auto
-  hence \<open>x \<in> orthogonal_complement (orthogonal_complement M)\<close>
-    by (simp add: orthogonal_complement_def)
-  then show "x \<in> orthogonal_complement (orthogonal_complement M)"
-    by blast
-qed
 
 lemma is_projection_on_id_minus:
   fixes M :: \<open>'a::complex_inner set\<close>

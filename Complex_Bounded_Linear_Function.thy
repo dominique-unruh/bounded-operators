@@ -956,9 +956,6 @@ lemma blinfun_of_cblinfun_norm:
 
 subsection \<open>Composition\<close>
 
-(* TODO remove *)
-abbreviation (input) "timesOp == cblinfun_compose"
-
 lemma blinfun_of_cblinfun_cblinfun_compose:
   fixes f::\<open>'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector\<close>
     and g::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b\<close>
@@ -1637,8 +1634,8 @@ lemma cblinfun_image_INF_leq[simp]:
   apply transfer
   by (simp add: INT_greatest Inter_lower closure_mono image_mono) 
 
-(* Renamed from mult_inf_distrib' *)
-lemma mult_inf_distrib':
+(* Renamed from isometry_cblinfun_image_inf_distrib' *)
+lemma isometry_cblinfun_image_inf_distrib':
   fixes U::\<open>'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b::cbanach\<close> and B C::"'a ccsubspace"
   shows "U *\<^sub>S (inf B C) \<le> inf (U *\<^sub>S B) (U *\<^sub>S C)"
 proof -
@@ -1702,8 +1699,8 @@ proof-
 qed
 
 
-(* TODO: rename (does not involve scaleC) *)
-lemma zero_scaleC_ccsubspace[simp]: "0 *\<^sub>S S = (0::_ ccsubspace)"
+(* Renamed from zero_scaleC_ccsubspace *)
+lemma zero_cblinfun_image[simp]: "0 *\<^sub>S S = (0::_ ccsubspace)"
   apply transfer by (simp add: complex_vector.subspace_0 image_constant[where x=0])
 
 
@@ -1855,9 +1852,8 @@ proof -
     by (rule cblinfun_image_INF_eq_general)
 qed
 
-
-(* TODO rename *)
-lemma mult_inf_distrib[simp]:
+(* Renamed from: mult_inf_distrib *)
+lemma isometry_cblinfun_image_inf_distrib[simp]:
   fixes U::\<open>'a::chilbert_space \<Rightarrow>\<^sub>C\<^sub>L 'b::chilbert_space\<close>
     and X Y::"'a ccsubspace"
   assumes "isometry U"
@@ -2206,7 +2202,7 @@ lemma Proj_on_own_range:
 
 (* Renamed from Proj_leq *)
 lemma Proj_image_leq: "(Proj S) *\<^sub>S A \<le> S"
-  by (metis Proj_range inf_top_left le_inf_iff mult_inf_distrib')
+  by (metis Proj_range inf_top_left le_inf_iff isometry_cblinfun_image_inf_distrib')
 
 (* Renamed from Proj_times *)
 lemma Proj_sandwich:
@@ -2370,7 +2366,7 @@ lemma is_Proj_complement[simp]:
 
 
 lemma Proj_bot[simp]: "Proj bot = 0"
-  by (metis zero_scaleC_ccsubspace Proj_on_own_range' is_Proj_0 is_Proj_algebraic 
+  by (metis zero_cblinfun_image Proj_on_own_range' is_Proj_0 is_Proj_algebraic 
       zero_ccsubspace_def)
 
 lemma Proj_ortho_compl:

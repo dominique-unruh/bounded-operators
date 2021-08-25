@@ -68,6 +68,11 @@ lemma bounded_clinearI:
 lemma bounded_clinear_id[simp]: \<open>bounded_clinear id\<close>
   by (simp add: id_def)
 
+(* The following would be a natural inclusion of locales, but unfortunately it leads to
+   name conflicts upon interpretation of bounded_cbilinear *)
+(* sublocale bounded_cbilinear \<subseteq> bounded_bilinear
+  by (rule bounded_bilinear) *)
+
 subsection \<open>Antilinear maps and friends\<close>
 
 locale antilinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
@@ -723,7 +728,7 @@ lift_definition bot_ccsubspace :: \<open>'a ccsubspace\<close> is \<open>{0}\<cl
 instance..
 end
 
-lemma zero_scaleC_ccsubspace[simp]: "0 *\<^sub>C S = bot" for S :: "_ ccsubspace"
+lemma zero_cblinfun_image[simp]: "0 *\<^sub>C S = bot" for S :: "_ ccsubspace"
 proof transfer
   have "(0::'b) \<in> (\<lambda>x. 0) ` S"
     if "closed_csubspace S"

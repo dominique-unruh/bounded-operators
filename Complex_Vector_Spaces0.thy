@@ -1167,12 +1167,6 @@ locale bounded_cbilinear =
 begin
 
 (* Not present in Real_Vector_Spaces *)
-(* TODO: remove? leads to name conflicts upon interpretation of bounded_cbilinear *)
-(* sublocale bounded_bilinear
-  apply standard
-  by (auto simp add: add_left add_right scaleR_scaleC scaleC_left scaleC_right bounded) *)
-
-(* Not present in Real_Vector_Spaces *)
 lemma bounded_bilinear[simp]: "bounded_bilinear prod"
   apply standard
   by (auto simp add: add_left add_right scaleR_scaleC scaleC_left scaleC_right bounded)
