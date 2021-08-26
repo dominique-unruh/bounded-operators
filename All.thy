@@ -15,5 +15,6 @@ theory All
     Cblinfun_Code_Examples
 begin
 
+(* TODO: Make sure bibtex works in document (check Infinite_Sums for an example) *)
 
 end
