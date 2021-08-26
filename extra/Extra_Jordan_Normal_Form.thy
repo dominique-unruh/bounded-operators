@@ -9,8 +9,8 @@ theory Extra_Jordan_Normal_Form
   imports
     Jordan_Normal_Form.Matrix Jordan_Normal_Form.Schur_Decomposition
 begin
-text \<open>This theory defines bundes to activate/deactivate the notation
-  from \<^session>\<open>Jordan_Normal_Form\<close>.
+
+text \<open>We define bundles to activate/deactivate the notation from \<^session>\<open>Jordan_Normal_Form\<close>.
                                                                          
 Reactivate the notation locally via "@{theory_text \<open>includes jnf_notation\<close>}" in a lemma statement.
 (Or sandwich a declaration using that notation between "@{theory_text \<open>unbundle jnf_notation ... unbundle no_jnf_notation\<close>}.)
@@ -564,6 +564,23 @@ proof (rule eq_matI)
     apply (subst eq)
     apply auto using assms(3) unit_vec_carrier by blast
 qed
+
+lemma list_of_vec_plus:
+  fixes v1 v2 :: \<open>complex vec\<close>
+  assumes \<open>dim_vec v1 = dim_vec v2\<close>
+  shows \<open>list_of_vec (v1 + v2) = map2 (+) (list_of_vec v1) (list_of_vec v2)\<close>
+proof-
+  have \<open>i < dim_vec v1 \<Longrightarrow> (list_of_vec (v1 + v2)) ! i = (map2 (+) (list_of_vec v1) (list_of_vec v2)) ! i\<close>
+    for i
+    by (simp add: assms)
+  thus ?thesis
+    by (metis assms index_add_vec(2) length_list_of_vec length_map map_fst_zip nth_equalityI) 
+qed
+
+lemma list_of_vec_mult:
+  fixes v :: \<open>complex vec\<close>
+  shows \<open>list_of_vec (c \<cdot>\<^sub>v v) = map ((*) c) (list_of_vec v)\<close>
+  by (metis (mono_tags, lifting) index_smult_vec(1) index_smult_vec(2) length_list_of_vec length_map nth_equalityI nth_list_of_vec nth_map)
 
 
 
