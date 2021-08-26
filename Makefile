@@ -45,7 +45,7 @@ bounded-operators-cpp.zip : $(FILES)
 	cd tmp2 && /opt/Isabelle2020/bin/isabelle build -d . Bounded_Operators
 	rm -rf tmp2
 
-outline.pdf document.pdf : $(wildcard *.thy) $(wildcard extra/*.thy) ROOT bounded_operators.bib document/root.tex
+outline.pdf document.pdf : $(wildcard *.thy) $(wildcard extra/*.thy) ROOT document/root.tex document/root.bib
 	/opt/Isabelle2021/bin/isabelle document -d . -P . Bounded_Operators
 
 show : outline.pdf

@@ -20,4 +20,4 @@ session Bounded_Operators = "Bounded_Operators-Extra" +
            document_variants = "document:outline=/proof,/ML"]
   sessions Infinite_Sums
   theories All
-  document_files "root.tex"
+  document_files "root.tex" "root.bib"

@@ -24,15 +24,13 @@ unbundle cblinfun_notation
 
 subsection \<open>Isomorphism between vectors\<close>
 
-(* TODO move text *)
-text \<open>We define the canonical isomorphism between \<^typ>\<open>'a::basis_enum \<Rightarrow>\<^sub>C\<^sub>L'b::basis_enum\<close>
-  and the complex \<^term>\<open>n*m\<close>-matrices (where n,m are the cdimensions of 'a,'b, 
-  respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>basis_enum\<close>
-  since that class fixes a finite canonical basis. Matrices are represented using
-  the \<^typ>\<open>_ mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.
-  (The isomorphism will be called \<^term>\<open>mat_of_cblinfun\<close> below.)\<close>
+text \<open>We define the canonical isomorphism between vectors in some complex vector space \<^typ>\<open>'a::basis_enum\<close> and the
+  complex \<^term>\<open>n\<close>-dimensional vectors (where \<^term>\<open>n\<close> is the dimension of \<^typ>\<open>'a\<close>).
+  This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>basis_enum\<close>
+  since that class fixes a finite canonical basis. Vector are represented using
+  the \<^typ>\<open>complex vec\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.
+  (The isomorphism will be called \<^term>\<open>vec_of_onb_enum\<close> below.)\<close>
 
-(* TODO new text *)
 definition vec_of_basis_enum :: \<open>'a::basis_enum \<Rightarrow> complex vec\<close> where
   \<comment> \<open>Maps \<^term>\<open>v\<close> to a \<^typ>\<open>'a vec\<close> represented in basis \<^const>\<open>canonical_basis\<close>\<close>
   \<open>vec_of_basis_enum v = vec_of_list (map (crepresentation (set canonical_basis) v) canonical_basis)\<close>
@@ -612,6 +610,18 @@ qed
 subsection \<open>Isomorphism between bounded linear functions and matrices\<close>
 
 
+text \<open>We define the canonical isomorphism between \<^typ>\<open>'a::basis_enum \<Rightarrow>\<^sub>C\<^sub>L'b::basis_enum\<close>
+  and the complex \<^term>\<open>n*m\<close>-matrices (where n,m are the dimensions of \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close>, 
+  respectively). This is possible if \<^typ>\<open>'a\<close>, \<^typ>\<open>'b\<close> are of class \<^class>\<open>basis_enum\<close>
+  since that class fixes a finite canonical basis. Matrices are represented using
+  the \<^typ>\<open>complex mat\<close> type from \<^session>\<open>Jordan_Normal_Form\<close>.
+  (The isomorphism will be called \<^term>\<open>mat_of_cblinfun\<close> below.)\<close>
+
+definition mat_of_cblinfun :: \<open>'a::{basis_enum,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L'b::{basis_enum,complex_normed_vector} \<Rightarrow> complex mat\<close> where
+  \<open>mat_of_cblinfun f = 
+    mat (length (canonical_basis :: 'b list)) (length (canonical_basis :: 'a list)) (
+    \<lambda> (i, j). crepresentation (set (canonical_basis::'b list)) (f *\<^sub>V ((canonical_basis::'a list)!j)) ((canonical_basis::'b list)!i))\<close>
+  for f
 
 lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::{basis_enum,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L'b::{basis_enum,complex_normed_vector}\<close> is  
   \<open>\<lambda>M. \<lambda>v. (if M\<in>carrier_mat (length (canonical_basis :: 'b list)) (length (canonical_basis :: 'a list))
@@ -658,14 +668,6 @@ proof
       by (metis (full_types) order_refl mult_eq_0_iff norm_eq_zero)
   qed
 qed
-
-
-
-definition mat_of_cblinfun :: \<open>'a::{basis_enum,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L'b::{basis_enum,complex_normed_vector} \<Rightarrow> complex mat\<close> where
-  \<open>mat_of_cblinfun f = 
-    mat (length (canonical_basis :: 'b list)) (length (canonical_basis :: 'a list)) (
-    \<lambda> (i, j). crepresentation (set (canonical_basis::'b list)) (f *\<^sub>V ((canonical_basis::'a list)!j)) ((canonical_basis::'b list)!i))\<close>
-  for f
 
 lemma mat_of_cblinfun_ell2_carrier[simp]: \<open>mat_of_cblinfun (a::'a::enum ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b::enum ell2) \<in> carrier_mat CARD('b) CARD('a)\<close>
   by (simp add: mat_of_cblinfun_def)
