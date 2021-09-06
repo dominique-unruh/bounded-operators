@@ -307,7 +307,6 @@ lemma mat_of_cblinfun_Proj_code_code[code]:
     (let d = length (canonical_basis :: 'a list) in mk_projector_orthog d 
               (gram_schmidt0 d (filter (\<lambda>v. dim_vec v = d) S)))"
 proof -
-  (* note [[show_types, show_consts]] *)
   have *: "map_option vec_of_basis_enum (if dim_vec x = length (canonical_basis :: 'a list) then Some (basis_enum_of_vec x :: 'a) else None)
       = (if dim_vec x = length (canonical_basis :: 'a list) then Some x else None)" for x
     by auto

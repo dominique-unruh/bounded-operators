@@ -711,7 +711,7 @@ proof -
     moreover have "Sup {y. \<exists>x. (\<exists>y. finite y \<and> y \<subseteq> A \<and> x = ennreal (sum f y)) \<and>
                 y = enn2ereal x} = Sup {y. \<exists>x. finite x \<and> x \<subseteq> A \<and> y = ereal (sum f x)}"
       using enn2ereal_ennreal fnn in_mono sum_nonneg Collect_cong
-      by smt (* > 1s *)
+      by smt
     ultimately show "max 0 (Sup {y. \<exists>x. (\<exists>xa. finite xa \<and> xa \<subseteq> A \<and> x
                                        = ennreal (sum f xa)) \<and> y = enn2ereal x})
          = Sup {y. \<exists>x. finite x \<and> x \<subseteq> A \<and> y = ereal (sum f x)}"
@@ -1207,7 +1207,7 @@ lemma infsetsum'_mono_set:
   fixes f :: "'a\<Rightarrow>'b::{ordered_comm_monoid_add,linorder_topology}"
   assumes fx0: "\<And>x. x\<in>B-A \<Longrightarrow> f x \<ge> 0"
     and "A \<subseteq> B"
-    and "infsetsum'_converges f A" (* See infsetsum'_converges_set_mono for why this assumption is needed. *)
+    and "infsetsum'_converges f A"
     and "infsetsum'_converges f B"
   shows "infsetsum' f B \<ge> infsetsum' f A"
 proof -
@@ -2035,7 +2035,7 @@ next
     unfolding A'_def by (rule abs_summable_countable)
   have A'A: "A' \<subseteq> A" and B'B: "B' x \<subseteq> B x" for x
     unfolding A'_def B'_def by auto
-  have f0': "f (x,y) = 0" if (* "x \<in> A" and *) "y \<in> B x - B' x" for x y
+  have f0': "f (x,y) = 0" if "y \<in> B x - B' x" for x y
     using that unfolding B'_def by auto
   have f0: "f (x,y) = 0" if "x \<in> A - A'" and "y \<in> B x" for x y
   proof -
@@ -2231,20 +2231,6 @@ proof -
     unfolding fAB by -
 qed
 
-(* Counterexample:
-   Fix a rational-valued f such that f sums to \<pi> on B and to \<pi> + 1 on A (over the reals).
-   Consider the following image space: It contains all rationals and all reals \<ge> 4.
-   Then f converges on A but not on B.
-
-   Maybe the lemma holds if the image space is complete?
-   Or if the image space is a topological vector space?
- *)
-(* lemma infsetsum'_converges_set_mono:
-  assumes \<open>infsetsum'_converges f A\<close>
-  assumes \<open>B \<subseteq> A\<close>
-  shows \<open>infsetsum'_converges f B\<close> *)
-
-
 lemma infsetsum'_converges_union_disjoint:
   fixes f :: "'a \<Rightarrow> 'b::{topological_monoid_add, t2_space, comm_monoid_add}"
   assumes finite: \<open>finite A\<close>
@@ -2280,7 +2266,7 @@ next
 qed
 
 theorem infsetsum'_mono:
-  fixes f g :: "'a\<Rightarrow>'b::{ordered_comm_monoid_add,linorder_topology}" (* Does it also hold in order_topology? *)
+  fixes f g :: "'a\<Rightarrow>'b::{ordered_comm_monoid_add,linorder_topology}"
   assumes "infsetsum'_converges f A"
     and "infsetsum'_converges g A"
   assumes leq: "\<And>x. x \<in> A \<Longrightarrow> f x \<le> g x"

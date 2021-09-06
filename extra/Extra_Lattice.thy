@@ -226,7 +226,6 @@ qed auto
 instance complete_boolean_algebra \<subseteq> complete_orthomodular_lattice
   by intro_classes
 
-(* Renamed from SUP_max *)
 lemma image_of_maximum:
   fixes f::"'a::order \<Rightarrow> 'b::conditionally_complete_lattice"
   assumes "mono f"

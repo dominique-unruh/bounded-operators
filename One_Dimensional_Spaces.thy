@@ -136,16 +136,6 @@ lemma one_dim_iso_id[simp]: "one_dim_iso = id"
   unfolding one_dim_iso_def
   by (auto simp add: of_complex_def)
 
-(* lemma one_dim_iso_inverse[simp]: "one_dim_iso (one_dim_iso x) = x"
-  proof (simp add: one_dim_iso_def)
-  show "of_complex \<langle>1, x\<rangle> = x"
-    by (simp add: of_complex_def)
-qed *)
-
-(* lemma one_dim_iso_adjoint: "\<langle>one_dim_iso x, y\<rangle> = \<langle>x, one_dim_iso y\<rangle>"
-  by (simp add: one_dim_iso_def of_complex_def)
- *)
-
 lemma one_dim_iso_adjoint[simp]: \<open>cadjoint one_dim_iso = one_dim_iso\<close>
   apply (rule cadjoint_eqI)
   by (simp add: one_dim_iso_def of_complex_def)
@@ -293,24 +283,5 @@ proof intro_classes
 qed
 
 instance one_dim \<subseteq> chilbert_space..
-(* proof intro_classes
-  fix X :: \<open>nat \<Rightarrow> 'a::one_dim\<close>
-  define X' :: \<open>nat \<Rightarrow> complex\<close> where \<open>X' n = one_dim_iso (X n)\<close> for n
-  then have X: \<open>X n = of_complex (X' n)\<close> for n
-    by simp
-  assume \<open>Cauchy X\<close>
-  then have \<open>Cauchy X'\<close>
-    unfolding Cauchy_def dist_norm X
-    by (metis norm_of_complex of_complex_diff) 
-  then have \<open>convergent X'\<close>
-    using Cauchy_convergent_iff by blast
-  then obtain L' where \<open>X' \<longlonglongrightarrow> L'\<close>
-    unfolding convergent_def by auto
-  then have \<open>X \<longlonglongrightarrow> of_complex L'\<close>
-    apply (simp add: dist_norm X tendsto_iff)
-    by (metis (mono_tags, lifting) dist_norm dist_of_complex eventually_mono)
-  then show \<open>convergent X\<close>
-    unfolding convergent_def by auto
-qed *)
 
 end

@@ -156,7 +156,7 @@ subsection \<open>Type of complex bounded linear functions\<close>
 
 typedef\<^marker>\<open>tag important\<close> (overloaded) ('a, 'b) cblinfun ("(_ \<Rightarrow>\<^sub>C\<^sub>L /_)" [22, 21] 21) =
   "{f::'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector. bounded_clinear f}"
-  morphisms cblinfun_apply cBlinfun (* \<rightarrow> Cblinfun *)
+  morphisms cblinfun_apply cBlinfun (* TODO \<rightarrow> Cblinfun *)
   by (blast intro: bounded_linear_intros)
 
 declare [[coercion

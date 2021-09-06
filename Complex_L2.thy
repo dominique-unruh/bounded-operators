@@ -164,7 +164,6 @@ qed
 lemma has_ell2_norm_finite[simp]: "has_ell2_norm (x::'a::finite\<Rightarrow>_)"
   unfolding has_ell2_norm_def by simp
 
-(* Renamed from ell2_norm_finite_def *)
 lemma ell2_norm_finite: 
   "ell2_norm (x::'a::finite\<Rightarrow>complex) = sqrt (sum (\<lambda>i. (norm(x i))^2) UNIV)"
 proof-    
@@ -191,7 +190,6 @@ proof-
     using mono by auto
 qed
 
-(* Renamed from ell2_norm_finite_def' *)
 lemma ell2_norm_finite_L2_set: "ell2_norm (x::'a::finite\<Rightarrow>complex) = L2_set (norm o x) UNIV"
 proof (subst ell2_norm_L2_set)
   show "has_ell2_norm x"
@@ -525,13 +523,10 @@ proof
 qed  
 end
 
-(* Renamed from norm_ell2_component *)
 lemma norm_point_bound_ell2: "norm (Rep_ell2 x i) \<le> norm x"
   apply transfer
   by (simp add: ell2_norm_point_bound)
 
-
-(* Renamed from ell2_norm_explicit_finite_support *)
 lemma ell2_norm_finite_support:
   assumes \<open>finite S\<close> \<open>\<And> i. i \<notin> S \<Longrightarrow> Rep_ell2 x i = 0\<close>
   shows \<open>norm x = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
@@ -948,7 +943,6 @@ lift_definition trunc_ell2:: \<open>'a set \<Rightarrow> 'a ell2 \<Rightarrow> '
 lemma trunc_ell2_empty[simp]: \<open>trunc_ell2 {} x = 0\<close>
   apply transfer by simp
 
-(* Renamed from trunc_ell2_norm_diff *)
 lemma norm_id_minus_trunc_ell2:
   \<open>(norm (x - trunc_ell2 S x))^2 = (norm x)^2 - (norm (trunc_ell2 S x))^2\<close>
 proof-
@@ -962,7 +956,6 @@ proof-
   thus ?thesis by simp
 qed
 
-(* Renamed from trunc_ell2_norm_explicit *)
 lemma norm_trunc_ell2_finite:
   \<open>finite S \<Longrightarrow> (norm (trunc_ell2 S x)) = sqrt ((sum (\<lambda>i. (cmod (Rep_ell2 x i))\<^sup>2)) S)\<close>
 proof-
@@ -977,8 +970,6 @@ proof-
   ultimately show ?thesis by simp
 qed
 
-
-(* Renamed from trunc_ell2_limit *)
 lemma trunc_ell2_lim_at_UNIV:
   \<open>((\<lambda>S. trunc_ell2 S \<psi>) \<longlongrightarrow> \<psi>) (finite_subsets_at_top UNIV)\<close>
 proof -
@@ -1056,11 +1047,9 @@ lemma cinner_ket_eqI:
   shows \<open>\<psi> = \<phi>\<close>
   by (metis Rep_ell2_inject assms cinner_ket_left ext)
 
-(* Renamed from ell2_ket *)
 lemma norm_ket[simp]: "norm (ket i) = 1"
   apply transfer by (rule ell2_norm_ket)
 
-(* Renamed from cinner_ket_eq *)
 lemma cinner_ket_same[simp]:
   \<open>\<langle>ket i, ket i\<rangle> = 1\<close>
 proof-
@@ -1084,7 +1073,6 @@ lemma orthogonal_ket[simp]:
   \<open>is_orthogonal (ket i) (ket j) \<longleftrightarrow> i \<noteq> j\<close>
   by (simp add: cinner_ket_left ket.rep_eq)
 
-(* Renamed from ket_Kronecker_delta *)
 lemma cinner_ket: \<open>\<langle>ket i, ket j\<rangle> = (if i=j then 1 else 0)\<close>
   by (simp add: cinner_ket_left ket.rep_eq)
 
@@ -1111,8 +1099,6 @@ next
     by (simp add: complex_vector.span_add_eq complex_vector.span_base complex_vector.span_scale)
 qed
 
-
-(* Renamed from ket_ell2_span *)
 lemma closed_cspan_range_ket[simp]:
   \<open>closure (cspan (range ket)) = UNIV\<close>
 proof (intro set_eqI iffI UNIV_I closure_approachable[THEN iffD2] allI impI)
@@ -1129,7 +1115,6 @@ proof (intro set_eqI iffI UNIV_I closure_approachable[THEN iffD2] allI impI)
     by auto
 qed
 
-(* Renamed from Span_range_ket *)
 lemma ccspan_range_ket[simp]: "ccspan (range ket) = (top::('a ell2 ccsubspace))"
 proof-
   have \<open>closure (complex_vector.span (range ket)) = (UNIV::'a ell2 set)\<close>
@@ -1138,7 +1123,6 @@ proof-
     by (simp add: ccspan.abs_eq top_ccsubspace.abs_eq)
 qed
 
-(* Renamed from cspan_ket_finite *)
 lemma cspan_range_ket_finite[simp]: "cspan (range ket :: 'a::finite ell2 set) = UNIV"
   by (metis closed_cspan_range_ket closure_finite_cspan finite_class.finite_UNIV finite_imageI)
 
@@ -1298,7 +1282,6 @@ lemma is_ortho_set_ket[simp]: \<open>is_ortho_set (range ket)\<close>
 
 subsection \<open>Butterflies\<close>
 
-(* Renamed from cspan_butterfly_ket_UNIV *)
 lemma cspan_butterfly_ket: \<open>cspan {butterfly (ket i) (ket j)| (i::'b::finite) (j::'a::finite). True} = UNIV\<close>
 proof -
   have *: \<open>{butterfly (ket i) (ket j)| (i::'b::finite) (j::'a::finite). True} = {butterfly a b |a b. a \<in> range ket \<and> b \<in> range ket}\<close>
@@ -1328,16 +1311,12 @@ lemma clinear_eq_butterfly_ketI:
      apply (subst cspan_butterfly_ket)
   using assms by auto
 
-
-(* Renamed from sum_butter *)
 lemma sum_butterfly_ket[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = id_cblinfun\<close>
   apply (rule equal_ket)
   apply (subst complex_vector.linear_sum[where f=\<open>\<lambda>y. y *\<^sub>V ket _\<close>])
   apply (auto simp add: scaleC_cblinfun.rep_eq cblinfun.add_left clinearI butterfly_def cblinfun_compose_image cinner_ket)
   apply (subst sum.mono_neutral_cong_right[where S=\<open>{_}\<close>])
   by auto
-
-
 
 subsection \<open>One-dimensional spaces\<close>
 
@@ -1721,7 +1700,6 @@ lemma classical_operator_exists_finite[simp]: "classical_operator_exists (\<pi> 
   using cindependent_ket apply blast
   using finite_class.finite_UNIV finite_imageI closed_cspan_range_ket closure_finite_cspan by blast
 
-(* Renamed from classical_operator_basis *)
 lemma classical_operator_ket:
   assumes "classical_operator_exists \<pi>"
   shows "(classical_operator \<pi>) *\<^sub>V (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)"
@@ -1890,11 +1868,7 @@ proof -
     by (simp add: equal_ket)
 qed
 
-lemma classical_operator_Some[simp]: 
-(*   defines  "classical_function  == (\<lambda> \<pi> t. case \<pi> (inv (ket::'a\<Rightarrow>_) t) 
-                           of None \<Rightarrow> (0::'a ell2) 
-                          | Some i \<Rightarrow> ket i)" *)
-  shows "classical_operator (Some::'a\<Rightarrow>_) = id_cblinfun"
+lemma classical_operator_Some[simp]: "classical_operator (Some::'a\<Rightarrow>_) = id_cblinfun"
 proof-
   have "(classical_operator Some) *\<^sub>V (ket i)  = id_cblinfun *\<^sub>V (ket i)"
     for i::'a

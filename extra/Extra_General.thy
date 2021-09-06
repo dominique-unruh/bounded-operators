@@ -23,11 +23,6 @@ lemma reals_zero_comparable:
   shows "x \<le> 0 \<or> x \<ge> 0"
   using assms unfolding reals_zero_comparable_iff by assumption
 
-(* abbreviation (input) uniform_convergence_abbr::
-  \<open>'a set \<Rightarrow> (nat \<Rightarrow> ('a \<Rightarrow>'b::metric_space)) \<Rightarrow> ('a\<Rightarrow>'b) \<Rightarrow> bool\<close>
-  (\<open>(_): ((_)/ \<midarrow>uniformly\<rightarrow> (_))\<close> [60, 60, 60] 60)
-  where \<open>S: f \<midarrow>uniformly\<rightarrow> l \<equiv> ( uniform_limit S f l sequentially )\<close> *)
-
 lemma unique_choice: "\<forall>x. \<exists>!y. Q x y \<Longrightarrow> \<exists>!f. \<forall>x. Q x (f x)"
   apply (auto intro!: choice ext) by metis
 
@@ -158,12 +153,6 @@ lemma UNIV_not_singleton_converse:
   shows "\<exists>x::'a. \<exists>y. x \<noteq> y"
   using assms
   by fastforce 
-
-(* lemma UNIV_not_singleton_converse_zero: 
-  assumes "UNIV \<noteq> {0::'a::real_normed_vector}"
-  shows "\<exists>x::'a. \<exists>y. x \<noteq> y"
-  using UNIV_not_singleton_converse assms
-  by fastforce  *)
 
 subclass (in card2) not_singleton
   apply standard using two_le_card
@@ -485,22 +474,16 @@ lemma Set_filter_unchanged: "Set.filter P X = X" if "\<And>x. x\<in>X \<Longrigh
 
 subsection \<open>Maps\<close>
 
-
-(* Renamed from inj_option *)
 definition "inj_map \<pi> = (\<forall>x y. \<pi> x = \<pi> y \<and> \<pi> x \<noteq> None \<longrightarrow> x = y)"
 
-(* Renamed from inv_option *)
 definition "inv_map \<pi> = (\<lambda>y. if Some y \<in> range \<pi> then Some (inv \<pi> (Some y)) else None)"
 
-
-(* Renamed from inj_map_Some_pi *)
 lemma inj_map_total[simp]: "inj_map (Some o \<pi>) = inj \<pi>"
   unfolding inj_map_def inj_def by simp
 
 lemma inj_map_Some[simp]: "inj_map Some"
   by (simp add: inj_map_def)
 
-(* Renamed from inv_map_Some *)
 lemma inv_map_total: 
   assumes "surj \<pi>"
   shows "inv_map (Some o \<pi>) = Some o inv \<pi>"

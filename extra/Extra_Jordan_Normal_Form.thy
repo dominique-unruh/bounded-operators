@@ -323,17 +323,10 @@ proof (induct ws arbitrary: us us')
     have U[simp]: "set us \<subseteq> carrier_vec n" using Cons by simp
     have UW: "set (us@ws) \<subseteq> carrier_vec n" by simp
     have wU: "set (w#us) \<subseteq> carrier_vec n" by simp
-        (* have dist: "distinct (us @ w # ws)" using Cons by simp *)
     have dist_U: "distinct us" using Cons by simp
-        (* and dist_W: "distinct ws" *)
-        (* and dist_UW: "distinct (us @ ws)" *)
     have w_U: "w \<notin> set us" using False using span_mem by auto
-        (* and w_W: "w \<notin> set ws" *)
-        (* and w_UW: "w \<notin> set (us @ ws)" *)
-        (* have ind: "~ lin_dep (set (us @ w # ws))" using Cons by simp *)
     have ind_U: "~ lin_dep (set us)"
       using Cons by simp
-        (* and ind_W: "~ lin_dep (set ws)" *)
     have ind_wU: "~ lin_dep (insert w (set us))"
       apply (subst lin_dep_iff_in_span[simplified, symmetric])
       using w_U ind_U False by auto
@@ -361,8 +354,6 @@ proof (induct ws arbitrary: us us')
       apply (subst span_add[symmetric])
       by (simp_all add: False vsU)
     hence vwUS: "?v + w \<notin> set us" using span_mem by auto
-        (*     hence ind2: "~ lin_dep (set (((?v + w) # us) @ ws))"
-      using lin_dep_iff_in_span[OF UW ind_UW vw] span by auto *)
 
     have vwU: "set ((?v + w) # us) \<subseteq> carrier_vec n" 
       using U w vw by simp

@@ -240,13 +240,7 @@ end
 (* Does not hold in the complex case *)
 (* lemma csquare_bound_lemma:
   fixes x :: complex
-  shows "x < (1 + x) * (1 + x)"
-proof -
-  have "(x + 1/2)\<^sup>2 + 3/4 > 0"
-    using zero_le_power2[of "x+1/2"] by arith
-  then show ?thesis
-    by (simp add: field_simps power2_eq_square)
-qed *)
+  shows "x < (1 + x) * (1 + x)" *)
 
 lemma csquare_continuous:
   fixes e :: real
