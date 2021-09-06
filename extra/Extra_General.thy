@@ -190,7 +190,7 @@ lemma not_singleton_vs_CARD_1:
   using assms unfolding class.not_singleton_def class.CARD_1_def
   by (metis (full_types) One_nat_def UNIV_I card.empty card.insert empty_iff equalityI finite.intros(1) insert_iff subsetI)
 
-subsection \<open>CARD_1\<close>
+subsection \<open>\<^class>\<open>CARD_1\<close>\<close>
 
 context CARD_1 begin
 
