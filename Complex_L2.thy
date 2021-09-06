@@ -15,7 +15,7 @@ theory Complex_L2
     "HOL-Analysis.L2_Norm"
     "HOL-Library.Rewrite"
     "HOL-Analysis.Infinite_Set_Sum"
-    "Bounded_Operators-Extra.Extra_Infinite_Set_Sum"
+    "Complex_Bounded_Operators-Extra.Extra_Infinite_Set_Sum"
 begin
 
 unbundle cblinfun_notation

@@ -1,4 +1,4 @@
-session "Bounded_Operators-Prerequisites" in "fake-session-dir/1" = "HOL-Analysis" +
+session "Complex_Bounded_Operators-Prerequisites" in "fake-session-dir/1" = "HOL-Analysis" +
   sessions "HOL-Library" "Jordan_Normal_Form" "HOL-Analysis" "HOL-Nonstandard_Analysis"
            "Real_Impl" "HOL-Types_To_Sets" "Banach_Steinhaus" "Containers"
   theories
@@ -10,12 +10,12 @@ session "Bounded_Operators-Prerequisites" in "fake-session-dir/1" = "HOL-Analysi
      "Banach_Steinhaus.Banach_Steinhaus" "Containers.Containers_Auxiliary"
      "Jordan_Normal_Form.Matrix_Impl"
     
-session "Bounded_Operators-Extra" in extra = "Bounded_Operators-Prerequisites" +
+session "Complex_Bounded_Operators-Extra" in extra = "Complex_Bounded_Operators-Prerequisites" +
   options [document = pdf, document_output = "output", 
            document_variants = "document:outline=/proof,/ML"]
   theories Extra_General Extra_Vector_Spaces Extra_Ordered_Fields Extra_Pretty_Code_Examples
 
-session Bounded_Operators = "Bounded_Operators-Extra" +
+session Complex_Bounded_Operators = "Complex_Bounded_Operators-Extra" +
   options [record_proofs=1, document = pdf, document_output = "output", 
            document_variants = "document:outline=/proof,/ML"]
   theories All

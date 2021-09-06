@@ -92,12 +92,11 @@ end
 
 subsection \<open>Vectors\<close>
 
-
 text \<open>In this section, we define code for operations on vectors. As with operators above,
   we do this by using an isomorphism between finite vectors
   (i.e., types T of sort \<open>complex_vector\<close>) and the type \<^typ>\<open>complex vec\<close> from
   \<^session>\<open>Jordan_Normal_Form\<close>. We have developed such an isomorphism in 
-  \<^theory>\<open>Bounded_Operators.Cblinfun_Matrix\<close> for 
+  \<^theory>\<open>Complex_Bounded_Operators.Cblinfun_Matrix\<close> for 
   any type T of sort \<open>onb_enum\<close> (i.e., any type with a finite canonical orthonormal basis)
   as was done above for bounded operators.
   Unfortunately, we cannot declare code equations for a type class, 

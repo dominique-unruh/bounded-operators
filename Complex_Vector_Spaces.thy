@@ -16,10 +16,10 @@ theory Complex_Vector_Spaces
     "HOL-Analysis.Starlike"
     "HOL-Types_To_Sets.Types_To_Sets"
 
-    "Bounded_Operators-Extra.Extra_Vector_Spaces"
-    "Bounded_Operators-Extra.Extra_Ordered_Fields"
-    "Bounded_Operators-Extra.Extra_Lattice"
-    "Bounded_Operators-Extra.Extra_General"
+    "Complex_Bounded_Operators-Extra.Extra_Vector_Spaces"
+    "Complex_Bounded_Operators-Extra.Extra_Ordered_Fields"
+    "Complex_Bounded_Operators-Extra.Extra_Lattice"
+    "Complex_Bounded_Operators-Extra.Extra_General"
 
     Complex_Vector_Spaces0
 begin

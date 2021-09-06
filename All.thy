@@ -7,7 +7,7 @@ Authors:
 *)
 
 theory All
-  imports 
+  imports
     Complex_Vector_Spaces
     Complex_Inner_Product
     Complex_L2

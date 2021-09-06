@@ -6,7 +6,7 @@ section \<open>\<open>Complex_Inner_Product0\<close> -- Inner Product Spaces and
 theory Complex_Inner_Product0
   imports Complex_Main Complex_Vector_Spaces
     "HOL-Analysis.Inner_Product"
-    "Bounded_Operators-Extra.Extra_Ordered_Fields"
+    "Complex_Bounded_Operators-Extra.Extra_Ordered_Fields"
 begin
 
 subsection \<open>Complex inner product spaces\<close>

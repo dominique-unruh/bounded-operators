@@ -6,7 +6,7 @@ theory Cblinfun_Matrix
 
     "Jordan_Normal_Form.Gram_Schmidt"
     "HOL-Analysis.Starlike"
-    "Bounded_Operators-Extra.Extra_Jordan_Normal_Form"
+    "Complex_Bounded_Operators-Extra.Extra_Jordan_Normal_Form"
 begin
 
 hide_const (open) Order.bottom Order.top

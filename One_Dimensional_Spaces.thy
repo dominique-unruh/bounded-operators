@@ -1,8 +1,9 @@
 section \<open>\<open>One_Dimensional_Spaces\<close> -- One dimensional complex vector spaces\<close>
 
 theory One_Dimensional_Spaces
-  imports Complex_Inner_Product
-    "Bounded_Operators-Extra.Extra_Operator_Norm"
+  imports
+    Complex_Inner_Product
+    "Complex_Bounded_Operators-Extra.Extra_Operator_Norm"
 begin
 
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
