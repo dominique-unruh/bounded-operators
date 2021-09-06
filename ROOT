@@ -18,6 +18,5 @@ session "Bounded_Operators-Extra" in extra = "Bounded_Operators-Prerequisites" +
 session Bounded_Operators = "Bounded_Operators-Extra" +
   options [record_proofs=1, document = pdf, document_output = "output", 
            document_variants = "document:outline=/proof,/ML"]
-  sessions Infinite_Sums
   theories All
   document_files "root.tex" "root.bib"
