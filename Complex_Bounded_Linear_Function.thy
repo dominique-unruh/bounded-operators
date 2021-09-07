@@ -2952,7 +2952,7 @@ lemma cblinfun_extension_apply:
   shows "(cblinfun_extension S f) *\<^sub>V v = f v"
   by (smt assms cblinfun_extension_def cblinfun_extension_exists_def tfl_some)
 
-section \<open>Notation\<close>
+subsection \<open>Notation\<close>
 
 bundle cblinfun_notation begin
 notation cblinfun_compose (infixl "o\<^sub>C\<^sub>L" 55)

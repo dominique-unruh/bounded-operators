@@ -1,6 +1,7 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage{amsmath,amssymb,stmaryrd}
 \usepackage{isabelle,isabellesym}
+\usepackage{authblk}
 
 % this should be the last package used
 \usepackage{pdfsetup}
@@ -34,11 +35,29 @@
 
 \begin{document}
 
-\title{Bounded Operators}
-\author{Jose Manuel Rodriguez Caballero, Dominique Unruh}
+\title{Bounded Operators\thanks{Supported by the ERC consolidator grant CerQuS (819317), the PRG team grant “Secure Quantum Technology” (PRG946) from the Estonian Research Council, and the Estonian Centre of Exellence in IT (EXCITE) funded by ERDF.}}
+% \author{Jose Manuel Rodriguez Caballero {\small(University of Tartu)} \qquad Dominique Unruh {\small (University of Tartu)}}
+\author[1]{Jose Manuel Rodriguez Caballero}
+\author[1]{Dominique Unruh}
+\affil[1]{University of Tartu}
+
 \maketitle
 
+\begin{abstract}
+  We present a formalization of bounded operators on complex vector spaces.
+  Our formalization contains material on complex vector spaces (normed spaces, Banach spaces, Hilbert spaces)
+  that complements and goes beyond the developments of real vectors spaces in the Isabelle/HOL standard library.
+  We define the type of bounded operators between complex vector spaces (\textit{cblinfun}) and develop the theory of
+  unitaries, projectors, extension of bounded linear functions (BLT theorem), adjoints, Loewner order, closed subspaces and more.
+  For the finite-dimensional case, we provide code generation support by identifying finite-dimensional operators with matrices
+  as formalized in the \textit{Jordan\_Normal\_Form} AFP entry.
+\end{abstract}
+
 \tableofcontents
+
+Theories whose names end with \textit{0} are complex analogues of the similarly named theories concerning real vector spaces in the Isabelle/HOL standard library.
+They are kept in sync with their real counterparts. The theories without \textit{0} contain material that goes beyond the material in the Isabelle/HOL standard library.
+This separation allows to keep the material in sync more easily when the Isabelle/HOL standard library is updated.
 
 % sane default for proof documents
 \parindent 0pt\parskip 0.5ex
