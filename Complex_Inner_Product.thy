@@ -53,8 +53,13 @@ instantiation complex :: "chilbert_space" begin
 instance ..
 end
 
-subsection \<open>Some identities and inequalities\<close>
+subsection \<open>Misc facts\<close>
 
+text \<open>This is a useful rule for establishing the equality of vectors\<close>
+lemma cinner_extensionality:
+  assumes \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
+  shows \<open>\<psi> = \<phi>\<close>
+  by (metis assms cinner_eq_zero_iff cinner_simps(3) right_minus_eq)
 
 lemma polar_identity:
   includes notation_norm
@@ -137,6 +142,153 @@ next
   finally show ?case
     by simp
 qed
+
+
+lemma Cauchy_cinner_Cauchy:
+  fixes x y :: \<open>nat \<Rightarrow> 'a::complex_inner\<close>
+  assumes a1: \<open>Cauchy x\<close> and a2: \<open>Cauchy y\<close>
+  shows \<open>Cauchy (\<lambda> n. \<langle> x n, y n \<rangle>)\<close>
+proof-
+  have \<open>bounded (range x)\<close>
+    using a1
+    by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
+  hence b1: \<open>\<exists>M. \<forall>n. norm (x n) < M\<close>
+    by (meson bounded_pos_less rangeI)  
+  have \<open>bounded (range y)\<close>
+    using a2
+    by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
+  hence b2: \<open>\<exists> M. \<forall> n. norm (y n) < M\<close>
+    by (meson bounded_pos_less rangeI)  
+  have \<open>\<exists>M. \<forall>n. norm (x n) < M \<and> norm (y n) < M\<close>
+    using b1 b2
+    by (metis dual_order.strict_trans linorder_neqE_linordered_idom)  
+  then obtain M where M1: \<open>\<And>n. norm (x n) < M\<close> and M2: \<open>\<And>n. norm (y n) < M\<close>
+    by blast
+  have M3: \<open>M > 0\<close>
+    by (smt M2 norm_not_less_zero)     
+  have \<open>\<exists>N. \<forall>n \<ge> N. \<forall>m \<ge> N. norm ( (\<lambda> i. \<langle> x i, y i \<rangle>) n -  (\<lambda> i. \<langle> x i, y i \<rangle>) m ) < e\<close>
+    if "e > 0" for e
+  proof-
+    have \<open>e / (2*M) > 0\<close>
+      using M3
+      by (simp add: that)
+    hence \<open>\<exists>N. \<forall>n\<ge>N. \<forall>m\<ge>N. norm (x n - x m) < e / (2*M)\<close>
+      using a1
+      by (simp add: Cauchy_iff) 
+    then obtain N1 where N1_def: \<open>\<And>n m. n\<ge>N1 \<Longrightarrow> m\<ge>N1 \<Longrightarrow> norm (x n - x m) < e / (2*M)\<close>
+      by blast
+    have x1: \<open>\<exists>N. \<forall> n\<ge>N. \<forall> m\<ge>N. norm (y n - y m) < e / (2*M)\<close>
+      using a2 \<open>e / (2*M) > 0\<close>
+      by (simp add: Cauchy_iff) 
+    obtain N2 where N2_def: \<open>\<And>n m.  n\<ge>N2 \<Longrightarrow> m\<ge>N2 \<Longrightarrow> norm (y n - y m) < e / (2*M)\<close>
+      using x1
+      by blast
+    define N where N_def: \<open>N = N1 + N2\<close>
+    hence \<open>N \<ge> N1\<close>
+      by auto
+    have \<open>N \<ge> N2\<close>
+      using N_def
+      by auto
+    have \<open>norm ( \<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> ) < e\<close>
+      if \<open>n \<ge> N\<close> and \<open>m \<ge> N\<close>
+      for n m
+    proof -
+      have \<open>\<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> = (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) + (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>)\<close>
+        by simp
+      hence y1: \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle>) \<le> norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>)
+           + norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>)\<close>
+        by (metis norm_triangle_ineq)
+
+      have \<open>\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle> = \<langle> x n - x m, y n \<rangle>\<close>
+        by (simp add: cinner_diff_left)
+      hence \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) = norm \<langle> x n - x m, y n \<rangle>\<close>
+        by simp
+      moreover have \<open>norm \<langle> x n - x m, y n \<rangle> \<le> norm (x n - x m) * norm (y n)\<close>
+        using complex_inner_class.Cauchy_Schwarz_ineq2 by blast
+      moreover have \<open>norm (y n) < M\<close>
+        by (simp add: M2)        
+      moreover have \<open>norm (x n - x m) < e/(2*M)\<close>
+        using \<open>N \<le> m\<close> \<open>N \<le> n\<close> \<open>N1 \<le> N\<close> N1_def by auto
+      ultimately have \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < (e/(2*M)) * M\<close>
+        by (smt linordered_semiring_strict_class.mult_strict_mono norm_ge_zero)
+      moreover have \<open> (e/(2*M)) * M = e/2\<close>
+        using \<open>M > 0\<close> by simp
+      ultimately have  \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < e/2\<close>
+        by simp      
+      hence y2: \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < e/2\<close>
+        by blast        
+      have \<open>\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle> = \<langle> x m, y n - y m \<rangle>\<close>
+        by (simp add: cinner_diff_right)
+      hence \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) = norm \<langle> x m, y n - y m \<rangle>\<close>
+        by simp
+      moreover have \<open>norm \<langle> x m, y n - y m \<rangle> \<le> norm (x m) * norm (y n - y m)\<close>
+        by (meson complex_inner_class.Cauchy_Schwarz_ineq2)
+      moreover have \<open>norm (x m) < M\<close>
+        by (simp add: M1)
+      moreover have \<open>norm (y n - y m) < e/(2*M)\<close>
+        using \<open>N \<le> m\<close> \<open>N \<le> n\<close> \<open>N2 \<le> N\<close> N2_def by auto 
+      ultimately have \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < M * (e/(2*M))\<close>
+        by (smt linordered_semiring_strict_class.mult_strict_mono norm_ge_zero)
+      moreover have \<open>M * (e/(2*M)) = e/2\<close>
+        using \<open>M > 0\<close> by simp
+      ultimately have  \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < e/2\<close>
+        by simp
+      hence y3: \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < e/2\<close>
+        by blast
+      show \<open>norm ( \<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> ) < e\<close>
+        using y1 y2 y3 by simp
+    qed
+    thus ?thesis by blast
+  qed
+  thus ?thesis
+    by (simp add: CauchyI)
+qed
+
+
+lemma cinner_sup_norm: \<open>norm \<psi> = (SUP \<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
+proof (rule sym, rule cSup_eq_maximum)
+  have \<open>norm \<psi> = cmod (cinner \<psi> \<psi>) / norm \<psi>\<close>
+    by (metis norm_eq_sqrt_cinner norm_ge_zero real_div_sqrt)
+  then show \<open>norm \<psi> \<in> range (\<lambda>\<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
+    by blast
+next
+  fix n assume \<open>n \<in> range (\<lambda>\<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
+  then obtain \<phi> where n\<phi>: \<open>n = cmod (cinner \<phi> \<psi>) / norm \<phi>\<close>
+    by auto
+  show \<open>n \<le> norm \<psi>\<close>
+    unfolding n\<phi>
+    by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2 divide_le_eq ordered_field_class.sign_simps(33))
+qed
+
+lemma cinner_sup_onorm: 
+  fixes A :: \<open>'a::{real_normed_vector,not_singleton} \<Rightarrow> 'b::complex_inner\<close>
+  assumes \<open>bounded_linear A\<close>
+  shows \<open>onorm A = (SUP (\<psi>,\<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
+proof (unfold onorm_def, rule cSup_eq_cSup)
+  show \<open>bdd_above (range (\<lambda>x. norm (A x) / norm x))\<close>
+    by (meson assms bdd_aboveI2 le_onorm)
+next
+  fix a
+  assume \<open>a \<in> range (\<lambda>\<phi>. norm (A \<phi>) / norm \<phi>)\<close>
+  then obtain \<phi> where \<open>a = norm (A \<phi>) / norm \<phi>\<close>
+    by auto
+  then have \<open>a \<le> cmod (cinner (A \<phi>) (A \<phi>)) / (norm (A \<phi>) * norm \<phi>)\<close>
+    apply auto
+    by (smt (verit) divide_divide_eq_left norm_eq_sqrt_cinner norm_imp_pos_and_ge real_div_sqrt)
+  then show \<open>\<exists>b\<in>range (\<lambda>(\<psi>, \<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>)). a \<le> b\<close>
+    by force
+next
+  fix b
+  assume \<open>b \<in> range (\<lambda>(\<psi>, \<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
+  then obtain \<psi> \<phi> where b: \<open>b = cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>)\<close>
+    by auto
+  then have \<open>b \<le> norm (A \<phi>) / norm \<phi>\<close>
+    apply auto
+    by (smt (verit, ccfv_threshold) complex_inner_class.Cauchy_Schwarz_ineq2 division_ring_divide_zero linordered_field_class.divide_right_mono mult_cancel_left1 nonzero_mult_divide_mult_cancel_left2 norm_imp_pos_and_ge ordered_field_class.sign_simps(33) zero_le_divide_iff)
+  then show \<open>\<exists>a\<in>range (\<lambda>x. norm (A x) / norm x). b \<le> a\<close>
+    by auto
+qed
+
 
 subsection \<open>Orthogonality\<close>
 
@@ -352,7 +504,199 @@ proof (rule subsetI)
     by blast
 qed
 
-subsection \<open>Minimum distance\<close>
+
+lemma orthonormal_basis_of_cspan:
+  fixes S::"'a::complex_inner set"
+  assumes "finite S"
+  shows "\<exists>A. is_ortho_set A \<and> (\<forall>x\<in>A. norm x = 1) \<and> cspan A = cspan S \<and> finite A"
+proof (use assms in induction)
+  case empty
+  show ?case
+    apply (rule exI[of _ "{}"])
+    by auto
+next
+  case (insert s S)
+  from insert.IH
+  obtain A where orthoA: "is_ortho_set A" and normA: "\<And>x. x\<in>A \<Longrightarrow> norm x = 1" and spanA: "cspan A = cspan S" and finiteA: "finite A"
+    by auto
+  show ?case
+  proof (cases \<open>s \<in> cspan S\<close>)
+    case True
+    then have \<open>cspan (insert s S) = cspan S\<close>
+      by (simp add: complex_vector.span_redundant)
+    with orthoA normA spanA finiteA
+    show ?thesis
+      by auto
+  next
+    case False
+    obtain a where a_ortho: \<open>\<And>x. x\<in>A \<Longrightarrow> is_orthogonal x a\<close> and sa_span: \<open>s - a \<in> cspan A\<close>
+    proof (atomize_elim, use \<open>finite A\<close> \<open>is_ortho_set A\<close> in induction)
+      case empty
+      then show ?case
+        by auto
+    next
+      case (insert x A)
+      then obtain a where orthoA: \<open>\<And>x. x \<in> A \<Longrightarrow> is_orthogonal x a\<close> and sa: \<open>s - a \<in> cspan A\<close>
+        by (meson is_ortho_set_antimono subset_insertI)
+      define a' where \<open>a' = a - cinner x a *\<^sub>C inverse (cinner x x) *\<^sub>C x\<close>
+      have \<open>is_orthogonal x a'\<close>
+        unfolding a'_def cinner_diff_right cinner_scaleC_right
+        apply (cases \<open>cinner x x = 0\<close>)
+        by auto
+      have orthoA: \<open>is_orthogonal y a'\<close> if \<open>y \<in> A\<close> for y
+        unfolding a'_def cinner_diff_right cinner_scaleC_right
+        apply auto by (metis insert.prems insertCI is_ortho_set_def mult_not_zero orthoA that)
+      have \<open>s - a' \<in> cspan (insert x A)\<close>
+        unfolding a'_def apply auto
+        by (metis (no_types, lifting) complex_vector.span_breakdown_eq diff_add_cancel diff_diff_add sa)
+      with \<open>is_orthogonal x a'\<close> orthoA
+      show ?case
+        apply (rule_tac exI[of _ a'])
+        by auto
+    qed
+
+    from False sa_span
+    have \<open>a \<noteq> 0\<close>
+      unfolding spanA by auto
+    define a' where \<open>a' = inverse (norm a) *\<^sub>C a\<close>
+    with \<open>a \<noteq> 0\<close> have \<open>norm a' = 1\<close>
+      by (simp add: norm_inverse)
+    have a: \<open>a = norm a *\<^sub>C a'\<close>
+      by (simp add: \<open>a \<noteq> 0\<close> a'_def)
+
+    from sa_span spanA
+    have a'_span: \<open>a' \<in> cspan (insert s S)\<close>
+      unfolding a'_def
+      by (metis complex_vector.eq_span_insert_eq complex_vector.span_scale complex_vector.span_superset in_mono insertI1)
+    from sa_span
+    have s_span: \<open>s \<in> cspan (insert a' A)\<close>
+      apply (subst (asm) a)
+      using complex_vector.span_breakdown_eq by blast
+
+    from \<open>a \<noteq> 0\<close> a_ortho orthoA
+    have ortho: "is_ortho_set (insert a' A)"
+      unfolding is_ortho_set_def a'_def
+      apply auto
+      by (meson is_orthogonal_sym)
+
+    have span: \<open>cspan (insert a' A) = cspan (insert s S)\<close>
+      using a'_span s_span spanA apply auto
+      apply (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
+      by (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
+
+    show ?thesis
+      apply (rule exI[of _ \<open>insert a' A\<close>])
+      by (simp add: ortho \<open>norm a' = 1\<close> normA finiteA span)
+  qed
+qed
+
+lemma is_ortho_set_cindependent:
+  assumes "is_ortho_set A" 
+  shows "cindependent A"
+proof -
+  have "u v = 0"
+    if b1: "finite t" and b2: "t \<subseteq> A" and b3: "(\<Sum>v\<in>t. u v *\<^sub>C v) = 0" and b4: "v \<in> t"
+    for t u v
+  proof -
+    have "\<langle>v, v'\<rangle> = 0" if c1: "v'\<in>t-{v}" for v'
+      by (metis DiffE assms b2 b4 insertI1 is_ortho_set_antimono is_ortho_set_def that)
+    hence sum0: "(\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>) = 0"
+      by simp
+    have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> = (\<Sum>v'\<in>t. u v' * \<langle>v, v'\<rangle>)"
+      using b1
+      by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong) 
+    also have "\<dots> = u v * \<langle>v, v\<rangle> + (\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>)"
+      by (meson b1 b4 sum.remove)
+    also have "\<dots> = u v * \<langle>v, v\<rangle>"
+      using sum0 by simp
+    finally have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> =  u v * \<langle>v, v\<rangle>"
+      by blast
+    hence "u v * \<langle>v, v\<rangle> = 0" using b3 by simp
+    moreover have "\<langle>v, v\<rangle> \<noteq> 0"
+      using assms is_ortho_set_def b2 b4 by auto    
+    ultimately show "u v = 0" by simp
+  qed
+  thus ?thesis using complex_vector.independent_explicit_module
+    by (smt cdependent_raw_def)
+qed
+
+
+lemma onb_expansion_finite:
+  includes notation_norm
+  fixes T::\<open>'a::{complex_inner,cfinite_dim} set\<close>
+  assumes a1: \<open>cspan T = UNIV\<close> and a3: \<open>is_ortho_set T\<close>
+    and a4: \<open>\<And>t. t\<in>T \<Longrightarrow> \<parallel>t\<parallel> = 1\<close>
+  shows \<open>x = (\<Sum>t\<in>T. \<langle> t, x \<rangle> *\<^sub>C t)\<close>
+proof -
+  have \<open>finite T\<close>
+    apply (rule cindependent_cfinite_dim_finite)
+    by (simp add: a3 is_ortho_set_cindependent)
+  have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
+    by (simp add: a1)
+  have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
+    apply auto
+     apply (rule_tac x=\<open>\<lambda>a. if a \<in> t then r a else 0\<close> in exI)
+    apply (simp add: \<open>finite T\<close> sum.mono_neutral_cong_right)
+    using \<open>finite T\<close> by blast
+
+  have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = cspan A"
+    by (simp add: complex_vector.span_explicit)      
+  have f2: "\<forall>a. (\<exists>f. a = (\<Sum>a\<in>T. f a *\<^sub>C a)) \<or> (\<forall>A. (\<forall>f. a \<noteq> (\<Sum>a\<in>A. f a *\<^sub>C a)) \<or> infinite A \<or> \<not> A \<subseteq> T)"
+    using \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close> by auto
+  have f3: "\<forall>A a. (\<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A) \<or> a \<notin> cspan A"
+    using f1 by blast
+  have "cspan T = UNIV"
+    by (metis (full_types, lifting)  \<open>complex_vector.span T = UNIV\<close>)
+  hence \<open>\<exists> r. x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
+    using f3 f2 by blast
+  then obtain r where \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
+    by blast
+
+  have \<open>r a = \<langle>a, x\<rangle>\<close> if \<open>a \<in> T\<close> for a
+  proof-
+    have \<open>norm a = 1\<close>
+      using a4
+      by (simp add: \<open>a \<in> T\<close>)
+    moreover have \<open>norm a = sqrt (norm \<langle>a, a\<rangle>)\<close>
+      using norm_eq_sqrt_cinner by auto        
+    ultimately have \<open>sqrt (norm \<langle>a, a\<rangle>) = 1\<close>
+      by simp
+    hence \<open>norm \<langle>a, a\<rangle> = 1\<close>
+      using real_sqrt_eq_1_iff by blast
+    moreover have \<open>\<langle>a, a\<rangle> \<in> \<real>\<close>
+      by (simp add: cinner_real)        
+    moreover have \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
+      using cinner_ge_zero by blast
+    ultimately have w1: \<open>\<langle>a, a\<rangle> = 1\<close>
+      by (metis \<open>0 \<le> \<langle>a, a\<rangle>\<close> \<open>cmod \<langle>a, a\<rangle> = 1\<close> complex_of_real_cmod of_real_1)
+
+    have \<open>r t * \<langle>a, t\<rangle> = 0\<close> if \<open>t \<in> T-{a}\<close> for t
+      by (metis DiffD1 DiffD2 \<open>a \<in> T\<close> a3 is_ortho_set_def mult_eq_0_iff singletonI that)
+    hence s1: \<open>(\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>) = 0\<close>
+      by (simp add: \<open>\<And>t. t \<in> T - {a} \<Longrightarrow> r t * \<langle>a, t\<rangle> = 0\<close>) 
+    have \<open>\<langle>a, x\<rangle> = \<langle>a, (\<Sum> t\<in>T. r t *\<^sub>C t)\<rangle>\<close>
+      using \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
+      by simp
+    also have \<open>\<dots> = (\<Sum> t\<in>T. \<langle>a, r t *\<^sub>C t\<rangle>)\<close>
+      using cinner_sum_right by blast
+    also have \<open>\<dots> = (\<Sum> t\<in>T. r t * \<langle>a, t\<rangle>)\<close>
+      by simp    
+    also have \<open>\<dots> = r a * \<langle>a, a\<rangle> + (\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>)\<close>
+      using \<open>a \<in> T\<close>
+      by (meson \<open>finite T\<close> sum.remove)
+    also have \<open>\<dots> = r a * \<langle>a, a\<rangle>\<close>
+      using s1
+      by simp
+    also have \<open>\<dots> = r a\<close>
+      by (simp add: w1)
+    finally show ?thesis by auto
+  qed
+  thus ?thesis 
+    using \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
+    by fastforce 
+qed
+
+subsection \<open>Projections\<close>
 
 lemma smallest_norm_exists:
   \<comment> \<open>Theorem 2.5 in @{cite conway2013course} (inside the proof)\<close>
@@ -1078,6 +1422,55 @@ lemma projection_on_orthogonal_complement[simp]:
   apply (auto intro!: ext)
   by (smt (verit, ccfv_SIG) add_diff_cancel_left' assms closed_csubspace.closed closed_csubspace.subspace complex_vector.subspace_0 csubspace_is_convex diff_add_cancel double_orthogonal_complement_increasing insert_absorb insert_not_empty is_projection_on_iff_orthog orthogonal_complement_closed_subspace projection_eqI projection_is_projection_on subset_eq)
 
+lemma is_projection_on_zero:
+  "is_projection_on (\<lambda>_. 0) {0}"
+  by (simp add: is_projection_on_def is_arg_min_def)
+
+lemma projection_zero[simp]:
+  "projection {0} = (\<lambda>_. 0)"
+  using is_projection_on_zero
+  by (metis (full_types) is_projection_on_in_image projection_def singletonD someI_ex)
+
+lemma is_projection_on_rank1:
+  fixes t :: \<open>'a::complex_inner\<close>
+  shows \<open>is_projection_on (\<lambda>x. (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t) (cspan {t})\<close>
+proof (cases \<open>t = 0\<close>)
+  case True
+  then show ?thesis
+    by (simp add: is_projection_on_zero)
+next
+  case False
+  define P where \<open>P x = (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t\<close> for x
+  define t' where \<open>t' = t /\<^sub>C norm t\<close>
+  with False have \<open>norm t' = 1\<close>
+    by (simp add: norm_inverse)
+  have P_def': \<open>P x = cinner t' x *\<^sub>C t'\<close> for x
+    unfolding P_def t'_def apply auto
+    by (metis divide_divide_eq_left divide_inverse mult.commute power2_eq_square power2_norm_eq_cinner)
+  have spant': \<open>cspan {t} = cspan {t'}\<close>
+    by (simp add: False t'_def)
+  have cc: \<open>closed_csubspace (cspan {t})\<close>
+    by (auto intro!: finite_cspan_closed closed_csubspace.intro)
+  have ortho: \<open>h - P h \<in> orthogonal_complement (cspan {t})\<close> for h
+    unfolding orthogonal_complement_def P_def' spant' apply auto
+    by (smt (verit, ccfv_threshold) \<open>norm t' = 1\<close> add_cancel_right_left cinner_add_right cinner_commute' cinner_scaleC_right cnorm_eq_1 complex_vector.span_breakdown_eq complex_vector.span_empty diff_add_cancel mult_cancel_left1 singletonD)
+  have inspan: \<open>P h \<in> cspan {t}\<close> for h
+    unfolding P_def' spant'
+    by (simp add: complex_vector.span_base complex_vector.span_scale)
+  show \<open>is_projection_on P (cspan {t})\<close>
+    apply (subst is_projection_on_iff_orthog)
+    using cc ortho inspan by auto      
+qed
+
+lemma projection_rank1:
+  fixes t x :: \<open>'a::complex_inner\<close>
+  shows \<open>projection (cspan {t}) x = (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t\<close>
+  apply (rule fun_cong, rule projection_eqI', simp)
+  by (rule is_projection_on_rank1)
+
+subsection \<open>More orthogonal complement\<close>
+
+text \<open>The following lemmas logically fit into the "orthogonality" section but depend on projections for their proofs.\<close>
 
 text \<open>Corollary 2.8 in  @{cite conway2013course}\<close>
 theorem double_orthogonal_complement_id[simp]:
@@ -1135,10 +1528,6 @@ lemma orthogonal_complement_zero[simp]:
   "orthogonal_complement {0} = UNIV"
   unfolding orthogonal_complement_def by auto
 
-
-subsection \<open>Closed sum\<close>
-
-(* TODO section title apparently mismatch? *)
 
 lemma de_morgan_orthogonal_complement_plus:        
   fixes A B::"('a::complex_inner) set"
@@ -1216,52 +1605,6 @@ proof-
   finally show ?thesis
     by simp
 qed
-
-lemma is_projection_on_zero:
-  "is_projection_on (\<lambda>_. 0) {0}"
-  by (simp add: is_projection_on_def is_arg_min_def)
-
-lemma projection_zero[simp]:
-  "projection {0} = (\<lambda>_. 0)"
-  using is_projection_on_zero
-  by (metis (full_types) is_projection_on_in_image projection_def singletonD someI_ex)
-
-lemma is_projection_on_rank1:
-  fixes t :: \<open>'a::complex_inner\<close>
-  shows \<open>is_projection_on (\<lambda>x. (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t) (cspan {t})\<close>
-proof (cases \<open>t = 0\<close>)
-  case True
-  then show ?thesis
-    by (simp add: is_projection_on_zero)
-next
-  case False
-  define P where \<open>P x = (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t\<close> for x
-  define t' where \<open>t' = t /\<^sub>C norm t\<close>
-  with False have \<open>norm t' = 1\<close>
-    by (simp add: norm_inverse)
-  have P_def': \<open>P x = cinner t' x *\<^sub>C t'\<close> for x
-    unfolding P_def t'_def apply auto
-    by (metis divide_divide_eq_left divide_inverse mult.commute power2_eq_square power2_norm_eq_cinner)
-  have spant': \<open>cspan {t} = cspan {t'}\<close>
-    by (simp add: False t'_def)
-  have cc: \<open>closed_csubspace (cspan {t})\<close>
-    by (auto intro!: finite_cspan_closed closed_csubspace.intro)
-  have ortho: \<open>h - P h \<in> orthogonal_complement (cspan {t})\<close> for h
-    unfolding orthogonal_complement_def P_def' spant' apply auto
-    by (smt (verit, ccfv_threshold) \<open>norm t' = 1\<close> add_cancel_right_left cinner_add_right cinner_commute' cinner_scaleC_right cnorm_eq_1 complex_vector.span_breakdown_eq complex_vector.span_empty diff_add_cancel mult_cancel_left1 singletonD)
-  have inspan: \<open>P h \<in> cspan {t}\<close> for h
-    unfolding P_def' spant'
-    by (simp add: complex_vector.span_base complex_vector.span_scale)
-  show \<open>is_projection_on P (cspan {t})\<close>
-    apply (subst is_projection_on_iff_orthog)
-    using cc ortho inspan by auto      
-qed
-
-lemma projection_rank1:
-  fixes t x :: \<open>'a::complex_inner\<close>
-  shows \<open>projection (cspan {t}) x = (\<langle>t , x\<rangle> / \<langle>t , t\<rangle>) *\<^sub>C t\<close>
-  apply (rule fun_cong, rule projection_eqI', simp)
-  by (rule is_projection_on_rank1)
 
 subsection \<open>Riesz-representation theorem\<close>
 
@@ -1702,253 +2045,9 @@ proof
     by simp
 qed
 
-subsection \<open>Unsorted\<close>
+subsection \<open>More projections\<close>
 
-(* TODO sort *)
-
-setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
-
-class onb_enum = basis_enum + complex_inner +
-  assumes is_orthonormal: "is_ortho_set (set canonical_basis)"
-    and is_normal: "\<And>x. x \<in> (set canonical_basis) \<Longrightarrow> norm x = 1"
-
-setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
-
-lemma cinner_canonical_basis:
-  assumes \<open>i < length (canonical_basis :: 'a::onb_enum list)\<close>
-  assumes \<open>j < length (canonical_basis :: 'a::onb_enum list)\<close>
-  shows \<open>cinner (canonical_basis!i :: 'a) (canonical_basis!j) = (if i=j then 1 else 0)\<close>
-  by (metis assms(1) assms(2) distinct_canonical_basis is_normal is_ortho_set_def is_orthonormal nth_eq_iff_index_eq nth_mem of_real_1 power2_norm_eq_cinner power_one)
-
-lemma orthonormal_basis_of_cspan:
-  fixes S::"'a::complex_inner set"
-  assumes "finite S"
-  shows "\<exists>A. is_ortho_set A \<and> (\<forall>x\<in>A. norm x = 1) \<and> cspan A = cspan S \<and> finite A"
-proof (use assms in induction)
-  case empty
-  show ?case
-    apply (rule exI[of _ "{}"])
-    by auto
-next
-  case (insert s S)
-  from insert.IH
-  obtain A where orthoA: "is_ortho_set A" and normA: "\<And>x. x\<in>A \<Longrightarrow> norm x = 1" and spanA: "cspan A = cspan S" and finiteA: "finite A"
-    by auto
-  show ?case
-  proof (cases \<open>s \<in> cspan S\<close>)
-    case True
-    then have \<open>cspan (insert s S) = cspan S\<close>
-      by (simp add: complex_vector.span_redundant)
-    with orthoA normA spanA finiteA
-    show ?thesis
-      by auto
-  next
-    case False
-    obtain a where a_ortho: \<open>\<And>x. x\<in>A \<Longrightarrow> is_orthogonal x a\<close> and sa_span: \<open>s - a \<in> cspan A\<close>
-    proof (atomize_elim, use \<open>finite A\<close> \<open>is_ortho_set A\<close> in induction)
-      case empty
-      then show ?case
-        by auto
-    next
-      case (insert x A)
-      then obtain a where orthoA: \<open>\<And>x. x \<in> A \<Longrightarrow> is_orthogonal x a\<close> and sa: \<open>s - a \<in> cspan A\<close>
-        by (meson is_ortho_set_antimono subset_insertI)
-      define a' where \<open>a' = a - cinner x a *\<^sub>C inverse (cinner x x) *\<^sub>C x\<close>
-      have \<open>is_orthogonal x a'\<close>
-        unfolding a'_def cinner_diff_right cinner_scaleC_right
-        apply (cases \<open>cinner x x = 0\<close>)
-        by auto
-      have orthoA: \<open>is_orthogonal y a'\<close> if \<open>y \<in> A\<close> for y
-        unfolding a'_def cinner_diff_right cinner_scaleC_right
-        apply auto by (metis insert.prems insertCI is_ortho_set_def mult_not_zero orthoA that)
-      have \<open>s - a' \<in> cspan (insert x A)\<close>
-        unfolding a'_def apply auto
-        by (metis (no_types, lifting) complex_vector.span_breakdown_eq diff_add_cancel diff_diff_add sa)
-      with \<open>is_orthogonal x a'\<close> orthoA
-      show ?case
-        apply (rule_tac exI[of _ a'])
-        by auto
-    qed
-
-    from False sa_span
-    have \<open>a \<noteq> 0\<close>
-      unfolding spanA by auto
-    define a' where \<open>a' = inverse (norm a) *\<^sub>C a\<close>
-    with \<open>a \<noteq> 0\<close> have \<open>norm a' = 1\<close>
-      by (simp add: norm_inverse)
-    have a: \<open>a = norm a *\<^sub>C a'\<close>
-      by (simp add: \<open>a \<noteq> 0\<close> a'_def)
-
-    from sa_span spanA
-    have a'_span: \<open>a' \<in> cspan (insert s S)\<close>
-      unfolding a'_def
-      by (metis complex_vector.eq_span_insert_eq complex_vector.span_scale complex_vector.span_superset in_mono insertI1)
-    from sa_span
-    have s_span: \<open>s \<in> cspan (insert a' A)\<close>
-      apply (subst (asm) a)
-      using complex_vector.span_breakdown_eq by blast
-
-    from \<open>a \<noteq> 0\<close> a_ortho orthoA
-    have ortho: "is_ortho_set (insert a' A)"
-      unfolding is_ortho_set_def a'_def
-      apply auto
-      by (meson is_orthogonal_sym)
-
-    have span: \<open>cspan (insert a' A) = cspan (insert s S)\<close>
-      using a'_span s_span spanA apply auto
-      apply (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
-      by (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
-
-    show ?thesis
-      apply (rule exI[of _ \<open>insert a' A\<close>])
-      by (simp add: ortho \<open>norm a' = 1\<close> normA finiteA span)
-  qed
-qed
-
-lemma is_ortho_set_cindependent:
-  assumes "is_ortho_set A" 
-  shows "cindependent A"
-proof -
-  have "u v = 0"
-    if b1: "finite t" and b2: "t \<subseteq> A" and b3: "(\<Sum>v\<in>t. u v *\<^sub>C v) = 0" and b4: "v \<in> t"
-    for t u v
-  proof -
-    have "\<langle>v, v'\<rangle> = 0" if c1: "v'\<in>t-{v}" for v'
-      by (metis DiffE assms b2 b4 insertI1 is_ortho_set_antimono is_ortho_set_def that)
-    hence sum0: "(\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>) = 0"
-      by simp
-    have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> = (\<Sum>v'\<in>t. u v' * \<langle>v, v'\<rangle>)"
-      using b1
-      by (metis (mono_tags, lifting) cinner_scaleC_right cinner_sum_right sum.cong) 
-    also have "\<dots> = u v * \<langle>v, v\<rangle> + (\<Sum>v'\<in>t-{v}. u v' * \<langle>v, v'\<rangle>)"
-      by (meson b1 b4 sum.remove)
-    also have "\<dots> = u v * \<langle>v, v\<rangle>"
-      using sum0 by simp
-    finally have "\<langle>v, (\<Sum>v'\<in>t. u v' *\<^sub>C v')\<rangle> =  u v * \<langle>v, v\<rangle>"
-      by blast
-    hence "u v * \<langle>v, v\<rangle> = 0" using b3 by simp
-    moreover have "\<langle>v, v\<rangle> \<noteq> 0"
-      using assms is_ortho_set_def b2 b4 by auto    
-    ultimately show "u v = 0" by simp
-  qed
-  thus ?thesis using complex_vector.independent_explicit_module
-    by (smt cdependent_raw_def)
-qed
-
-subsection \<open>Commutative monoid of subspaces\<close>
-
-(* TODO section name? *)
-
-text \<open>This is a useful rule for establishing the equality of vectors\<close>
-lemma cinner_extensionality:
-  assumes \<open>\<And>\<gamma>. \<langle>\<gamma>, \<psi>\<rangle> = \<langle>\<gamma>, \<phi>\<rangle>\<close>
-  shows \<open>\<psi> = \<phi>\<close>
-  by (metis assms cinner_commute' riesz_frechet_representation_unique)
-
-subsection \<open>Boundedness\<close>
-
-
-(* TODO section name? *)
-
-lemma Cauchy_cinner_Cauchy:
-  fixes x y :: \<open>nat \<Rightarrow> 'a::complex_inner\<close>
-  assumes a1: \<open>Cauchy x\<close> and a2: \<open>Cauchy y\<close>
-  shows \<open>Cauchy (\<lambda> n. \<langle> x n, y n \<rangle>)\<close>
-proof-
-  have \<open>bounded (range x)\<close>
-    using a1
-    by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
-  hence b1: \<open>\<exists>M. \<forall>n. norm (x n) < M\<close>
-    by (meson bounded_pos_less rangeI)  
-  have \<open>bounded (range y)\<close>
-    using a2
-    by (simp add: Elementary_Metric_Spaces.cauchy_imp_bounded)
-  hence b2: \<open>\<exists> M. \<forall> n. norm (y n) < M\<close>
-    by (meson bounded_pos_less rangeI)  
-  have \<open>\<exists>M. \<forall>n. norm (x n) < M \<and> norm (y n) < M\<close>
-    using b1 b2
-    by (metis dual_order.strict_trans linorder_neqE_linordered_idom)  
-  then obtain M where M1: \<open>\<And>n. norm (x n) < M\<close> and M2: \<open>\<And>n. norm (y n) < M\<close>
-    by blast
-  have M3: \<open>M > 0\<close>
-    by (smt M2 norm_not_less_zero)     
-  have \<open>\<exists>N. \<forall>n \<ge> N. \<forall>m \<ge> N. norm ( (\<lambda> i. \<langle> x i, y i \<rangle>) n -  (\<lambda> i. \<langle> x i, y i \<rangle>) m ) < e\<close>
-    if "e > 0" for e
-  proof-
-    have \<open>e / (2*M) > 0\<close>
-      using M3
-      by (simp add: that)
-    hence \<open>\<exists>N. \<forall>n\<ge>N. \<forall>m\<ge>N. norm (x n - x m) < e / (2*M)\<close>
-      using a1
-      by (simp add: Cauchy_iff) 
-    then obtain N1 where N1_def: \<open>\<And>n m. n\<ge>N1 \<Longrightarrow> m\<ge>N1 \<Longrightarrow> norm (x n - x m) < e / (2*M)\<close>
-      by blast
-    have x1: \<open>\<exists>N. \<forall> n\<ge>N. \<forall> m\<ge>N. norm (y n - y m) < e / (2*M)\<close>
-      using a2 \<open>e / (2*M) > 0\<close>
-      by (simp add: Cauchy_iff) 
-    obtain N2 where N2_def: \<open>\<And>n m.  n\<ge>N2 \<Longrightarrow> m\<ge>N2 \<Longrightarrow> norm (y n - y m) < e / (2*M)\<close>
-      using x1
-      by blast
-    define N where N_def: \<open>N = N1 + N2\<close>
-    hence \<open>N \<ge> N1\<close>
-      by auto
-    have \<open>N \<ge> N2\<close>
-      using N_def
-      by auto
-    have \<open>norm ( \<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> ) < e\<close>
-      if \<open>n \<ge> N\<close> and \<open>m \<ge> N\<close>
-      for n m
-    proof -
-      have \<open>\<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> = (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) + (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>)\<close>
-        by simp
-      hence y1: \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle>) \<le> norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>)
-           + norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>)\<close>
-        by (metis norm_triangle_ineq)
-
-      have \<open>\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle> = \<langle> x n - x m, y n \<rangle>\<close>
-        by (simp add: cinner_diff_left)
-      hence \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) = norm \<langle> x n - x m, y n \<rangle>\<close>
-        by simp
-      moreover have \<open>norm \<langle> x n - x m, y n \<rangle> \<le> norm (x n - x m) * norm (y n)\<close>
-        using complex_inner_class.Cauchy_Schwarz_ineq2 by blast
-      moreover have \<open>norm (y n) < M\<close>
-        by (simp add: M2)        
-      moreover have \<open>norm (x n - x m) < e/(2*M)\<close>
-        using \<open>N \<le> m\<close> \<open>N \<le> n\<close> \<open>N1 \<le> N\<close> N1_def by auto
-      ultimately have \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < (e/(2*M)) * M\<close>
-        by (smt linordered_semiring_strict_class.mult_strict_mono norm_ge_zero)
-      moreover have \<open> (e/(2*M)) * M = e/2\<close>
-        using \<open>M > 0\<close> by simp
-      ultimately have  \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < e/2\<close>
-        by simp      
-      hence y2: \<open>norm (\<langle> x n, y n \<rangle> - \<langle> x m, y n \<rangle>) < e/2\<close>
-        by blast        
-      have \<open>\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle> = \<langle> x m, y n - y m \<rangle>\<close>
-        by (simp add: cinner_diff_right)
-      hence \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) = norm \<langle> x m, y n - y m \<rangle>\<close>
-        by simp
-      moreover have \<open>norm \<langle> x m, y n - y m \<rangle> \<le> norm (x m) * norm (y n - y m)\<close>
-        by (meson complex_inner_class.Cauchy_Schwarz_ineq2)
-      moreover have \<open>norm (x m) < M\<close>
-        by (simp add: M1)
-      moreover have \<open>norm (y n - y m) < e/(2*M)\<close>
-        using \<open>N \<le> m\<close> \<open>N \<le> n\<close> \<open>N2 \<le> N\<close> N2_def by auto 
-      ultimately have \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < M * (e/(2*M))\<close>
-        by (smt linordered_semiring_strict_class.mult_strict_mono norm_ge_zero)
-      moreover have \<open>M * (e/(2*M)) = e/2\<close>
-        using \<open>M > 0\<close> by simp
-      ultimately have  \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < e/2\<close>
-        by simp
-      hence y3: \<open>norm (\<langle> x m, y n \<rangle> - \<langle> x m, y m \<rangle>) < e/2\<close>
-        by blast
-      show \<open>norm ( \<langle> x n, y n \<rangle> - \<langle> x m, y m \<rangle> ) < e\<close>
-        using y1 y2 y3 by simp
-    qed
-    thus ?thesis by blast
-  qed
-  thus ?thesis
-    by (simp add: CauchyI)
-qed
+text \<open>These lemmas logically belong in the "projections" section above but depend on lemmas developed later.\<close>
 
 lemma is_projection_on_plus:
   assumes "\<And>x y. x:A \<Longrightarrow> y:B \<Longrightarrow> is_orthogonal x y"
@@ -2038,143 +2137,21 @@ lemma projection_insert_finite:
   using projection_insert
   by (metis a1 a2 closure_finite_cspan finite.insertI) 
 
-subsection \<open>Conjugate space\<close>
+subsection \<open>Canonical basis (\<open>onb_enum\<close>)\<close>
 
-instantiation conjugate_space :: (complex_inner) complex_inner begin
-lift_definition cinner_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> complex" is
-  \<open>\<lambda>x y. cinner y x\<close>.
-instance
-  apply (intro_classes; transfer)
-       apply (simp_all add: )
-    apply (simp add: cinner_add_right)
-  using cinner_ge_zero norm_eq_sqrt_cinner by auto
-end
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a set \<Rightarrow> bool\<close>)\<close>
 
+class onb_enum = basis_enum + complex_inner +
+  assumes is_orthonormal: "is_ortho_set (set canonical_basis)"
+    and is_normal: "\<And>x. x \<in> (set canonical_basis) \<Longrightarrow> norm x = 1"
 
-instance conjugate_space :: (chilbert_space) chilbert_space..
+setup \<open>Sign.add_const_constraint (\<^const_name>\<open>is_ortho_set\<close>, SOME \<^typ>\<open>'a::complex_inner set \<Rightarrow> bool\<close>)\<close>
 
-subsection \<open>Unsorted\<close>
-
-lemma cinner_sup_norm: \<open>norm \<psi> = (SUP \<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
-proof (rule sym, rule cSup_eq_maximum)
-  have \<open>norm \<psi> = cmod (cinner \<psi> \<psi>) / norm \<psi>\<close>
-    by (metis norm_eq_sqrt_cinner norm_ge_zero real_div_sqrt)
-  then show \<open>norm \<psi> \<in> range (\<lambda>\<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
-    by blast
-next
-  fix n assume \<open>n \<in> range (\<lambda>\<phi>. cmod (cinner \<phi> \<psi>) / norm \<phi>)\<close>
-  then obtain \<phi> where n\<phi>: \<open>n = cmod (cinner \<phi> \<psi>) / norm \<phi>\<close>
-    by auto
-  show \<open>n \<le> norm \<psi>\<close>
-    unfolding n\<phi>
-    by (simp add: complex_inner_class.Cauchy_Schwarz_ineq2 divide_le_eq ordered_field_class.sign_simps(33))
-qed
-
-lemma cinner_sup_onorm: 
-  fixes A :: \<open>'a::{real_normed_vector,not_singleton} \<Rightarrow> 'b::complex_inner\<close>
-  assumes \<open>bounded_linear A\<close>
-  shows \<open>onorm A = (SUP (\<psi>,\<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
-proof (unfold onorm_def, rule cSup_eq_cSup)
-  show \<open>bdd_above (range (\<lambda>x. norm (A x) / norm x))\<close>
-    by (meson assms bdd_aboveI2 le_onorm)
-next
-  fix a
-  assume \<open>a \<in> range (\<lambda>\<phi>. norm (A \<phi>) / norm \<phi>)\<close>
-  then obtain \<phi> where \<open>a = norm (A \<phi>) / norm \<phi>\<close>
-    by auto
-  then have \<open>a \<le> cmod (cinner (A \<phi>) (A \<phi>)) / (norm (A \<phi>) * norm \<phi>)\<close>
-    apply auto
-    by (smt (verit) divide_divide_eq_left norm_eq_sqrt_cinner norm_imp_pos_and_ge real_div_sqrt)
-  then show \<open>\<exists>b\<in>range (\<lambda>(\<psi>, \<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>)). a \<le> b\<close>
-    by force
-next
-  fix b
-  assume \<open>b \<in> range (\<lambda>(\<psi>, \<phi>). cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>))\<close>
-  then obtain \<psi> \<phi> where b: \<open>b = cmod (cinner \<psi> (A \<phi>)) / (norm \<psi> * norm \<phi>)\<close>
-    by auto
-  then have \<open>b \<le> norm (A \<phi>) / norm \<phi>\<close>
-    apply auto
-    by (smt (verit, ccfv_threshold) complex_inner_class.Cauchy_Schwarz_ineq2 division_ring_divide_zero linordered_field_class.divide_right_mono mult_cancel_left1 nonzero_mult_divide_mult_cancel_left2 norm_imp_pos_and_ge ordered_field_class.sign_simps(33) zero_le_divide_iff)
-  then show \<open>\<exists>a\<in>range (\<lambda>x. norm (A x) / norm x). b \<le> a\<close>
-    by auto
-qed
-
-lemma onb_expansion_finite:
-  includes notation_norm
-  fixes T::\<open>'a::{complex_inner,cfinite_dim} set\<close>
-  assumes a1: \<open>cspan T = UNIV\<close> and a3: \<open>is_ortho_set T\<close>
-    and a4: \<open>\<And>t. t\<in>T \<Longrightarrow> \<parallel>t\<parallel> = 1\<close>
-  shows \<open>x = (\<Sum>t\<in>T. \<langle> t, x \<rangle> *\<^sub>C t)\<close>
-proof -
-  have \<open>finite T\<close>
-    apply (rule cindependent_cfinite_dim_finite)
-    by (simp add: a3 is_ortho_set_cindependent)
-  have \<open>closure (complex_vector.span T)  = complex_vector.span T\<close>
-    by (simp add: a1)
-  have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
-    apply auto
-     apply (rule_tac x=\<open>\<lambda>a. if a \<in> t then r a else 0\<close> in exI)
-    apply (simp add: \<open>finite T\<close> sum.mono_neutral_cong_right)
-    using \<open>finite T\<close> by blast
-
-  have f1: "\<forall>A. {a. \<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A} = cspan A"
-    by (simp add: complex_vector.span_explicit)      
-  have f2: "\<forall>a. (\<exists>f. a = (\<Sum>a\<in>T. f a *\<^sub>C a)) \<or> (\<forall>A. (\<forall>f. a \<noteq> (\<Sum>a\<in>A. f a *\<^sub>C a)) \<or> infinite A \<or> \<not> A \<subseteq> T)"
-    using \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close> by auto
-  have f3: "\<forall>A a. (\<exists>Aa f. (a::'a) = (\<Sum>a\<in>Aa. f a *\<^sub>C a) \<and> finite Aa \<and> Aa \<subseteq> A) \<or> a \<notin> cspan A"
-    using f1 by blast
-  have "cspan T = UNIV"
-    by (metis (full_types, lifting)  \<open>complex_vector.span T = UNIV\<close>)
-  hence \<open>\<exists> r. x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
-    using f3 f2 by blast
-  then obtain r where \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
-    by blast
-
-  have \<open>r a = \<langle>a, x\<rangle>\<close>
-    if \<open>a \<in> T\<close>
-    for a
-  proof-
-    have \<open>norm a = 1\<close>
-      using a4
-      by (simp add: \<open>a \<in> T\<close>)
-    moreover have \<open>norm a = sqrt (norm \<langle>a, a\<rangle>)\<close>
-      using norm_eq_sqrt_cinner by auto        
-    ultimately have \<open>sqrt (norm \<langle>a, a\<rangle>) = 1\<close>
-      by simp
-    hence \<open>norm \<langle>a, a\<rangle> = 1\<close>
-      using real_sqrt_eq_1_iff by blast
-    moreover have \<open>\<langle>a, a\<rangle> \<in> \<real>\<close>
-      by (simp add: cinner_real)        
-    moreover have \<open>\<langle>a, a\<rangle> \<ge> 0\<close>
-      using cinner_ge_zero by blast
-    ultimately have w1: \<open>\<langle>a, a\<rangle> = 1\<close>
-      by (metis \<open>0 \<le> \<langle>a, a\<rangle>\<close> \<open>cmod \<langle>a, a\<rangle> = 1\<close> complex_of_real_cmod of_real_1)
-
-    have \<open>r t * \<langle>a, t\<rangle> = 0\<close> if \<open>t \<in> T-{a}\<close> for t
-      by (metis DiffD1 DiffD2 \<open>a \<in> T\<close> a3 is_ortho_set_def mult_eq_0_iff singletonI that)
-    hence s1: \<open>(\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>) = 0\<close>
-      by (simp add: \<open>\<And>t. t \<in> T - {a} \<Longrightarrow> r t * \<langle>a, t\<rangle> = 0\<close>) 
-    have \<open>\<langle>a, x\<rangle> = \<langle>a, (\<Sum> t\<in>T. r t *\<^sub>C t)\<rangle>\<close>
-      using \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
-      by simp
-    also have \<open>\<dots> = (\<Sum> t\<in>T. \<langle>a, r t *\<^sub>C t\<rangle>)\<close>
-      using cinner_sum_right by blast
-    also have \<open>\<dots> = (\<Sum> t\<in>T. r t * \<langle>a, t\<rangle>)\<close>
-      by simp    
-    also have \<open>\<dots> = r a * \<langle>a, a\<rangle> + (\<Sum> t\<in>T-{a}. r t * \<langle>a, t\<rangle>)\<close>
-      using \<open>a \<in> T\<close>
-      by (meson \<open>finite T\<close> sum.remove)
-    also have \<open>\<dots> = r a * \<langle>a, a\<rangle>\<close>
-      using s1
-      by simp
-    also have \<open>\<dots> = r a\<close>
-      by (simp add: w1)
-    finally show ?thesis by auto
-  qed
-  thus ?thesis 
-    using \<open>x = (\<Sum> a\<in>T. r a *\<^sub>C a)\<close>
-    by fastforce 
-qed
+lemma cinner_canonical_basis:
+  assumes \<open>i < length (canonical_basis :: 'a::onb_enum list)\<close>
+  assumes \<open>j < length (canonical_basis :: 'a::onb_enum list)\<close>
+  shows \<open>cinner (canonical_basis!i :: 'a) (canonical_basis!j) = (if i=j then 1 else 0)\<close>
+  by (metis assms(1) assms(2) distinct_canonical_basis is_normal is_ortho_set_def is_orthonormal nth_eq_iff_index_eq nth_mem of_real_1 power2_norm_eq_cinner power_one)
 
 instance onb_enum \<subseteq> chilbert_space
 proof
@@ -2200,7 +2177,7 @@ proof
       for n
       using onb_expansion_finite[where T = "set canonical_basis" and x = "X n"]
         \<open>finite (set canonical_basis)\<close> 
-      by (smt  is_generator_set is_normal is_orthonormal)
+      by (smt is_generator_set is_normal is_orthonormal)
 
     have \<open>(\<lambda> n. \<langle> t, X n \<rangle> *\<^sub>C t) \<longlonglongrightarrow> L t *\<^sub>C t\<close> 
       if r1: \<open>t\<in>set canonical_basis\<close>
@@ -2235,5 +2212,19 @@ proof
       unfolding convergent_def by blast
   qed
 qed
+
+subsection \<open>Conjugate space\<close>
+
+instantiation conjugate_space :: (complex_inner) complex_inner begin
+lift_definition cinner_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a conjugate_space \<Rightarrow> complex" is
+  \<open>\<lambda>x y. cinner y x\<close>.
+instance
+  apply (intro_classes; transfer)
+       apply (simp_all add: )
+    apply (simp add: cinner_add_right)
+  using cinner_ge_zero norm_eq_sqrt_cinner by auto
+end
+
+instance conjugate_space :: (chilbert_space) chilbert_space..
 
 end
