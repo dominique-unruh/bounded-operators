@@ -1370,7 +1370,7 @@ lemma classical_operator_existsI:
 lemma classical_operator_exists_inj:
   assumes "inj_map \<pi>"
   shows "classical_operator_exists \<pi>"
-  (* Maybe a shorter proof is possible using cblinfun_extension_exists_bounded_dense *)
+  (* Probably a shorter proof is possible using cblinfun_extension_exists_bounded_dense *)
 proof -
   define C0 where "C0 \<psi> = (\<lambda>b. case inv_map \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)" for \<psi> :: "'a\<Rightarrow>complex"
 
@@ -1668,10 +1668,10 @@ proof -
     using \<open>clinear C1\<close> bounded_C1
     using add bounded_clinear_intro scaleC by blast
 
-  define C where "C = cBlinfun C1"
+  define C where "C = CBlinfun C1"
   have [transfer_rule]: "pcr_cblinfun (=) (=) C1 C"
     unfolding C_def unfolding cblinfun.pcr_cr_eq cr_cblinfun_def
-    apply (subst cBlinfun_inverse)
+    apply (subst CBlinfun_inverse)
     using \<open>bounded_clinear C1\<close> by auto
 
   have C1_ket: "C1 (ket x) = (case \<pi> x of Some i \<Rightarrow> ket i | None \<Rightarrow> 0)" for x

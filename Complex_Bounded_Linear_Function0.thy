@@ -156,7 +156,7 @@ subsection \<open>Type of complex bounded linear functions\<close>
 
 typedef\<^marker>\<open>tag important\<close> (overloaded) ('a, 'b) cblinfun ("(_ \<Rightarrow>\<^sub>C\<^sub>L /_)" [22, 21] 21) =
   "{f::'a::complex_normed_vector\<Rightarrow>'b::complex_normed_vector. bounded_clinear f}"
-  morphisms cblinfun_apply cBlinfun (* TODO \<rightarrow> Cblinfun *)
+  morphisms cblinfun_apply CBlinfun
   by (blast intro: bounded_linear_intros)
 
 declare [[coercion
@@ -171,8 +171,8 @@ setup_lifting type_definition_cblinfun
 lemma cblinfun_eqI: "(\<And>i. cblinfun_apply x i = cblinfun_apply y i) \<Longrightarrow> x = y"
   by transfer auto
 
-lemma bounded_clinear_cBlinfun_apply: "bounded_clinear f \<Longrightarrow> cblinfun_apply (cBlinfun f) = f"
-  by (auto simp: cBlinfun_inverse)
+lemma bounded_clinear_CBlinfun_apply: "bounded_clinear f \<Longrightarrow> cblinfun_apply (CBlinfun f) = f"
+  by (auto simp: CBlinfun_inverse)
 
 
 subsection \<open>Type class instantiations\<close>
@@ -411,10 +411,10 @@ proof
         by (simp add: ac_simps)
     qed
   qed
-  hence Bv: "\<And>x. (\<lambda>n. X n x) \<longlonglongrightarrow> cBlinfun v x"
-    by (auto simp: bounded_clinear_cBlinfun_apply v)
+  hence Bv: "\<And>x. (\<lambda>n. X n x) \<longlonglongrightarrow> CBlinfun v x"
+    by (auto simp: bounded_clinear_CBlinfun_apply v)
 
-  have "X \<longlonglongrightarrow> cBlinfun v"
+  have "X \<longlonglongrightarrow> CBlinfun v"
   proof (rule LIMSEQ_I)
     fix r::real assume "r > 0"
     define r' where "r' = r / 2"
@@ -422,10 +422,10 @@ proof
     from CauchyD[OF \<open>Cauchy X\<close> \<open>r' > 0\<close>]
     obtain M where M: "\<And>m n. m \<ge> M \<Longrightarrow> n \<ge> M \<Longrightarrow> norm (X m - X n) < r'"
       by metis
-    show "\<exists>no. \<forall>n\<ge>no. norm (X n - cBlinfun v) < r"
+    show "\<exists>no. \<forall>n\<ge>no. norm (X n - CBlinfun v) < r"
     proof (safe intro!: exI[where x=M])
       fix n assume n: "M \<le> n"
-      have "norm (X n - cBlinfun v) \<le> r'"
+      have "norm (X n - CBlinfun v) \<le> r'"
       proof (rule norm_cblinfun_bound)
         fix x
         have "eventually (\<lambda>m. m \<ge> M) sequentially"
@@ -441,12 +441,12 @@ proof
             using M[OF n elim] by (simp add: mult_right_mono)
           finally show ?case .
         qed
-        have tendsto_v: "(\<lambda>m. norm (X n x - X m x)) \<longlonglongrightarrow> norm (X n x - cBlinfun v x)"
+        have tendsto_v: "(\<lambda>m. norm (X n x - X m x)) \<longlonglongrightarrow> norm (X n x - CBlinfun v x)"
           by (auto intro!: tendsto_intros Bv)
-        show "norm ((X n - cBlinfun v) x) \<le> r' * norm x"
+        show "norm ((X n - CBlinfun v) x) \<le> r' * norm x"
           by (auto intro!: tendsto_upperbound tendsto_v ev_le simp: cblinfun.cbilinear_simps)
       qed (simp add: \<open>0 < r'\<close> less_imp_le)
-      thus "norm (X n - cBlinfun v) < r"
+      thus "norm (X n - CBlinfun v) < r"
         by (metis \<open>r' < r\<close> le_less_trans)
     qed
   qed
@@ -628,9 +628,9 @@ lemma cblinfun_euclidean_eqI: "(\<And>i. i \<in> CBasis \<Longrightarrow> cblinf
   apply (subst (1) ceuclidean_representation[symmetric, where 'a='a])
   by (simp add: cblinfun.cbilinear_simps)
 
-lemma cBlinfun_eq_matrix: "bounded_clinear f \<Longrightarrow> cBlinfun f = cblinfun_of_matrix (\<lambda>i j. i \<bullet>\<^sub>C f j)"
+lemma CBlinfun_eq_matrix: "bounded_clinear f \<Longrightarrow> CBlinfun f = cblinfun_of_matrix (\<lambda>i j. i \<bullet>\<^sub>C f j)"
   apply (intro cblinfun_euclidean_eqI)
-  by (auto simp: cblinfun_of_matrix_apply bounded_clinear_cBlinfun_apply cinner_CBasis if_distrib
+  by (auto simp: cblinfun_of_matrix_apply bounded_clinear_CBlinfun_apply cinner_CBasis if_distrib
       if_distribR sum.delta' ceuclidean_representation
       cong: if_cong)
 

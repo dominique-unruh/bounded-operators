@@ -324,13 +324,13 @@ proof intro_classes
     by (simp add: complex_vector.construct_basis f_def that)
   have f_not_a: \<open>f a b c = 0\<close> if \<open>a : basisA\<close> and \<open>c : basisA\<close> and \<open>a \<noteq> c\<close>for a b c
     using that by (simp add: complex_vector.construct_basis f_def)
-  define F where \<open>F a b = cBlinfun (f a b)\<close> for a b
+  define F where \<open>F a b = CBlinfun (f a b)\<close> for a b
   have \<open>clinear (f a b)\<close> for a b
     by (auto intro: complex_vector.linear_construct simp: f_def)
   then have \<open>bounded_clinear (f a b)\<close> for a b
     by auto
   then have F_apply: \<open>cblinfun_apply (F a b) = f a b\<close> for a b
-    by (simp add: F_def bounded_clinear_cBlinfun_apply)
+    by (simp add: F_def bounded_clinear_CBlinfun_apply)
   define basis where \<open>basis = {F a b| a b. a\<in>basisA \<and> b\<in>basisB}\<close>
   have \<open>cspan basis = UNIV\<close>
     apply (rule cblinfun_cspan_UNIV[where basisA=basisA and basisB=basisB])
@@ -597,11 +597,11 @@ lemma cblinfun_blinfun_transfer_scaleC[cblinfun_blinfun_transfer]:
   unfolding rel_fun_def apply transfer
   by (simp add: real_complex_eq_def scaleR_scaleC)
 
-lemma cblinfun_blinfun_transfer_cBlinfun[cblinfun_blinfun_transfer]:
+lemma cblinfun_blinfun_transfer_CBlinfun[cblinfun_blinfun_transfer]:
   includes lifting_syntax
-  shows "(eq_onp bounded_clinear ===> blinfun_cblinfun_eq) Blinfun cBlinfun"
+  shows "(eq_onp bounded_clinear ===> blinfun_cblinfun_eq) Blinfun CBlinfun"
   unfolding rel_fun_def blinfun_cblinfun_eq.rep_eq eq_onp_def
-  by (auto simp: cBlinfun_inverse Blinfun_inverse bounded_clinear.bounded_linear)
+  by (auto simp: CBlinfun_inverse Blinfun_inverse bounded_clinear.bounded_linear)
 
 lemma cblinfun_blinfun_transfer_norm[cblinfun_blinfun_transfer]:
   includes lifting_syntax
@@ -2666,9 +2666,9 @@ lemma bifunctional_apply[simp]: \<open>(bifunctional *\<^sub>V x) *\<^sub>V f = 
 
 lemma bifunctional_isometric[simp]: \<open>norm (bifunctional *\<^sub>V x) = norm x\<close> for x :: \<open>'a::complex_inner\<close>
 proof -
-  define f :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L complex\<close> where \<open>f = cBlinfun (\<lambda>y. cinner x y)\<close>
+  define f :: \<open>'a \<Rightarrow>\<^sub>C\<^sub>L complex\<close> where \<open>f = CBlinfun (\<lambda>y. cinner x y)\<close>
   then have [simp]: \<open>f *\<^sub>V y = cinner x y\<close> for y
-    by (simp add: bounded_clinear_cBlinfun_apply bounded_clinear_cinner_right)
+    by (simp add: bounded_clinear_CBlinfun_apply bounded_clinear_cinner_right)
   then have [simp]: \<open>norm f = norm x\<close>
     apply (auto intro!: norm_cblinfun_eqI[where x=x] simp: power2_norm_eq_cinner[symmetric])
     apply (smt (verit, best) norm_eq_sqrt_cinner norm_ge_zero power2_norm_eq_cinner real_div_sqrt)
@@ -2938,11 +2938,11 @@ proof -
   have \<open>bounded_clinear g\<close>
     using g_add g_scale apply (rule bounded_clinearI[where K=B])
     using g_bounded by (simp add: ordered_field_class.sign_simps(5))
-  then have [simp]: \<open>cBlinfun g *\<^sub>V x = g x\<close> for x
-    by (subst cBlinfun_inverse, auto)
+  then have [simp]: \<open>CBlinfun g *\<^sub>V x = g x\<close> for x
+    by (subst CBlinfun_inverse, auto)
 
   show \<open>cblinfun_extension_exists S f\<close>
-    apply (rule cblinfun_extension_existsI[where B=\<open>cBlinfun g\<close>])
+    apply (rule cblinfun_extension_existsI[where B=\<open>CBlinfun g\<close>])
     by auto
 qed
 
