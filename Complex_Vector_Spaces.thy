@@ -73,6 +73,503 @@ lemma bounded_clinear_id[simp]: \<open>bounded_clinear id\<close>
 (* sublocale bounded_cbilinear \<subseteq> bounded_bilinear
   by (rule bounded_bilinear) *)
 
+
+definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
+  where \<open>cbilinear = (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
+
+lemma cbilinear_add_left:
+  assumes \<open>cbilinear f\<close>
+  shows \<open>f (a + b) c = f a c + f b c\<close>
+  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
+
+lemma cbilinear_add_right:
+  assumes \<open>cbilinear f\<close>
+  shows \<open>f a (b + c) = f a b + f a c\<close>
+  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
+
+lemma cbilinear_times:
+  fixes g' :: \<open>'a::complex_vector \<Rightarrow> complex\<close> and g :: \<open>'b::complex_vector \<Rightarrow> complex\<close>
+  assumes \<open>\<And> x y. h x y = (g' x)*(g y)\<close> and \<open>clinear g\<close> and \<open>clinear g'\<close>
+  shows \<open>cbilinear h\<close>
+proof -
+  have w1: "h (b1 + b2) y = h b1 y + h b2 y"
+    for b1 :: 'a
+      and b2 :: 'a
+      and y
+  proof-
+    have \<open>h (b1 + b2) y = g' (b1 + b2) * g y\<close>
+      using \<open>\<And> x y. h x y = (g' x)*(g y)\<close>
+      by auto
+    also have \<open>\<dots> = (g' b1 + g' b2) * g y\<close>
+      using \<open>clinear g'\<close>
+      unfolding clinear_def
+      by (simp add: assms(3) complex_vector.linear_add)
+    also have \<open>\<dots> = g' b1 * g y + g' b2 * g y\<close>
+      by (simp add: ring_class.ring_distribs(2))
+    also have \<open>\<dots> = h b1 y + h b2 y\<close>
+      using assms(1) by auto          
+    finally show ?thesis by blast
+  qed
+  have w2: "h (r *\<^sub>C b) y = r *\<^sub>C h b y"
+    for r :: complex
+      and b :: 'a
+      and y
+  proof-
+    have \<open>h (r *\<^sub>C b) y = g' (r *\<^sub>C b) * g y\<close>
+      by (simp add: assms(1))
+    also have \<open>\<dots> = r *\<^sub>C (g' b * g y)\<close>
+      by (simp add: assms(3) complex_vector.linear_scale)
+    also have \<open>\<dots> = r *\<^sub>C (h b y)\<close>
+      by (simp add: assms(1))          
+    finally show ?thesis by blast
+  qed
+  have "clinear (\<lambda>x. h x y)"
+    for y :: 'b
+    unfolding clinear_def
+    by (meson clinearI clinear_def w1 w2)
+  hence t2: "\<forall>y. clinear (\<lambda>x. h x y)"
+    by simp
+  have v1: "h x (b1 + b2) = h x b1 + h x b2"
+    for b1 :: 'b
+      and b2 :: 'b
+      and x
+  proof-
+    have \<open>h x (b1 + b2)  = g' x * g (b1 + b2)\<close>
+      using \<open>\<And> x y. h x y = (g' x)*(g y)\<close>
+      by auto
+    also have \<open>\<dots> = g' x * (g b1 + g b2)\<close>
+      using \<open>clinear g'\<close>
+      unfolding clinear_def
+      by (simp add: assms(2) complex_vector.linear_add)
+    also have \<open>\<dots> = g' x * g b1 + g' x * g b2\<close>
+      by (simp add: ring_class.ring_distribs(1))
+    also have \<open>\<dots> = h x b1 + h x b2\<close>
+      using assms(1) by auto          
+    finally show ?thesis by blast
+  qed
+
+  have v2:  "h x (r *\<^sub>C b) = r *\<^sub>C h x b"
+    for r :: complex
+      and b :: 'b
+      and x
+  proof-
+    have \<open>h x (r *\<^sub>C b) =  g' x * g (r *\<^sub>C b)\<close>
+      by (simp add: assms(1))
+    also have \<open>\<dots> = r *\<^sub>C (g' x * g b)\<close>
+      by (simp add: assms(2) complex_vector.linear_scale)
+    also have \<open>\<dots> = r *\<^sub>C (h x b)\<close>
+      by (simp add: assms(1))          
+    finally show ?thesis by blast
+  qed
+  have "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) (h x)"
+    for x :: 'a
+    using v1 v2
+    by (meson clinearI clinear_def) 
+  hence t1: "\<forall>x. clinear (h x)"
+    unfolding clinear_def
+    by simp
+  show ?thesis
+    unfolding cbilinear_def
+    by (simp add: t1 t2)    
+qed
+
+lemma csubspace_is_subspace: "csubspace A \<Longrightarrow> subspace A"
+  apply (rule subspaceI) 
+  by (auto simp: complex_vector.subspace_def scaleR_scaleC)
+
+lemma span_subset_cspan: "span A \<subseteq> cspan A"
+  unfolding span_def complex_vector.span_def
+  by (simp add: csubspace_is_subspace hull_antimono)
+
+
+lemma cindependent_implies_independent: 
+  assumes "cindependent (S::'a::complex_vector set)"
+  shows "independent S"
+  using assms unfolding dependent_def complex_vector.dependent_def
+  using span_subset_cspan by blast
+
+lemma cspan_singleton: "cspan {x} = {\<alpha> *\<^sub>C x| \<alpha>. True}"
+proof -
+  have \<open>cspan {x} = {y. y\<in>cspan {x}}\<close>
+    by auto
+  also have \<open>\<dots> = {\<alpha> *\<^sub>C x| \<alpha>. True}\<close>
+    apply (subst complex_vector.span_breakdown_eq)
+    by auto
+  finally show ?thesis
+    by -
+qed
+
+
+lemma cspan_as_span:
+  "cspan (B::'a::complex_vector set) = span (B \<union> scaleC \<i> ` B)"
+proof auto
+  let ?cspan = complex_vector.span
+  let ?rspan = real_vector.span
+  fix \<psi>
+  assume cspan: "\<psi> \<in> ?cspan B"
+  have "\<exists>B' r. finite B' \<and> B' \<subseteq> B \<and> \<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
+    using complex_vector.span_explicit[of B] cspan
+    by auto
+  then obtain B' r where "finite B'" and "B' \<subseteq> B" and \<psi>_explicit: "\<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
+    by atomize_elim 
+  define R where "R = B \<union> scaleC \<i> ` B"
+
+  have x2: "(case x of (b, i) \<Rightarrow> if i 
+            then Im (r b) *\<^sub>R \<i> *\<^sub>C b 
+            else Re (r b) *\<^sub>R b) \<in> span (B \<union> (*\<^sub>C) \<i> ` B)"
+    if "x \<in> B' \<times> (UNIV::bool set)"
+    for x :: "'a \<times> bool"
+    using that \<open>B' \<subseteq> B\<close> by (auto simp add: real_vector.span_base real_vector.span_scale subset_iff)
+  have x1: "\<psi> = (\<Sum>x\<in>B'. \<Sum>i\<in>UNIV. if i then Im (r x) *\<^sub>R \<i> *\<^sub>C x else Re (r x) *\<^sub>R x)"
+    if "\<And>b. r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b"
+    using that by (simp add: UNIV_bool \<psi>_explicit)
+  moreover have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
+    using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
+    by (metis (no_types, lifting) complex_of_real_i i_complex_of_real)
+  ultimately have "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
+    by (simp add: sum.cartesian_product)     
+  also have "\<dots> \<in> ?rspan R"
+    unfolding R_def
+    using x2
+    by (rule real_vector.span_sum) 
+  finally show "\<psi> \<in> ?rspan R" by -
+next
+  let ?cspan = complex_vector.span
+  let ?rspan = real_vector.span
+  define R where "R = B \<union> scaleC \<i> ` B"
+  fix \<psi>
+  assume rspan: "\<psi> \<in> ?rspan R"
+  have "subspace {a. a \<in> cspan B}"
+    by (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero 
+        complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
+  moreover have "x \<in> cspan B"
+    if "x \<in> R"
+    for x :: 'a
+    using that R_def complex_vector.span_base complex_vector.span_scale by fastforce
+  ultimately show "\<psi> \<in> ?cspan B"
+    using real_vector.span_induct rspan by blast  
+qed
+
+
+lemma isomorphic_equal_cdim:
+  assumes lin_f: \<open>clinear f\<close>
+  assumes inj_f: \<open>inj_on f (cspan S)\<close>
+  assumes im_S: \<open>f ` S = T\<close>
+  shows \<open>cdim S = cdim T\<close>
+proof -
+  obtain SB where SB_span: "cspan SB = cspan S" and indep_SB: \<open>cindependent SB\<close>
+    by (metis complex_vector.basis_exists complex_vector.span_mono complex_vector.span_span subset_antisym)
+  with lin_f inj_f have indep_fSB: \<open>cindependent (f ` SB)\<close>
+    apply (rule_tac complex_vector.linear_independent_injective_image)
+    by auto
+  from lin_f have \<open>cspan (f ` SB) = f ` cspan SB\<close>
+    by (meson complex_vector.linear_span_image)
+  also from SB_span lin_f have \<open>\<dots> = cspan T\<close>
+    by (metis complex_vector.linear_span_image im_S)
+  finally have \<open>cdim T = card (f ` SB)\<close>
+    using indep_fSB complex_vector.dim_eq_card by blast
+  also have \<open>\<dots> = card SB\<close>
+    apply (rule card_image) using inj_f
+    by (metis SB_span complex_vector.linear_inj_on_span_iff_independent_image indep_fSB lin_f)
+  also have \<open>\<dots> = cdim S\<close>
+    using indep_SB SB_span
+    by (metis complex_vector.dim_eq_card)
+  finally show ?thesis by simp
+qed
+
+
+lemma cindependent_inter_scaleC_cindependent:
+  assumes a1: "cindependent (B::'a::complex_vector set)" and a3: "c \<noteq> 1"
+  shows "B \<inter> (*\<^sub>C) c ` B = {}"
+proof (rule classical, cases \<open>c = 0\<close>)
+  case True
+  then show ?thesis
+    using a1 by (auto simp add: complex_vector.dependent_zero)
+next
+  case False
+  assume "\<not>(B \<inter> (*\<^sub>C) c ` B = {})"
+  hence "B \<inter> (*\<^sub>C) c ` B \<noteq> {}"
+    by blast
+  then obtain x where u1: "x \<in> B \<inter> (*\<^sub>C) c ` B"
+    by blast
+  then obtain b where u2: "x = b" and u3: "b\<in>B"
+    by blast
+  then  obtain b' where u2': "x = c *\<^sub>C b'" and u3': "b'\<in>B"
+    using u1
+    by blast
+  have g1: "b = c *\<^sub>C b'"
+    using u2 and u2' by simp
+  hence "b \<in> complex_vector.span {b'}"
+    using False
+    by (simp add: complex_vector.span_base complex_vector.span_scale)
+  hence "b = b'"
+    by (metis  u3' a1 complex_vector.dependent_def complex_vector.span_base 
+        complex_vector.span_scale insertE insert_Diff u2 u2' u3) 
+  hence "b' = c *\<^sub>C b'"
+    using g1 by blast
+  thus ?thesis
+    by (metis a1 a3 complex_vector.dependent_zero complex_vector.scale_right_imp_eq
+        mult_cancel_right2 scaleC_scaleC u3')
+qed
+
+lemma real_independent_from_complex_independent:
+  assumes "cindependent (B::'a::complex_vector set)"
+  defines "B' == ((*\<^sub>C) \<i> ` B)"
+  shows "independent (B \<union> B')"
+proof (rule notI)
+  assume \<open>dependent (B \<union> B')\<close>
+  then obtain T f0 x where [simp]: \<open>finite T\<close> and \<open>T \<subseteq> B \<union> B'\<close> and f0_sum: \<open>(\<Sum>v\<in>T. f0 v *\<^sub>R v) = 0\<close>
+      and x: \<open>x \<in> T\<close> and f0_x: \<open>f0 x \<noteq> 0\<close>
+    by (auto simp: real_vector.dependent_explicit)
+  define f T1 T2 T' f' x' where \<open>f v = (if v \<in> T then f0 v else 0)\<close> 
+    and \<open>T1 = T \<inter> B\<close> and \<open>T2 = scaleC (-\<i>) ` (T \<inter> B')\<close>
+    and \<open>T' = T1 \<union> T2\<close> and \<open>f' v = f v + \<i> * f (\<i> *\<^sub>C v)\<close>
+    and \<open>x' = (if x \<in> T1 then x else -\<i> *\<^sub>C x)\<close> for v
+  have \<open>B \<inter> B' = {}\<close>
+    by (simp add: assms cindependent_inter_scaleC_cindependent)
+  have \<open>T' \<subseteq> B\<close> 
+    by (auto simp: T'_def T1_def T2_def B'_def)
+  have [simp]: \<open>finite T'\<close> \<open>finite T1\<close> \<open>finite T2\<close>
+    by (auto simp add: T'_def T1_def T2_def)
+  have f_sum: \<open>(\<Sum>v\<in>T. f v *\<^sub>R v) = 0\<close>
+    unfolding f_def using f0_sum by auto
+  have f_x: \<open>f x \<noteq> 0\<close>
+    using f0_x x by (auto simp: f_def)
+  have f'_sum: \<open>(\<Sum>v\<in>T'. f' v *\<^sub>C v) = 0\<close>
+  proof -
+    have \<open>(\<Sum>v\<in>T'. f' v *\<^sub>C v) = (\<Sum>v\<in>T'. complex_of_real (f v) *\<^sub>C v) + (\<Sum>v\<in>T'. (\<i> * complex_of_real (f (\<i> *\<^sub>C v))) *\<^sub>C v)\<close>
+      by (auto simp: f'_def sum.distrib scaleC_add_left)
+    also have \<open>(\<Sum>v\<in>T'. complex_of_real (f v) *\<^sub>C v) = (\<Sum>v\<in>T1. f v *\<^sub>R v)\<close> (is \<open>_ = ?left\<close>)
+      apply (auto simp: T'_def scaleR_scaleC intro!: sum.mono_neutral_cong_right)
+      using T'_def T1_def \<open>T' \<subseteq> B\<close> f_def by auto
+    also have \<open>(\<Sum>v\<in>T'. (\<i> * complex_of_real (f (\<i> *\<^sub>C v))) *\<^sub>C v) = (\<Sum>v\<in>T2. (\<i> * complex_of_real (f (\<i> *\<^sub>C v))) *\<^sub>C v)\<close> (is \<open>_ = ?right\<close>)
+      apply (auto simp: T'_def intro!: sum.mono_neutral_cong_right)
+      by (smt (z3) B'_def IntE IntI T1_def T2_def \<open>f \<equiv> \<lambda>v. if v \<in> T then f0 v else 0\<close> add.inverse_inverse complex_vector.vector_space_axioms i_squared imageI mult_minus_left vector_space.vector_space_assms(3) vector_space.vector_space_assms(4))
+    also have \<open>?right = (\<Sum>v\<in>T\<inter>B'. f v *\<^sub>R v)\<close> (is \<open>_ = ?right\<close>)
+      apply (rule sum.reindex_cong[symmetric, where l=\<open>scaleC \<i>\<close>])
+      apply (auto simp: T2_def image_image scaleR_scaleC)
+      using inj_on_def by fastforce
+    also have \<open>?left + ?right = (\<Sum>v\<in>T. f v *\<^sub>R v)\<close>
+      apply (subst sum.union_disjoint[symmetric])
+      using \<open>B \<inter> B' = {}\<close> \<open>T \<subseteq> B \<union> B'\<close> apply (auto simp: T1_def)
+      by (metis Int_Un_distrib Un_Int_eq(4) sup.absorb_iff1)
+    also have \<open>\<dots> = 0\<close>
+      by (rule f_sum)
+    finally show ?thesis
+      by -
+  qed
+
+  have x': \<open>x' \<in> T'\<close>
+    using \<open>T \<subseteq> B \<union> B'\<close> x by (auto simp: x'_def T'_def T1_def T2_def)
+
+  have f'_x': \<open>f' x' \<noteq> 0\<close>
+    using Complex_eq Complex_eq_0 f'_def f_x x'_def by auto
+
+  from \<open>finite T'\<close> \<open>T' \<subseteq> B\<close> f'_sum x' f'_x'
+  have \<open>cdependent B\<close>
+    using complex_vector.independent_explicit_module by blast
+  with assms show False
+    by auto
+qed
+
+lemma crepresentation_from_representation: 
+  assumes a1: "cindependent B" and a2: "b \<in> B" and a3: "finite B"
+  shows "crepresentation B \<psi> b = (representation (B \<union> (*\<^sub>C) \<i> ` B) \<psi> b)
+                           + \<i> *\<^sub>C (representation (B \<union> (*\<^sub>C) \<i> ` B) \<psi> (\<i> *\<^sub>C b))"
+proof (cases "\<psi> \<in> cspan B")
+  define B' where "B' = B \<union> (*\<^sub>C) \<i> ` B"
+  case True
+  define r  where "r v = real_vector.representation B' \<psi> v" for v
+  define r' where "r' v = real_vector.representation B' \<psi> (\<i> *\<^sub>C v)" for v
+  define f  where "f v = r v + \<i> *\<^sub>C r' v" for v
+  define g  where "g v = crepresentation B \<psi> v" for v
+  have "(\<Sum>v | g v \<noteq> 0. g v *\<^sub>C v) = \<psi>"
+    unfolding g_def
+    using Collect_cong Collect_mono_iff DiffD1 DiffD2 True a1 
+      complex_vector.finite_representation
+      complex_vector.sum_nonzero_representation_eq sum.mono_neutral_cong_left
+    by fastforce
+  moreover have "finite {v. g v \<noteq> 0}"
+    unfolding g_def
+    by (simp add: complex_vector.finite_representation)
+  moreover have "v \<in> B"
+    if "g v \<noteq> 0" for v
+    using that unfolding g_def
+    by (simp add: complex_vector.representation_ne_zero)        
+  ultimately have rep1: "(\<Sum>v\<in>B. g v *\<^sub>C v) = \<psi>"    
+    unfolding g_def
+    using a3 True a1 complex_vector.sum_representation_eq by blast
+  have l0': "inj ((*\<^sub>C) \<i>::'a \<Rightarrow>'a)"
+    unfolding inj_def 
+    by simp 
+  have l0: "inj ((*\<^sub>C) (- \<i>)::'a \<Rightarrow>'a)"
+    unfolding inj_def 
+    by simp 
+  have l1: "(*\<^sub>C) (- \<i>) ` B \<inter> B = {}"
+    using cindependent_inter_scaleC_cindependent[where B=B and c = "- \<i>"]
+    by (metis Int_commute a1 add.inverse_inverse complex_i_not_one i_squared mult_cancel_left1 
+        neg_equal_0_iff_equal)
+  have l2: "B \<inter> (*\<^sub>C) \<i> ` B = {}"
+    by (simp add: a1 cindependent_inter_scaleC_cindependent)
+  have rr1: "r (\<i> *\<^sub>C v) = r' v" for v
+    unfolding r_def r'_def
+    by simp 
+  have k1: "independent B'"
+    unfolding B'_def using a1 real_independent_from_complex_independent by simp
+  have "\<psi> \<in> span B'"
+    using B'_def True cspan_as_span by blast    
+  have "v \<in> B'"
+    if "r v \<noteq> 0"
+    for v
+    unfolding r_def
+    using r_def real_vector.representation_ne_zero that by auto
+  have "finite B'"
+    unfolding B'_def using a3
+    by simp 
+  have "(\<Sum>v\<in>B'. r v *\<^sub>R v) = \<psi>"
+    unfolding r_def 
+    using True  Real_Vector_Spaces.real_vector.sum_representation_eq[where B = B' and basis = B' 
+        and v = \<psi>]  
+    by (smt Real_Vector_Spaces.dependent_raw_def \<open>\<psi> \<in> Real_Vector_Spaces.span B'\<close> \<open>finite B'\<close> 
+        equalityD2 k1)
+  have d1: "(\<Sum>v\<in>B. r (\<i> *\<^sub>C v) *\<^sub>R (\<i> *\<^sub>C v)) = (\<Sum>v\<in>(*\<^sub>C) \<i> ` B. r v *\<^sub>R v)"
+    using l0'
+    by (metis (mono_tags, lifting) inj_eq inj_on_def sum.reindex_cong)
+  have "(\<Sum>v\<in>B. (r v + \<i> * (r' v)) *\<^sub>C v) = (\<Sum>v\<in>B. r v *\<^sub>C v + (\<i> * r' v) *\<^sub>C v)"
+    by (meson scaleC_left.add)
+  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>C v) + (\<Sum>v\<in>B. (\<i> * r' v) *\<^sub>C v)"
+    using sum.distrib by fastforce
+  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>C v) + (\<Sum>v\<in>B. \<i> *\<^sub>C (r' v *\<^sub>C v))"
+    by auto
+  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>B. \<i> *\<^sub>C (r (\<i> *\<^sub>C v) *\<^sub>R v))"
+    unfolding r'_def r_def
+    by (metis (mono_tags, lifting) scaleR_scaleC sum.cong) 
+  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>B. r (\<i> *\<^sub>C v) *\<^sub>R (\<i> *\<^sub>C v))"
+    by (metis (no_types, lifting) complex_vector.scale_left_commute scaleR_scaleC)      
+  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>(*\<^sub>C) \<i> ` B. r v *\<^sub>R v)"
+    using d1
+    by simp
+  also have "\<dots> = \<psi>"
+    using l2 \<open>(\<Sum>v\<in>B'. r v *\<^sub>R v) = \<psi>\<close>
+    unfolding B'_def
+    by (simp add: a3 sum.union_disjoint) 
+  finally have "(\<Sum>v\<in>B. f v *\<^sub>C v) = \<psi>" unfolding r'_def r_def f_def by simp
+  hence "0 = (\<Sum>v\<in>B. f v *\<^sub>C v) - (\<Sum>v\<in>B. crepresentation B \<psi> v *\<^sub>C v)"
+    using rep1
+    unfolding g_def
+    by simp
+  also have "\<dots> = (\<Sum>v\<in>B. f v *\<^sub>C v - crepresentation B \<psi> v *\<^sub>C v)"
+    by (simp add: sum_subtractf)
+  also have "\<dots> = (\<Sum>v\<in>B. (f v - crepresentation B \<psi> v) *\<^sub>C v)"
+    by (metis scaleC_left.diff)
+  finally have "0 = (\<Sum>v\<in>B. (f v - crepresentation B \<psi> v) *\<^sub>C v)".
+  hence "(\<Sum>v\<in>B. (f v - crepresentation B \<psi> v) *\<^sub>C v) = 0"
+    by simp
+  hence "f b - crepresentation B \<psi> b = 0"
+    using a1 a2 a3 complex_vector.independentD[where s = B and t = B 
+        and u = "\<lambda>v. f v - crepresentation B \<psi> v" and v = b]
+      order_refl  by smt
+  hence "crepresentation B \<psi> b = f b"
+    by simp
+  thus ?thesis unfolding f_def r_def r'_def B'_def by auto
+next
+  define B' where "B' = B \<union> (*\<^sub>C) \<i> ` B"
+  case False
+  have b2: "\<psi> \<notin> real_vector.span B'"
+    unfolding B'_def
+    using False cspan_as_span by auto    
+  have "\<psi> \<notin> complex_vector.span B"
+    using False by blast
+  have "crepresentation B \<psi> b = 0"
+    unfolding complex_vector.representation_def
+    by (simp add: False)
+  moreover have "real_vector.representation B' \<psi> b = 0"
+    unfolding real_vector.representation_def
+    by (simp add: b2)
+  moreover have "real_vector.representation B' \<psi> ((*\<^sub>C) \<i> b) = 0"
+    unfolding real_vector.representation_def
+    by (simp add: b2)
+  ultimately show ?thesis unfolding B'_def by simp
+qed
+
+
+lemma CARD_1_vec_0[simp]: \<open>(\<psi> :: _ ::{complex_vector,CARD_1}) = 0\<close>
+  by auto
+
+
+lemma scaleC_cindependent:
+  assumes a1: "cindependent (B::'a::complex_vector set)" and a3: "c \<noteq> 0"
+  shows "cindependent ((*\<^sub>C) c ` B)"
+proof-
+  have "u y = 0"
+    if g1: "y\<in>S" and g2: "(\<Sum>x\<in>S. u x *\<^sub>C x) = 0" and g3: "finite S" and g4: "S\<subseteq>(*\<^sub>C) c ` B"
+    for u y S
+  proof-
+    define v where "v x = u (c *\<^sub>C x)" for x
+    obtain S' where "S'\<subseteq>B" and S_S': "S = (*\<^sub>C) c ` S'"
+      by (meson g4 subset_imageE)      
+    have "inj ((*\<^sub>C) c::'a\<Rightarrow>_)"
+      unfolding inj_def
+      using a3 by auto 
+    hence "finite S'"
+      using S_S' finite_imageD g3 subset_inj_on by blast            
+    have "t \<in> (*\<^sub>C) (inverse c) ` S"
+      if "t \<in> S'" for t
+    proof-
+      have "c *\<^sub>C t \<in> S"
+        using \<open>S = (*\<^sub>C) c ` S'\<close> that by blast
+      hence "(inverse c) *\<^sub>C (c *\<^sub>C t) \<in> (*\<^sub>C) (inverse c) ` S"
+        by blast
+      moreover have "(inverse c) *\<^sub>C (c *\<^sub>C t) = t"
+        by (simp add: a3)
+      ultimately show ?thesis by simp
+    qed
+    moreover have "t \<in> S'"
+      if "t \<in> (*\<^sub>C) (inverse c) ` S" for t
+    proof-
+      obtain t' where "t = (inverse c) *\<^sub>C t'" and "t' \<in> S"
+        using \<open>t \<in> (*\<^sub>C) (inverse c) ` S\<close> by auto
+      have "c *\<^sub>C t = c *\<^sub>C ((inverse c) *\<^sub>C t')"
+        using \<open>t = (inverse c) *\<^sub>C t'\<close> by simp
+      also have "\<dots> = (c * (inverse c)) *\<^sub>C t'"
+        by simp
+      also have "\<dots> = t'"
+        by (simp add: a3)
+      finally have "c *\<^sub>C t = t'".
+      thus ?thesis using \<open>t' \<in> S\<close>
+        using \<open>S = (*\<^sub>C) c ` S'\<close> a3 complex_vector.scale_left_imp_eq by blast 
+    qed
+    ultimately have "S' = (*\<^sub>C) (inverse c) ` S"
+      by blast 
+    hence "inverse c *\<^sub>C y \<in> S'"
+      using that(1) by blast 
+    have t: "inj (((*\<^sub>C) c)::'a \<Rightarrow> _)"
+      using a3 complex_vector.injective_scale[where c = c]
+      by blast
+    have "0 = (\<Sum>x\<in>(*\<^sub>C) c ` S'. u x *\<^sub>C x)"
+      using \<open>S = (*\<^sub>C) c ` S'\<close> that(2) by auto
+    also have "\<dots> = (\<Sum>x\<in>S'. v x *\<^sub>C (c *\<^sub>C x))"
+      unfolding v_def
+      using t Groups_Big.comm_monoid_add_class.sum.reindex[where h = "((*\<^sub>C) c)" and A = S' 
+          and g = "\<lambda>x. u x *\<^sub>C x"] subset_inj_on by auto     
+    also have "\<dots> = c *\<^sub>C (\<Sum>x\<in>S'. v x *\<^sub>C x)"
+      by (metis (mono_tags, lifting) complex_vector.scale_left_commute scaleC_right.sum sum.cong)
+    finally have "0 = c *\<^sub>C (\<Sum>x\<in>S'. v x *\<^sub>C x)".
+    hence "(\<Sum>x\<in>S'. v x *\<^sub>C x) = 0"
+      using a3 by auto
+    hence "v (inverse c *\<^sub>C y) = 0"
+      using \<open>inverse c *\<^sub>C y \<in> S'\<close> \<open>finite S'\<close> \<open>S' \<subseteq> B\<close> a1
+        complex_vector.independentD
+      by blast 
+    thus "u y = 0"
+      unfolding v_def
+      by (simp add: a3) 
+  qed
+  thus ?thesis
+    using complex_vector.dependent_explicit
+    by (simp add: complex_vector.dependent_explicit ) 
+qed
+
 subsection \<open>Antilinear maps and friends\<close>
 
 locale antilinear = additive f for f :: "'a::complex_vector \<Rightarrow> 'b::complex_vector" +
@@ -329,14 +826,7 @@ lemma comp_bounded_clinear:
 lemmas isCont_scaleC [simp] =
   bounded_bilinear.isCont [OF bounded_cbilinear_scaleC[THEN bounded_cbilinear.bounded_bilinear]]
 
-subsection \<open>Cauchy sequences\<close>
-
-lemma (in bounded_clinear) Cauchy: "Cauchy X \<Longrightarrow> Cauchy (\<lambda>n. f (X n))"
-  by (simp add: bounded_linear bounded_linear.Cauchy)
-
-subsection \<open>Cauchy Sequences are Convergent\<close>
-
-subsection \<open>The set of complex numbers is a complete metric space\<close>
+subsection \<open>Misc 2\<close>
 
 lemmas sums_of_complex = bounded_linear.sums [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
 lemmas summable_of_complex = bounded_linear.summable [OF bounded_clinear_of_complex[THEN bounded_clinear.bounded_linear]]
@@ -349,10 +839,6 @@ lemmas suminf_scaleC_left = bounded_linear.suminf[OF bounded_clinear_scaleC_left
 lemmas sums_scaleC_right = bounded_linear.sums[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
 lemmas summable_scaleC_right = bounded_linear.summable[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
 lemmas suminf_scaleC_right = bounded_linear.suminf[OF bounded_clinear_scaleC_right[THEN bounded_clinear.bounded_linear]]
-
-subsection \<open>Miscellany\<close>
-
-(* TODO sort? *)
 
 lemma closed_scaleC: 
   fixes S::\<open>'a::complex_normed_vector set\<close> and a :: complex
@@ -518,669 +1004,7 @@ proof (cases "f = 0")
   qed
 qed (simp add: onorm_zero)
 
-lemma csubspace_INF[simp]: "(\<And>x. x \<in> A \<Longrightarrow> csubspace x) \<Longrightarrow> csubspace (\<Inter>A)"
-  by (simp add: complex_vector.subspace_Inter)
-
-subsection \<open>Subspace\<close>
-
-locale closed_csubspace =
-  fixes A::"('a::{complex_vector,topological_space}) set"
-  assumes subspace: "csubspace A"
-  assumes closed: "closed A"
-
-declare closed_csubspace.subspace[simp]
-
-lemma closure_is_csubspace[simp]:
-  fixes A::"('a::complex_normed_vector) set"
-  assumes \<open>csubspace A\<close>
-  shows \<open>csubspace (closure A)\<close>
-proof-
-  have "x \<in> closure A \<Longrightarrow> y \<in> closure A \<Longrightarrow> x+y \<in> closure A" for x y
-  proof-
-    assume \<open>x\<in>(closure A)\<close>
-    then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
-      using closure_sequential by blast
-    assume \<open>y\<in>(closure A)\<close>
-    then obtain yy where \<open>\<forall> n::nat. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
-      using closure_sequential by blast
-    have \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close> 
-      using \<open>\<forall>n. xx n \<in> A\<close> \<open>\<forall>n. yy n \<in> A\<close> assms complex_vector.subspace_def
-      by (simp add: complex_vector.subspace_def)      
-    hence  \<open>(\<lambda> n. (xx n) + (yy n)) \<longlonglongrightarrow> x + y\<close> using  \<open>xx \<longlonglongrightarrow> x\<close> \<open>yy \<longlonglongrightarrow> y\<close> 
-      by (simp add: tendsto_add)
-    thus ?thesis using  \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close>
-      by (meson closure_sequential)
-  qed
-  moreover have "x\<in>(closure A) \<Longrightarrow> c *\<^sub>C x \<in> (closure A)" for x c
-  proof-
-    assume \<open>x\<in>(closure A)\<close>
-    then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
-      using closure_sequential by blast
-    have \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
-      using \<open>\<forall>n. xx n \<in> A\<close> assms complex_vector.subspace_def
-      by (simp add: complex_vector.subspace_def)
-    have \<open>isCont (\<lambda> t. c *\<^sub>C t) x\<close> 
-      using bounded_clinear.bounded_linear bounded_clinear_scaleC_right linear_continuous_at by auto
-    hence  \<open>(\<lambda> n. c *\<^sub>C (xx n)) \<longlonglongrightarrow> c *\<^sub>C x\<close> using  \<open>xx \<longlonglongrightarrow> x\<close>
-      by (simp add: isCont_tendsto_compose)
-    thus ?thesis using  \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
-      by (meson closure_sequential)
-  qed
-  moreover have "0 \<in> (closure A)"
-    using assms closure_subset complex_vector.subspace_def
-    by (metis in_mono)    
-  ultimately show ?thesis
-    by (simp add: complex_vector.subspaceI) 
-qed
-
-lemma csubspace_set_plus:
-  assumes \<open>csubspace A\<close> and \<open>csubspace B\<close>
-  shows \<open>csubspace (A + B)\<close>
-proof -
-  define C where \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
-  have  "x\<in>C \<Longrightarrow> y\<in>C \<Longrightarrow> x+y\<in>C" for x y
-    using C_def assms(1) assms(2) complex_vector.subspace_add complex_vector.subspace_sums by blast
-  moreover have "c *\<^sub>C x \<in> C" if \<open>x\<in>C\<close> for x c
-  proof -
-    have "csubspace C"
-      by (simp add: C_def assms(1) assms(2) complex_vector.subspace_sums)
-    then show ?thesis
-      using that by (simp add: complex_vector.subspace_def)
-  qed
-  moreover have  "0 \<in> C"
-    using  \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> add.inverse_neutral add_uminus_conv_diff assms(1) assms(2) diff_0  mem_Collect_eq
-      add.right_inverse
-    by (metis (mono_tags, lifting) complex_vector.subspace_0)
-  ultimately show ?thesis
-    unfolding C_def complex_vector.subspace_def
-    by (smt mem_Collect_eq set_plus_elim set_plus_intro)    
-qed
-
-lemma closed_csubspace_0[simp]:
-  "closed_csubspace ({0} :: ('a::{complex_vector,t1_space}) set)"
-proof-
-  have \<open>csubspace {0}\<close>
-    using add.right_neutral complex_vector.subspace_def scaleC_right.zero
-    by blast    
-  moreover have "closed ({0} :: 'a set)"
-    by simp 
-  ultimately show ?thesis 
-    by (simp add: closed_csubspace_def)
-qed
-
-lemma closed_csubspace_UNIV[simp]: "closed_csubspace (UNIV::('a::{complex_vector,topological_space}) set)"
-proof-
-  have \<open>csubspace UNIV\<close>
-    by simp  
-  moreover have \<open>closed UNIV\<close>
-    by simp
-  ultimately show ?thesis 
-    unfolding closed_csubspace_def by auto
-qed
-
-lemma closed_csubspace_inter[simp]:
-  assumes "closed_csubspace A" and "closed_csubspace B"
-  shows "closed_csubspace (A\<inter>B)"
-proof-
-  obtain C where \<open>C = A \<inter> B\<close> by blast
-  have \<open>csubspace C\<close>
-  proof-
-    have "x\<in>C \<Longrightarrow> y\<in>C \<Longrightarrow> x+y\<in>C" for x y
-      by (metis IntD1 IntD2 IntI \<open>C = A \<inter> B\<close> assms(1) assms(2) complex_vector.subspace_def closed_csubspace_def)
-    moreover have "x\<in>C \<Longrightarrow> c *\<^sub>C x \<in> C" for x c
-      by (metis IntD1 IntD2 IntI \<open>C = A \<inter> B\<close> assms(1) assms(2) complex_vector.subspace_def closed_csubspace_def)
-    moreover have "0 \<in> C" 
-      using  \<open>C = A \<inter> B\<close> assms(1) assms(2) complex_vector.subspace_def closed_csubspace_def by fastforce
-    ultimately show ?thesis 
-      by (simp add: complex_vector.subspace_def)
-  qed
-  moreover have \<open>closed C\<close>
-    using  \<open>C = A \<inter> B\<close>
-    by (simp add: assms(1) assms(2) closed_Int closed_csubspace.closed)
-  ultimately show ?thesis
-    using  \<open>C = A \<inter> B\<close>
-    by (simp add: closed_csubspace_def)
-qed
-
-
-lemma closed_csubspace_INF[simp]:
-  assumes a1: "\<forall>A\<in>\<A>. closed_csubspace A"
-  shows "closed_csubspace (\<Inter>\<A>)"
-proof-
-  have \<open>csubspace (\<Inter>\<A>)\<close>
-    by (simp add: assms closed_csubspace.subspace complex_vector.subspace_Inter)
-  moreover have \<open>closed (\<Inter>\<A>)\<close>
-    by (simp add: assms closed_Inter closed_csubspace.closed)
-  ultimately show ?thesis 
-    by (simp add: closed_csubspace.intro)
-qed
-
-
-subsection \<open>Linear space\<close>
-
-
-typedef (overloaded) ('a::"{complex_vector,topological_space}") 
-  ccsubspace = \<open>{S::'a set. closed_csubspace S}\<close>
-  morphisms space_as_set Abs_clinear_space
-  using Complex_Vector_Spaces.closed_csubspace_UNIV by blast
-
-setup_lifting type_definition_ccsubspace
-
-lemma csubspace_space_as_set[simp]: \<open>csubspace (space_as_set S)\<close>
-  by (metis closed_csubspace_def mem_Collect_eq space_as_set)
-
-instantiation ccsubspace :: (complex_normed_vector) scaleC begin
-lift_definition scaleC_ccsubspace :: "complex \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" is
-  "\<lambda>c S. (*\<^sub>C) c ` S"
-proof
-  show "csubspace ((*\<^sub>C) c ` S)"
-    if "closed_csubspace S"
-    for c :: complex
-      and S :: "'a set"
-    using that
-    by (simp add: closed_csubspace.subspace complex_vector.linear_subspace_image) 
-  show "closed ((*\<^sub>C) c ` S)"
-    if "closed_csubspace S"
-    for c :: complex
-      and S :: "'a set"
-    using that
-    by (simp add: closed_scaleC closed_csubspace.closed) 
-qed
-
-lift_definition scaleR_ccsubspace :: "real \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" is
-  "\<lambda>c S. (*\<^sub>R) c ` S"
-proof
-  show "csubspace ((*\<^sub>R) r ` S)"
-    if "closed_csubspace S"
-    for r :: real
-      and S :: "'a set"
-    using that   using bounded_clinear_def bounded_clinear_scaleC_right scaleR_scaleC
-    by (simp add: scaleR_scaleC closed_csubspace.subspace complex_vector.linear_subspace_image)
-  show "closed ((*\<^sub>R) r ` S)"
-    if "closed_csubspace S"
-    for r :: real
-      and S :: "'a set"
-    using that 
-    by (simp add: closed_scaling closed_csubspace.closed)
-qed
-
-instance 
-proof
-  show "((*\<^sub>R) r::'a ccsubspace \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)" for r :: real
-    by (simp add: scaleR_scaleC scaleC_ccsubspace_def scaleR_ccsubspace_def)    
-qed
-end
-
-instantiation ccsubspace :: ("{complex_vector,t1_space}") bot begin
-lift_definition bot_ccsubspace :: \<open>'a ccsubspace\<close> is \<open>{0}\<close>
-  by simp
-instance..
-end
-
-lemma zero_cblinfun_image[simp]: "0 *\<^sub>C S = bot" for S :: "_ ccsubspace"
-proof transfer
-  have "(0::'b) \<in> (\<lambda>x. 0) ` S"
-    if "closed_csubspace S"
-    for S::"'b set"
-    using that unfolding closed_csubspace_def
-    by (simp add: complex_vector.linear_subspace_image complex_vector.module_hom_zero 
-        complex_vector.subspace_0)
-  thus "(*\<^sub>C) 0 ` S = {0::'b}"
-    if "closed_csubspace (S::'b set)"
-    for S :: "'b set"
-    using that 
-    by (auto intro !: exI [of _ 0])
-qed
-
-lemma csubspace_scaleC_invariant: 
-  fixes a S
-  assumes \<open>a \<noteq> 0\<close> and \<open>csubspace S\<close>
-  shows \<open>(*\<^sub>C) a ` S = S\<close>
-proof-
-  have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close>
-    for x
-    using assms(2) complex_vector.subspace_scale by blast 
-  moreover have  \<open>x \<in> S \<Longrightarrow> x \<in> (*\<^sub>C) a ` S\<close>
-    for x
-  proof -
-    assume "x \<in> S"
-    hence "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
-      using assms(2) complex_vector.subspace_def scaleC_one by metis
-    hence "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
-      using assms(1) by auto
-    thus ?thesis
-      by (meson image_iff)
-  qed 
-  ultimately show ?thesis by blast
-qed
-
-
-lemma ccsubspace_scaleC_invariant[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ ccsubspace"
-  apply transfer
-  by (simp add: closed_csubspace.subspace csubspace_scaleC_invariant)
-
-
-instantiation ccsubspace :: ("{complex_vector,topological_space}") "top"
-begin
-lift_definition top_ccsubspace :: \<open>'a ccsubspace\<close> is \<open>UNIV\<close>
-  by simp
-
-instance ..
-end
-
-lemma ccsubspace_top_not_bot[simp]: 
-  "(top::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> bot"
-  (* The type class t1_space is needed because the definition of bot in ccsubspace needs it *)
-  by (metis UNIV_not_singleton bot_ccsubspace.rep_eq top_ccsubspace.rep_eq)
-
-lemma ccsubspace_bot_not_top[simp]:
-  "(bot::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
-  using ccsubspace_top_not_bot by metis
-
-instantiation ccsubspace :: ("{complex_vector,topological_space}") "Inf"
-begin
-lift_definition Inf_ccsubspace::\<open>'a ccsubspace set \<Rightarrow> 'a ccsubspace\<close>
-  is \<open>\<lambda> S. \<Inter> S\<close>
-proof
-  fix S :: "'a set set"
-  assume closed: "closed_csubspace x" if \<open>x \<in> S\<close> for x
-  show "csubspace (\<Inter> S::'a set)"
-    by (simp add: closed closed_csubspace.subspace) 
-  show "closed (\<Inter> S::'a set)"
-    by (simp add: closed closed_csubspace.closed) 
-qed
-
-instance ..
-end
-
-subsection \<open>Closed spans\<close>
-
-lift_definition ccspan :: "'a::complex_normed_vector set \<Rightarrow> 'a ccsubspace"
-  is "\<lambda>G. closure (cspan G)"
-proof (rule closed_csubspace.intro)
-  fix S :: "'a set"
-  show "csubspace (closure (cspan S))"
-    by (simp add: closure_is_csubspace)    
-  show "closed (closure (cspan S))"
-    by simp
-qed
-
-lemma ccspan_Inf_def: \<open>ccspan A = Inf {S. A \<subseteq> space_as_set S}\<close>
-  for A::\<open>('a::cbanach) set\<close>
-proof-
-  have \<open>x \<in> space_as_set (ccspan A) 
-    \<Longrightarrow> x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
-    for x::'a
-  proof-
-    assume \<open>x \<in> space_as_set (ccspan A)\<close>
-    hence "x \<in> closure (cspan A)"
-      by (simp add: ccspan.rep_eq)
-    hence \<open>x \<in> closure (complex_vector.span A)\<close>
-      unfolding ccspan_def
-      by simp
-    hence \<open>\<exists> y::nat \<Rightarrow> 'a. (\<forall> n. y n \<in> (complex_vector.span A)) \<and> y \<longlonglongrightarrow> x\<close>
-      by (simp add: closure_sequential)
-    then obtain y where \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
-      by blast
-    have \<open>y n \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close>
-      for n
-      using  \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close>
-      by auto
-
-    have \<open>closed_csubspace S \<Longrightarrow> closed S\<close>
-      for S::\<open>'a set\<close>
-      by (simp add: closed_csubspace.closed)
-    hence \<open>closed ( \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S})\<close>
-      by simp
-    hence \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close> using \<open>y \<longlonglongrightarrow> x\<close>
-      using \<open>\<And>n. y n \<in> \<Inter> {S. complex_vector.span A \<subseteq> S \<and> closed_csubspace S}\<close> closed_sequentially 
-      by blast
-    moreover have \<open>{S. A \<subseteq> S \<and> closed_csubspace S} \<subseteq> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close>
-      using Collect_mono_iff
-      by (simp add: Collect_mono_iff closed_csubspace.subspace complex_vector.span_minimal)
-    ultimately have \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> closed_csubspace S}\<close>
-      by blast     
-    moreover have "(x::'a) \<in> \<Inter> {x. A \<subseteq> x \<and> closed_csubspace x}"
-      if "(x::'a) \<in> \<Inter> {S. A \<subseteq> S \<and> closed_csubspace S}"
-      for x :: 'a
-        and A :: "'a set"
-      using that
-      by simp
-    ultimately show \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close> 
-      apply transfer.
-  qed
-  moreover have \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})
-             \<Longrightarrow> x \<in> space_as_set (ccspan A)\<close>
-    for x::'a
-  proof-
-    assume \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
-    hence \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> closed_csubspace S}\<close>
-      apply transfer
-      by blast
-    moreover have \<open>{S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S} \<subseteq> {S. A \<subseteq> S \<and> closed_csubspace S}\<close>
-      using Collect_mono_iff complex_vector.span_superset by fastforce
-    ultimately have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close>
-      by blast 
-    thus \<open>x \<in> space_as_set (ccspan A)\<close>
-      by (metis (no_types, lifting) Inter_iff space_as_set closure_subset mem_Collect_eq ccspan.rep_eq)      
-  qed
-  ultimately have \<open>space_as_set (ccspan A) = space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
-    by blast
-  thus ?thesis
-    using space_as_set_inject by auto 
-qed
-
-lemma cspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> cspan { a *\<^sub>C \<psi> } = cspan {\<psi>}"
-  for \<psi>::"'a::complex_vector"
-  by (smt complex_vector.dependent_single complex_vector.independent_insert 
-      complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_redundant 
-      complex_vector.span_scale doubleton_eq_iff insert_absorb insert_absorb2 insert_commute 
-      singletonI)
-
-lemma closure_is_closed_csubspace[simp]:
-  fixes S::\<open>'a::complex_normed_vector set\<close>
-  assumes \<open>csubspace S\<close>
-  shows \<open>closed_csubspace (closure S)\<close>
-proof-
-  fix x y :: 'a and c :: complex
-  have "x + y \<in> closure S"
-    if "x \<in> closure S"
-      and "y \<in> closure S"
-  proof-
-    have \<open>\<exists> r. (\<forall> n::nat. r n \<in> S) \<and> r \<longlonglongrightarrow> x\<close>
-      using closure_sequential that(1) by auto
-    then obtain r where \<open>\<forall> n::nat. r n \<in> S\<close> and \<open>r \<longlonglongrightarrow> x\<close>
-      by blast
-    have \<open>\<exists> s. (\<forall> n::nat. s n \<in> S) \<and> s \<longlonglongrightarrow> y\<close>
-      using closure_sequential that(2) by auto
-    then obtain s where \<open>\<forall> n::nat. s n \<in> S\<close> and \<open>s \<longlonglongrightarrow> y\<close>
-      by blast
-    have \<open>\<forall> n::nat. r n + s n \<in> S\<close>
-      using \<open>\<forall>n. r n \<in> S\<close> \<open>\<forall>n. s n \<in> S\<close> assms complex_vector.subspace_add by blast 
-    moreover have \<open>(\<lambda> n. r n + s n) \<longlonglongrightarrow> x + y\<close>
-      by (simp add: \<open>r \<longlonglongrightarrow> x\<close> \<open>s \<longlonglongrightarrow> y\<close> tendsto_add)
-    ultimately show ?thesis
-      using assms that(1) that(2)
-      by (simp add: complex_vector.subspace_add) 
-  qed
-  moreover have "c *\<^sub>C x \<in> closure S"
-    if "x \<in> closure S"
-  proof-
-    have \<open>\<exists> y. (\<forall> n::nat. y n \<in> S) \<and> y \<longlonglongrightarrow> x\<close>
-      using Elementary_Topology.closure_sequential that by auto
-    then obtain y where \<open>\<forall> n::nat. y n \<in> S\<close> and \<open>y \<longlonglongrightarrow> x\<close>
-      by blast
-    have \<open>isCont (scaleC c) x\<close>
-      by simp
-    hence \<open>(\<lambda> n. scaleC c (y n)) \<longlonglongrightarrow> scaleC c x\<close>
-      using  \<open>y \<longlonglongrightarrow> x\<close>
-      by (simp add: isCont_tendsto_compose) 
-    from  \<open>\<forall> n::nat. y n \<in> S\<close>
-    have  \<open>\<forall> n::nat. scaleC c (y n) \<in> S\<close>
-      using assms complex_vector.subspace_scale by auto
-    thus ?thesis
-      using assms that
-      by (simp add: complex_vector.subspace_scale) 
-  qed
-  moreover have "0 \<in> closure S"
-    by (simp add: assms complex_vector.subspace_0)
-  moreover have "closed (closure S)"
-    by auto
-  ultimately show ?thesis
-    by (simp add: assms closed_csubspace_def)
-qed
-
-lemma ccspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> ccspan {a *\<^sub>C \<psi>} = ccspan {\<psi>}"
-  apply transfer by simp
-
-lemma clinear_continuous_at:
-  assumes \<open>bounded_clinear f\<close> 
-  shows \<open>isCont f x\<close>
-  by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
-
-lemma clinear_continuous_within:
-  assumes \<open>bounded_clinear f\<close> 
-  shows \<open>continuous (at x within s) f\<close>
-  by (simp add: assms bounded_clinear.bounded_linear linear_continuous_within)
-
-lemma antilinear_continuous_at:
-  assumes \<open>bounded_antilinear f\<close> 
-  shows \<open>isCont f x\<close>
-  by (simp add: assms bounded_antilinear.bounded_linear linear_continuous_at)
-
-lemma antilinear_continuous_within:
-  assumes \<open>bounded_antilinear f\<close> 
-  shows \<open>continuous (at x within s) f\<close>
-  by (simp add: assms bounded_antilinear.bounded_linear linear_continuous_within)
-
-lemma bounded_clinear_eq_on:
-  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
-  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
-    eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
-  shows \<open>A t = B t\<close>
-proof -
-  have eq': \<open>A t = B t\<close> if \<open>t \<in> cspan G\<close> for t
-    using _ _ that eq apply (rule complex_vector.linear_eq_on)
-    by (auto simp: assms bounded_clinear.clinear)
-  have \<open>A t - B t = 0\<close>
-    using _ _ t apply (rule continuous_constant_on_closure)
-    by (auto simp add: eq' assms(1) assms(2) clinear_continuous_at continuous_at_imp_continuous_on)
-  then show ?thesis
-    by auto
-qed
-
-instantiation ccsubspace :: ("{complex_vector,topological_space}") "order"
-begin
-lift_definition less_eq_ccsubspace :: \<open>'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> bool\<close>
-  is  \<open>(\<subseteq>)\<close>.
-declare less_eq_ccsubspace_def[code del]
-lift_definition less_ccsubspace :: \<open>'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> bool\<close>
-  is \<open>(\<subset>)\<close>.
-declare less_ccsubspace_def[code del]
-instance
-proof
-  fix x y z :: "'a ccsubspace"
-  show "(x < y) = (x \<le> y \<and> \<not> y \<le> x)"
-    by (simp add: less_eq_ccsubspace.rep_eq less_le_not_le less_ccsubspace.rep_eq)    
-  show "x \<le> x"
-    by (simp add: less_eq_ccsubspace.rep_eq)    
-  show "x \<le> z" if "x \<le> y" and "y \<le> z"
-    using that less_eq_ccsubspace.rep_eq by auto 
-  show "x = y" if "x \<le> y" and "y \<le> x"
-    using that by (simp add: space_as_set_inject less_eq_ccsubspace.rep_eq) 
-qed
-end
-
-lemma ccspan_leqI:
-  assumes \<open>M \<subseteq> space_as_set S\<close>
-  shows \<open>ccspan M \<le> S\<close>
-  using assms apply transfer
-  by (simp add: closed_csubspace.closed closure_minimal complex_vector.span_minimal)
-
-lemma ccspan_mono:
-  assumes \<open>A \<subseteq> B\<close>
-  shows \<open>ccspan A \<le> ccspan B\<close>
-  apply (transfer fixing: A B)
-  by (simp add: assms closure_mono complex_vector.span_mono)
-
-lemma bounded_sesquilinear_add:
-  \<open>bounded_sesquilinear (\<lambda> x y. A x y + B x y)\<close> if \<open>bounded_sesquilinear A\<close> and \<open>bounded_sesquilinear B\<close>
-proof
-  fix a a' :: 'a and b b' :: 'b and r :: complex
-  show "A (a + a') b + B (a + a') b = (A a b + B a b) + (A a' b + B a' b)"
-    by (simp add: bounded_sesquilinear.add_left that(1) that(2))
-  show \<open>A a (b + b') + B a (b + b') = (A a b + B a b) + (A a b' + B a b')\<close>
-    by (simp add: bounded_sesquilinear.add_right that(1) that(2))
-  show \<open>A (r *\<^sub>C a) b + B (r *\<^sub>C a) b = cnj r *\<^sub>C (A a b + B a b)\<close>
-    by (simp add: bounded_sesquilinear.scaleC_left scaleC_add_right that(1) that(2))
-  show \<open>A a (r *\<^sub>C b) + B a (r *\<^sub>C b) = r *\<^sub>C (A a b + B a b)\<close>
-    by (simp add: bounded_sesquilinear.scaleC_right scaleC_add_right that(1) that(2))
-  show \<open>\<exists>K. \<forall>a b. norm (A a b + B a b) \<le> norm a * norm b * K\<close>
-  proof-
-    have \<open>\<exists> KA. \<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
-      by (simp add: bounded_sesquilinear.bounded that(1))
-    then obtain KA where \<open>\<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
-      by blast
-    have \<open>\<exists> KB. \<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
-      by (simp add: bounded_sesquilinear.bounded that(2))
-    then obtain KB where \<open>\<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
-      by blast
-    have \<open>norm (A a b + B a b) \<le> norm a * norm b * (KA + KB)\<close>
-      for a b
-    proof-
-      have \<open>norm (A a b + B a b) \<le> norm (A a b) +  norm (B a b)\<close>
-        using norm_triangle_ineq by blast
-      also have \<open>\<dots> \<le> norm a * norm b * KA + norm a * norm b * KB\<close>
-        using  \<open>\<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
-          \<open>\<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
-        using add_mono by blast
-      also have \<open>\<dots>=  norm a * norm b * (KA + KB)\<close>
-        by (simp add: mult.commute ring_class.ring_distribs(2))
-      finally show ?thesis 
-        by blast
-    qed
-    thus ?thesis by blast
-  qed
-qed
-
-lemma bounded_sesquilinear_uminus:
-  \<open>bounded_sesquilinear (\<lambda> x y. - A x y)\<close> if \<open>bounded_sesquilinear A\<close>
-proof
-  fix a a' :: 'a and b b' :: 'b and r :: complex
-  show "- A (a + a') b = (- A a b) + (- A a' b)"
-    by (simp add: bounded_sesquilinear.add_left that)
-  show \<open>- A a (b + b') = (- A a b) + (- A a b')\<close>
-    by (simp add: bounded_sesquilinear.add_right that)
-  show \<open>- A (r *\<^sub>C a) b = cnj r *\<^sub>C (- A a b)\<close>
-    by (simp add: bounded_sesquilinear.scaleC_left that)
-  show \<open>- A a (r *\<^sub>C b) = r *\<^sub>C (- A a b)\<close>
-    by (simp add: bounded_sesquilinear.scaleC_right that)
-  show \<open>\<exists>K. \<forall>a b. norm (- A a b) \<le> norm a * norm b * K\<close>
-  proof-
-    have \<open>\<exists> KA. \<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
-      by (simp add: bounded_sesquilinear.bounded that(1))
-    then obtain KA where \<open>\<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
-      by blast
-    have \<open>norm (- A a b) \<le> norm a * norm b * KA\<close>
-      for a b
-      by (simp add: \<open>\<forall>a b. norm (A a b) \<le> norm a * norm b * KA\<close>)
-    thus ?thesis by blast
-  qed
-qed
-
-lemma bounded_sesquilinear_diff:
-  \<open>bounded_sesquilinear (\<lambda> x y. A x y - B x y)\<close> if \<open>bounded_sesquilinear A\<close> and \<open>bounded_sesquilinear B\<close>
-proof -
-  have \<open>bounded_sesquilinear (\<lambda> x y. - B x y)\<close>
-    using that(2) by (rule bounded_sesquilinear_uminus)
-  then have \<open>bounded_sesquilinear (\<lambda> x y. A x y + (- B x y))\<close>
-    using that(1) by (rule bounded_sesquilinear_add[rotated])
-  then show ?thesis
-    by auto
-qed
-
-subsection \<open>Unsorted\<close>
-
-(* TODO: sort into sections *)
-
-definition cbilinear :: \<open>('a::complex_vector \<Rightarrow> 'b::complex_vector \<Rightarrow> 'c::complex_vector) \<Rightarrow> bool\<close>
-  where \<open>cbilinear = (\<lambda> f. (\<forall> y. clinear (\<lambda> x. f x y)) \<and> (\<forall> x. clinear (\<lambda> y. f x y)) )\<close>
-
-lemma cbilinear_add_left:
-  assumes \<open>cbilinear f\<close>
-  shows \<open>f (a + b) c = f a c + f b c\<close>
-  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
-
-lemma cbilinear_add_right:
-  assumes \<open>cbilinear f\<close>
-  shows \<open>f a (b + c) = f a b + f a c\<close>
-  by (smt (verit, del_insts) assms cbilinear_def complex_vector.linear_add)
-
-lemma cbilinear_times:
-  fixes g' :: \<open>'a::complex_vector \<Rightarrow> complex\<close> and g :: \<open>'b::complex_vector \<Rightarrow> complex\<close>
-  assumes \<open>\<And> x y. h x y = (g' x)*(g y)\<close> and \<open>clinear g\<close> and \<open>clinear g'\<close>
-  shows \<open>cbilinear h\<close>
-proof -
-  have w1: "h (b1 + b2) y = h b1 y + h b2 y"
-    for b1 :: 'a
-      and b2 :: 'a
-      and y
-  proof-
-    have \<open>h (b1 + b2) y = g' (b1 + b2) * g y\<close>
-      using \<open>\<And> x y. h x y = (g' x)*(g y)\<close>
-      by auto
-    also have \<open>\<dots> = (g' b1 + g' b2) * g y\<close>
-      using \<open>clinear g'\<close>
-      unfolding clinear_def
-      by (simp add: assms(3) complex_vector.linear_add)
-    also have \<open>\<dots> = g' b1 * g y + g' b2 * g y\<close>
-      by (simp add: ring_class.ring_distribs(2))
-    also have \<open>\<dots> = h b1 y + h b2 y\<close>
-      using assms(1) by auto          
-    finally show ?thesis by blast
-  qed
-  have w2: "h (r *\<^sub>C b) y = r *\<^sub>C h b y"
-    for r :: complex
-      and b :: 'a
-      and y
-  proof-
-    have \<open>h (r *\<^sub>C b) y = g' (r *\<^sub>C b) * g y\<close>
-      by (simp add: assms(1))
-    also have \<open>\<dots> = r *\<^sub>C (g' b * g y)\<close>
-      by (simp add: assms(3) complex_vector.linear_scale)
-    also have \<open>\<dots> = r *\<^sub>C (h b y)\<close>
-      by (simp add: assms(1))          
-    finally show ?thesis by blast
-  qed
-  have "clinear (\<lambda>x. h x y)"
-    for y :: 'b
-    unfolding clinear_def
-    by (meson clinearI clinear_def w1 w2)
-  hence t2: "\<forall>y. clinear (\<lambda>x. h x y)"
-    by simp
-  have v1: "h x (b1 + b2) = h x b1 + h x b2"
-    for b1 :: 'b
-      and b2 :: 'b
-      and x
-  proof-
-    have \<open>h x (b1 + b2)  = g' x * g (b1 + b2)\<close>
-      using \<open>\<And> x y. h x y = (g' x)*(g y)\<close>
-      by auto
-    also have \<open>\<dots> = g' x * (g b1 + g b2)\<close>
-      using \<open>clinear g'\<close>
-      unfolding clinear_def
-      by (simp add: assms(2) complex_vector.linear_add)
-    also have \<open>\<dots> = g' x * g b1 + g' x * g b2\<close>
-      by (simp add: ring_class.ring_distribs(1))
-    also have \<open>\<dots> = h x b1 + h x b2\<close>
-      using assms(1) by auto          
-    finally show ?thesis by blast
-  qed
-
-  have v2:  "h x (r *\<^sub>C b) = r *\<^sub>C h x b"
-    for r :: complex
-      and b :: 'b
-      and x
-  proof-
-    have \<open>h x (r *\<^sub>C b) =  g' x * g (r *\<^sub>C b)\<close>
-      by (simp add: assms(1))
-    also have \<open>\<dots> = r *\<^sub>C (g' x * g b)\<close>
-      by (simp add: assms(2) complex_vector.linear_scale)
-    also have \<open>\<dots> = r *\<^sub>C (h x b)\<close>
-      by (simp add: assms(1))          
-    finally show ?thesis by blast
-  qed
-  have "Vector_Spaces.linear (*\<^sub>C) (*\<^sub>C) (h x)"
-    for x :: 'a
-    using v1 v2
-    by (meson clinearI clinear_def) 
-  hence t1: "\<forall>x. clinear (h x)"
-    unfolding clinear_def
-    by simp
-  show ?thesis
-    unfolding cbilinear_def
-    by (simp add: t1 t2)    
-qed
+subsection \<open>Finite dimension and canonical basis\<close>
 
 lemma vector_finitely_spanned:
   assumes \<open>z \<in> cspan T\<close>
@@ -1221,11 +1045,6 @@ lemma cdim_UNIV_basis_enum[simp]: \<open>cdim (UNIV::'a::basis_enum set) = lengt
    apply (rule is_cindependent_set)
   using distinct_canonical_basis distinct_card by blast
 
-lemma ccspan_canonical_basis[simp]: "ccspan (set canonical_basis) = top"
-  using ccspan.rep_eq space_as_set_inject top_ccsubspace.rep_eq
-    closure_UNIV is_generator_set
-  by metis
-
 lemma finite_basis: "\<exists>basis::'a::cfinite_dim set. finite basis \<and> cindependent basis \<and> cspan basis = UNIV"
 proof -
   from cfinitely_spanned
@@ -1259,339 +1078,18 @@ lemma cfinite_dim_finite_subspace_basis:
   shows "\<exists>basis::'a::cfinite_dim set. finite basis \<and> cindependent basis \<and> cspan basis = X"
   by (meson assms cindependent_cfinite_dim_finite complex_vector.basis_exists complex_vector.span_subspace)
 
-lemma ccsubspace_leI:
-  assumes t1: "space_as_set A \<subseteq> space_as_set B"
-  shows "A \<le> B"
-  using t1 apply transfer by -
 
-context bounded_cbilinear begin
-interpretation bounded_bilinear prod by simp
-lemmas tendsto = tendsto
-lemmas isCont = isCont
-end
+text \<open>The following auxiliary lemma (\<open>finite_span_complete_aux\<close>) shows more or less the same as \<open>finite_span_representation_bounded\<close>,
+   \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
+   content of the lemmas). However, there is one difference: Here we additionally assume here
+   that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
+   This is needed to be able to use results about euclidean spaces that are formulated w.r.t.
+   the type class \<^class>\<open>finite\<close>
 
-context bounded_sesquilinear begin
-interpretation bounded_bilinear prod by simp
-lemmas tendsto = tendsto
-lemmas isCont = isCont
-end
-
-
-
-lemmas tendsto_scaleC [tendsto_intros] =
-  bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
-
-lemma csubspace_is_subspace: "csubspace A \<Longrightarrow> subspace A"
-  apply (rule subspaceI) 
-  by (auto simp: complex_vector.subspace_def scaleR_scaleC)
-
-lemma span_subset_cspan: "span A \<subseteq> cspan A"
-  unfolding span_def complex_vector.span_def
-  by (simp add: csubspace_is_subspace hull_antimono)
-
-lemma cindependent_implies_independent: 
-  assumes "cindependent (S::'a::complex_vector set)"
-  shows "independent S"
-  using assms unfolding dependent_def complex_vector.dependent_def
-  using span_subset_cspan by blast
-
-lemma cspan_singleton: "cspan {x} = {\<alpha> *\<^sub>C x| \<alpha>. True}"
-proof -
-  have \<open>cspan {x} = {y. y\<in>cspan {x}}\<close>
-    by auto
-  also have \<open>\<dots> = {\<alpha> *\<^sub>C x| \<alpha>. True}\<close>
-    apply (subst complex_vector.span_breakdown_eq)
-    by auto
-  finally show ?thesis
-    by -
-qed
-
-lemma ccspan_of_empty[simp]: "ccspan {} = bot"
-proof transfer
-  show "closure (cspan {}) = {0::'a}"
-    by simp
-qed
-
-definition closed_sum:: \<open>'a::{semigroup_add,topological_space} set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
-  \<open>closed_sum A B = closure (A + B)\<close>
-
-notation closed_sum (infixl "+\<^sub>M" 65)
-
-lemma closed_sum_comm: \<open>A +\<^sub>M B = B +\<^sub>M A\<close> for A B :: "_::ab_semigroup_add"
-  by (simp add: add.commute closed_sum_def)
-
-lemma closed_sum_left_subset: \<open>0 \<in> B \<Longrightarrow> A \<subseteq> A +\<^sub>M B\<close> for A B :: "_::monoid_add"
-  by (metis add.right_neutral closed_sum_def closure_subset in_mono set_plus_intro subsetI)
-
-lemma closed_sum_right_subset: \<open>0 \<in> A \<Longrightarrow> B \<subseteq> A +\<^sub>M B\<close> for A B :: "_::monoid_add"
-  by (metis add.left_neutral closed_sum_def closure_subset set_plus_intro subset_iff)
-
-lemma closed_sum_is_sup:
-  fixes A B C:: \<open>('a::{complex_vector,topological_space}) set\<close>
-  assumes \<open>closed_csubspace C\<close>
-  assumes \<open>A \<subseteq> C\<close> and \<open>B \<subseteq> C\<close>
-  shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
-proof -
-  have \<open>A + B \<subseteq> C\<close>
-    using assms unfolding set_plus_def
-    using closed_csubspace.subspace complex_vector.subspace_add by blast
-  then show \<open>(A +\<^sub>M B) \<subseteq> C\<close>
-    unfolding closed_sum_def
-    using \<open>closed_csubspace C\<close>
-    by (simp add: closed_csubspace.closed closure_minimal)
-qed
-
-lemma closed_subspace_closed_sum:
-  fixes A B::"('a::complex_normed_vector) set"
-  assumes a1: \<open>csubspace A\<close> and a2: \<open>csubspace B\<close>
-  shows \<open>closed_csubspace (A +\<^sub>M B)\<close>
-  using a1 a2 closed_sum_def 
-  by (metis closure_is_closed_csubspace csubspace_set_plus)
-
-
-lemma closed_sum_assoc:
-  fixes A B C::"'a::real_normed_vector set"
-  shows \<open>A +\<^sub>M (B +\<^sub>M C) = (A +\<^sub>M B) +\<^sub>M C\<close>
-proof -
-  have \<open>A + closure B \<subseteq> closure (A + B)\<close> for A B :: "'a set"
-    by (meson closure_subset closure_sum dual_order.trans order_refl set_plus_mono2)
-  then have \<open>A +\<^sub>M (B +\<^sub>M C) = closure (A + (B + C))\<close>
-    unfolding closed_sum_def
-    by (meson antisym_conv closed_closure closure_minimal closure_mono closure_subset equalityD1 set_plus_mono2)
-  moreover 
-  have \<open>closure A + B \<subseteq> closure (A + B)\<close> for A B :: "'a set"
-    by (meson closure_subset closure_sum dual_order.trans order_refl set_plus_mono2)
-  then have \<open>(A +\<^sub>M B) +\<^sub>M C = closure ((A + B) + C)\<close>
-    unfolding closed_sum_def
-    by (meson closed_closure closure_minimal closure_mono closure_subset eq_iff set_plus_mono2)
-  ultimately show ?thesis
-    by (simp add: ab_semigroup_add_class.add_ac(1))
-qed
-
-
-lemma closed_sum_zero_left[simp]:
-  fixes A :: \<open>('a::{monoid_add, topological_space}) set\<close>
-  shows \<open>{0} +\<^sub>M A = closure A\<close>
-  unfolding closed_sum_def
-  by (metis add.left_neutral set_zero)
-
-lemma closed_sum_zero_right[simp]:
-  fixes A :: \<open>('a::{monoid_add, topological_space}) set\<close>
-  shows \<open>A +\<^sub>M {0} = closure A\<close>
-  unfolding closed_sum_def
-  by (metis add.right_neutral set_zero)
-
-lemma closed_sum_closure_right[simp]:
-  fixes A B :: \<open>'a::real_normed_vector set\<close>
-  shows \<open>A +\<^sub>M closure B = A +\<^sub>M B\<close>
-  by (metis closed_sum_assoc closed_sum_def closed_sum_zero_right closure_closure)
-
-lemma closed_sum_closure_left[simp]:
-  fixes A B :: \<open>'a::real_normed_vector set\<close>
-  shows \<open>closure A +\<^sub>M B = A +\<^sub>M B\<close>
-  by (simp add: closed_sum_comm)
-
-lemma closed_sum_mono_left:
-  assumes \<open>A \<subseteq> B\<close>
-  shows \<open>A +\<^sub>M C \<subseteq> B +\<^sub>M C\<close>
-  by (simp add: assms closed_sum_def closure_mono set_plus_mono2)
-
-lemma closed_sum_mono_right:
-  assumes \<open>A \<subseteq> B\<close>
-  shows \<open>C +\<^sub>M A \<subseteq> C +\<^sub>M B\<close>
-  by (simp add: assms closed_sum_def closure_mono set_plus_mono2)
-
-instantiation ccsubspace :: (complex_normed_vector) sup begin
-lift_definition sup_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" 
-  \<comment> \<open>Note that \<^term>\<open>A+B\<close> would not be a closed subspace, we need the closure. See, e.g., \<^url>\<open>https://math.stackexchange.com/a/1786792/403528\<close>.\<close>
-  is "\<lambda>A B::'a set. A +\<^sub>M B"
-  by (simp add: closed_subspace_closed_sum) 
-instance .. 
-end
-
-lemma closed_sum_cspan[simp]:
-  shows \<open>cspan X +\<^sub>M cspan Y = closure (cspan (X \<union> Y))\<close>
-  by (smt (verit, best) Collect_cong closed_sum_def complex_vector.span_Un set_plus_def)
-
-lemma closure_image_closed_sum: 
-  assumes \<open>bounded_linear U\<close>
-  shows \<open>closure (U ` (A +\<^sub>M B)) = closure (U ` A) +\<^sub>M closure (U ` B)\<close>
-proof -
-  have \<open>closure (U ` (A +\<^sub>M B)) = closure (U ` closure (closure A + closure B))\<close>
-    unfolding closed_sum_def
-    by (smt (verit, best) closed_closure closure_minimal closure_mono closure_subset closure_sum set_plus_mono2 subset_antisym)
-  also have \<open>\<dots> = closure (U ` (closure A + closure B))\<close>
-    using assms closure_bounded_linear_image_subset_eq by blast
-  also have \<open>\<dots> = closure (U ` closure A + U ` closure B)\<close>
-    apply (subst image_set_plus)
-    by (simp_all add: assms bounded_linear.linear)
-  also have \<open>\<dots> = closure (closure (U ` A) + closure (U ` B))\<close>
-    by (smt (verit, ccfv_SIG) assms closed_closure closure_bounded_linear_image_subset closure_bounded_linear_image_subset_eq closure_minimal closure_mono closure_sum dual_order.eq_iff set_plus_mono2)
-  also have \<open>\<dots> = closure (U ` A) +\<^sub>M closure (U ` B)\<close>
-    using closed_sum_def by blast
-  finally show ?thesis
-    by -
-qed
-
-
-
-lemma ccspan_union: "ccspan A \<squnion> ccspan B = ccspan (A \<union> B)"
-  apply transfer by simp
-
-instantiation ccsubspace :: (complex_normed_vector) "Sup"
-begin
-lift_definition Sup_ccsubspace::\<open>'a ccsubspace set \<Rightarrow> 'a ccsubspace\<close>
-  is \<open>\<lambda>S. closure (complex_vector.span (Union S))\<close>
-proof
-  show "csubspace (closure (complex_vector.span (\<Union> S::'a set)))"
-    if "\<And>x::'a set. x \<in> S \<Longrightarrow> closed_csubspace x"
-    for S :: "'a set set"
-    using that
-    by (simp add: closure_is_closed_csubspace) 
-  show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
-    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_csubspace x"
-    for S :: "'a set set"
-    using that
-    by simp 
-qed
-
-instance..
-end
-
-
-instantiation ccsubspace :: ("{complex_vector,topological_space}") inf begin 
-lift_definition inf_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" 
-  is "(\<inter>)" by simp
-instance .. end
-
-lemma space_as_set_inf[simp]: "space_as_set (A \<sqinter> B) = space_as_set A \<inter> space_as_set B"
-  by (rule inf_ccsubspace.rep_eq)
-
-instantiation ccsubspace :: ("{complex_vector,topological_space}") order_top begin
-instance 
-proof
-  show "a \<le> \<top>"
-    for a :: "'a ccsubspace"
-    apply transfer
-    by simp
-qed
-end
-
-
-instantiation ccsubspace :: ("{complex_vector,t1_space}") order_bot begin
-instance 
-proof
-  show "(\<bottom>::'a ccsubspace) \<le> a"
-    for a :: "'a ccsubspace"
-    apply transfer
-    apply auto
-    using closed_csubspace.subspace complex_vector.subspace_0 by blast
-qed
-end
-
-instantiation ccsubspace :: ("{complex_vector,topological_space}") semilattice_inf begin
-instance 
-proof
-  show "x \<sqinter> y \<le> x"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-    apply transfer
-    by simp
-
-  show "x \<sqinter> y \<le> y"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-    apply transfer
-    by simp
-
-  show "x \<le> y \<sqinter> z"
-    if "x \<le> y"
-      and "x \<le> z"
-    for x :: "'a ccsubspace"
-      and y :: "'a ccsubspace"
-      and z :: "'a ccsubspace"
-    using that 
-    apply transfer
-    by simp
-qed  
-end
-
-
-instance ccsubspace :: ("{complex_normed_vector}") semilattice_sup
-proof
-  fix x y z :: \<open>'a ccsubspace\<close>
-  show \<open>x \<le> sup x y\<close>
-    apply transfer
-    by (simp add: closed_csubspace_def closed_sum_left_subset complex_vector.subspace_0)
-
-  show "y \<le> sup x y"
-    apply transfer
-    by (simp add: closed_csubspace_def closed_sum_right_subset complex_vector.subspace_0)
-
-  show "sup x y \<le> z" if "x \<le> z" and "y \<le> z"
-    using that apply transfer
-    apply (rule closed_sum_is_sup) by auto
-qed
-
-instance ccsubspace :: ("{complex_normed_vector}") complete_lattice
-proof
-  show "Inf A \<le> x"
-    if "x \<in> A"
-    for x :: "'a ccsubspace"
-      and A :: "'a ccsubspace set"
-    using that 
-    apply transfer
-    by auto
-
-  have b1: "z \<subseteq> \<Inter> A"
-    if "Ball A closed_csubspace" and
-      "closed_csubspace z" and
-      "(\<And>x. closed_csubspace x \<Longrightarrow> x \<in> A \<Longrightarrow> z \<subseteq> x)"
-    for z::"'a set" and A
-    using that
-    by auto 
-  show "z \<le> Inf A"
-    if "\<And>x::'a ccsubspace. x \<in> A \<Longrightarrow> z \<le> x"
-    for A :: "'a ccsubspace set"
-      and z :: "'a ccsubspace"
-    using that 
-    apply transfer
-    using b1 by blast
-
-  show "x \<le> Sup A"
-    if "x \<in> A"
-    for x :: "'a ccsubspace"
-      and A :: "'a ccsubspace set"
-    using that 
-    apply transfer
-    by (meson Union_upper closure_subset complex_vector.span_superset dual_order.trans)  
-
-  show "Sup A \<le> z"
-    if "\<And>x::'a ccsubspace. x \<in> A \<Longrightarrow> x \<le> z"
-    for A :: "'a ccsubspace set"
-      and z :: "'a ccsubspace"
-    using that apply transfer
-  proof -
-    fix A :: "'a set set" and z :: "'a set"
-    assume A_closed: "Ball A closed_csubspace"
-    assume "closed_csubspace z"
-    assume in_z: "\<And>x. closed_csubspace x \<Longrightarrow> x \<in> A \<Longrightarrow> x \<subseteq> z"
-    from A_closed in_z
-    have \<open>V \<subseteq> z\<close> if \<open>V \<in> A\<close> for V
-      by (simp add: that)
-    then have \<open>\<Union> A \<subseteq> z\<close>
-      by (simp add: Sup_le_iff)
-    with \<open>closed_csubspace z\<close>
-    show "closure (cspan (\<Union> A)) \<subseteq> z"
-      by (simp add: closed_csubspace_def closure_minimal complex_vector.span_def subset_hull)
-  qed
-
-  show "Inf {} = (top::'a ccsubspace)"
-    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
-
-  show "Sup {} = (bot::'a ccsubspace)"
-    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto 
-qed
+   Since we anyway assume that $B$ is finite, this added assumption does not make the lemma
+   weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
+   (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
+   an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
 
 lemma finite_span_complete_aux:
   fixes b :: "'b::real_normed_vector" and B :: "'b set"
@@ -1600,19 +1098,6 @@ lemma finite_span_complete_aux:
     and t1: "finite B" and t2: "b\<in>B" and t3: "independent B"
   shows "\<exists>D>0. \<forall>\<psi>. norm (representation B \<psi> b) \<le> norm \<psi> * D"
     and "complete (span B)"
-
-  text \<open>This auxiliary lemma shows more or less the same as \<open>finite_span_representation_bounded\<close>,
-     \<open>finite_span_complete\<close> below (see there for an intuition about the mathematical 
-     content of the lemmas). However, there is one difference: Here we additionally assume here
-     that there is a bijection rep/abs between a finite type \<^typ>\<open>'basis\<close> and the set $B$.
-     This is needed to be able to use results about euclidean spaces that are formulated w.r.t.
-     the type class \<^class>\<open>finite\<close>
-
-     Since we anyway assume that $B$ is finite, this added assumption does not make the lemma
-     weaker. However, we cannot derive the existence of \<^typ>\<open>'basis\<close> inside the proof
-     (HOL does not support such reasoning). Therefore we have the type \<^typ>\<open>'basis\<close> as
-     an explicit assumption and remove it using @{attribute internalize_sort} after the proof.\<close>
-
 proof -
   define repr  where "repr = real_vector.representation B"
   define repr' where "repr' \<psi> = Abs_euclidean_space (repr \<psi> o rep)" for \<psi>
@@ -1978,56 +1463,6 @@ qed
 
 hide_fact finite_span_complete_aux
 
-lemma cspan_as_span:
-  "cspan (B::'a::complex_vector set) = span (B \<union> scaleC \<i> ` B)"
-proof auto
-  let ?cspan = complex_vector.span
-  let ?rspan = real_vector.span
-  fix \<psi>
-  assume cspan: "\<psi> \<in> ?cspan B"
-  have "\<exists>B' r. finite B' \<and> B' \<subseteq> B \<and> \<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
-    using complex_vector.span_explicit[of B] cspan
-    by auto
-  then obtain B' r where "finite B'" and "B' \<subseteq> B" and \<psi>_explicit: "\<psi> = (\<Sum>b\<in>B'. r b *\<^sub>C b)"
-    by atomize_elim 
-  define R where "R = B \<union> scaleC \<i> ` B"
-
-  have x2: "(case x of (b, i) \<Rightarrow> if i 
-            then Im (r b) *\<^sub>R \<i> *\<^sub>C b 
-            else Re (r b) *\<^sub>R b) \<in> span (B \<union> (*\<^sub>C) \<i> ` B)"
-    if "x \<in> B' \<times> (UNIV::bool set)"
-    for x :: "'a \<times> bool"
-    using that \<open>B' \<subseteq> B\<close> by (auto simp add: real_vector.span_base real_vector.span_scale subset_iff)
-  have x1: "\<psi> = (\<Sum>x\<in>B'. \<Sum>i\<in>UNIV. if i then Im (r x) *\<^sub>R \<i> *\<^sub>C x else Re (r x) *\<^sub>R x)"
-    if "\<And>b. r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b"
-    using that by (simp add: UNIV_bool \<psi>_explicit)
-  moreover have "r b *\<^sub>C b = Re (r b) *\<^sub>R b + Im (r b) *\<^sub>R \<i> *\<^sub>C b" for b
-    using complex_eq scaleC_add_left scaleC_scaleC scaleR_scaleC
-    by (metis (no_types, lifting) complex_of_real_i i_complex_of_real)
-  ultimately have "\<psi> = (\<Sum>(b,i)\<in>(B'\<times>UNIV). if i then Im (r b) *\<^sub>R (\<i> *\<^sub>C b) else Re (r b) *\<^sub>R b)"
-    by (simp add: sum.cartesian_product)     
-  also have "\<dots> \<in> ?rspan R"
-    unfolding R_def
-    using x2
-    by (rule real_vector.span_sum) 
-  finally show "\<psi> \<in> ?rspan R" by -
-next
-  let ?cspan = complex_vector.span
-  let ?rspan = real_vector.span
-  define R where "R = B \<union> scaleC \<i> ` B"
-  fix \<psi>
-  assume rspan: "\<psi> \<in> ?rspan R"
-  have "subspace {a. a \<in> cspan B}"
-    by (rule real_vector.subspaceI, auto simp add: complex_vector.span_zero 
-        complex_vector.span_add_eq2 complex_vector.span_scale scaleR_scaleC)
-  moreover have "x \<in> cspan B"
-    if "x \<in> R"
-    for x :: 'a
-    using that R_def complex_vector.span_base complex_vector.span_scale by fastforce
-  ultimately show "\<psi> \<in> ?cspan B"
-    using real_vector.span_induct rspan by blast  
-qed
-
 
 lemma finite_cspan_complete[simp]: 
   fixes B :: "'a::complex_normed_vector set"
@@ -2055,10 +1490,751 @@ lemma closure_finite_cspan:
   shows \<open>closure (cspan T)  = cspan T\<close>
   by (simp add: assms)
 
-lemma finite_cspan_closed_csubspace:
-  assumes "finite (S::'a::complex_normed_vector set)"
-  shows "closed_csubspace (cspan S)"
-  by (simp add: assms closed_csubspace.intro)
+
+lemma finite_cspan_crepresentation_bounded:
+  fixes B :: "'a::complex_normed_vector set"
+  assumes a1: "finite B" and a2: "cindependent B"
+  shows "\<exists>D>0. \<forall>\<psi> b. norm (crepresentation B \<psi> b) \<le> norm \<psi> * D"
+proof -
+  define B' where "B' = (B \<union> scaleC \<i> ` B)"
+  have independent_B': "independent B'"
+    using B'_def \<open>cindependent B\<close>
+    by (simp add: real_independent_from_complex_independent a1)
+  have "finite B'"
+    unfolding B'_def using \<open>finite B\<close> by simp
+  obtain D' where "D' > 0" and D': "norm (real_vector.representation B' \<psi> b) \<le> norm \<psi> * D'" 
+    for \<psi> b
+    apply atomize_elim
+    using independent_B' \<open>finite B'\<close>
+    by (simp add: finite_span_representation_bounded)
+
+  define D where "D = 2*D'" 
+  from \<open>D' > 0\<close> have \<open>D > 0\<close>
+    unfolding D_def by simp
+  have "norm (crepresentation B \<psi> b) \<le> norm \<psi> * D" for \<psi> b
+  proof (cases "b\<in>B")
+    case True
+    have d3: "norm \<i> = 1"
+      by simp          
+
+    have "norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
+          = norm \<i> * norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+      using norm_scaleC by blast
+    also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+      using d3 by simp
+    finally have d2:"norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
+          = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))".
+    have "norm (crepresentation B \<psi> b)
+        = norm (complex_of_real (real_vector.representation B' \<psi> b)
+            + \<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+      by (simp add: B'_def True a1 a2 crepresentation_from_representation)      
+    also have "\<dots> \<le> norm (complex_of_real (real_vector.representation B' \<psi> b))
+             + norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+      using norm_triangle_ineq by blast
+    also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> b))
+                  + norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
+      using d2 by simp
+    also have "\<dots> = norm (real_vector.representation B' \<psi> b)
+                  + norm (real_vector.representation B' \<psi> (\<i> *\<^sub>C b))"
+      by simp
+    also have "\<dots> \<le> norm \<psi> * D' + norm \<psi> * D'"
+      by (rule add_mono; rule D')
+    also have "\<dots> \<le> norm \<psi> * D"
+      unfolding D_def by linarith
+    finally show ?thesis
+      by auto
+  next
+    case False
+    hence "crepresentation B \<psi> b = 0"
+      using complex_vector.representation_ne_zero by blast      
+    thus ?thesis
+      by (smt \<open>0 < D\<close> norm_ge_zero norm_zero split_mult_pos_le)
+  qed
+  with \<open>D > 0\<close>
+  show ?thesis
+    by auto
+qed
+
+lemma bounded_clinear_finite_dim[simp]:
+  fixes f :: \<open>'a::{cfinite_dim,complex_normed_vector} \<Rightarrow> 'b::complex_normed_vector\<close>
+  assumes \<open>clinear f\<close>
+  shows \<open>bounded_clinear f\<close>
+proof -
+  include notation_norm
+  obtain basis :: \<open>'a set\<close> where b1: "complex_vector.span basis = UNIV"
+    and b2: "cindependent basis"
+    and b3:"finite basis" 
+    using finite_basis by auto
+  have "\<exists>C>0. \<forall>\<psi> b. cmod (crepresentation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C"
+    using finite_cspan_crepresentation_bounded[where B = basis] b2 b3 by blast
+  then obtain C where s1: "cmod (crepresentation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C" 
+    and s2: "C > 0"
+  for \<psi> b by blast
+  define M where "M = C * (\<Sum>a\<in>basis. \<parallel>f a\<parallel>)"
+  have "\<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * M"
+    for x
+  proof-
+    define r where "r b = crepresentation basis x b" for b
+    have x_span: "x \<in> complex_vector.span basis"
+      by (simp add: b1)
+    have f0: "v \<in> basis"
+      if "r v \<noteq> 0" for v
+      using complex_vector.representation_ne_zero r_def that by auto       
+    have w:"{a|a. r a \<noteq> 0} \<subseteq> basis"
+      using f0 by blast
+    hence f1: "finite {a|a. r a \<noteq> 0}"
+      using b3 rev_finite_subset by auto 
+    have f2: "(\<Sum>a| r a \<noteq> 0. r a *\<^sub>C a) = x"
+      unfolding r_def
+      using b2 complex_vector.sum_nonzero_representation_eq x_span
+        Collect_cong  by fastforce
+    have g1: "(\<Sum>a\<in>basis. crepresentation basis x a *\<^sub>C a) = x"
+      by (simp add: b2 b3 complex_vector.sum_representation_eq x_span)
+    have f3: "(\<Sum>a\<in>basis. r a *\<^sub>C a) = x"
+      unfolding r_def
+      by (simp add: g1) 
+    hence "f x = f (\<Sum>a\<in>basis. r a *\<^sub>C a)"
+      by simp
+    also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C f a)"
+      by (smt (verit, ccfv_SIG) assms complex_vector.linear_scale complex_vector.linear_sum sum.cong)
+    finally have "f x = (\<Sum>a\<in>basis. r a *\<^sub>C f a)".
+    hence "\<parallel>f x\<parallel> = \<parallel>(\<Sum>a\<in>basis. r a *\<^sub>C f a)\<parallel>"
+      by simp
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a *\<^sub>C f a\<parallel>)"
+      by (simp add: sum_norm_le)
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a\<parallel> * \<parallel>f a\<parallel>)"
+      by simp
+    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>x\<parallel> * C * \<parallel>f a\<parallel>)"      
+      using sum_mono s1 unfolding r_def
+      by (simp add: sum_mono mult_right_mono)
+    also have "\<dots> \<le> \<parallel>x\<parallel> * C * (\<Sum>a\<in>basis. \<parallel>f a\<parallel>)"
+      using sum_distrib_left
+      by (smt sum.cong)
+    also have "\<dots> = \<parallel>x\<parallel> * M"
+      unfolding M_def
+      by linarith 
+    finally show ?thesis .
+  qed
+  thus ?thesis
+    using assms bounded_clinear_def bounded_clinear_axioms_def by blast
+qed
+
+subsection \<open>Closed subspaces\<close>
+
+lemma csubspace_INF[simp]: "(\<And>x. x \<in> A \<Longrightarrow> csubspace x) \<Longrightarrow> csubspace (\<Inter>A)"
+  by (simp add: complex_vector.subspace_Inter)
+
+locale closed_csubspace =
+  fixes A::"('a::{complex_vector,topological_space}) set"
+  assumes subspace: "csubspace A"
+  assumes closed: "closed A"
+
+declare closed_csubspace.subspace[simp]
+
+lemma closure_is_csubspace[simp]:
+  fixes A::"('a::complex_normed_vector) set"
+  assumes \<open>csubspace A\<close>
+  shows \<open>csubspace (closure A)\<close>
+proof-
+  have "x \<in> closure A \<Longrightarrow> y \<in> closure A \<Longrightarrow> x+y \<in> closure A" for x y
+  proof-
+    assume \<open>x\<in>(closure A)\<close>
+    then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
+      using closure_sequential by blast
+    assume \<open>y\<in>(closure A)\<close>
+    then obtain yy where \<open>\<forall> n::nat. yy n \<in> A\<close> and \<open>yy \<longlonglongrightarrow> y\<close>
+      using closure_sequential by blast
+    have \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close> 
+      using \<open>\<forall>n. xx n \<in> A\<close> \<open>\<forall>n. yy n \<in> A\<close> assms complex_vector.subspace_def
+      by (simp add: complex_vector.subspace_def)      
+    hence  \<open>(\<lambda> n. (xx n) + (yy n)) \<longlonglongrightarrow> x + y\<close> using  \<open>xx \<longlonglongrightarrow> x\<close> \<open>yy \<longlonglongrightarrow> y\<close> 
+      by (simp add: tendsto_add)
+    thus ?thesis using  \<open>\<forall> n::nat. (xx n) + (yy n) \<in> A\<close>
+      by (meson closure_sequential)
+  qed
+  moreover have "x\<in>(closure A) \<Longrightarrow> c *\<^sub>C x \<in> (closure A)" for x c
+  proof-
+    assume \<open>x\<in>(closure A)\<close>
+    then obtain xx where \<open>\<forall> n::nat. xx n \<in> A\<close> and \<open>xx \<longlonglongrightarrow> x\<close>
+      using closure_sequential by blast
+    have \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
+      using \<open>\<forall>n. xx n \<in> A\<close> assms complex_vector.subspace_def
+      by (simp add: complex_vector.subspace_def)
+    have \<open>isCont (\<lambda> t. c *\<^sub>C t) x\<close> 
+      using bounded_clinear.bounded_linear bounded_clinear_scaleC_right linear_continuous_at by auto
+    hence  \<open>(\<lambda> n. c *\<^sub>C (xx n)) \<longlonglongrightarrow> c *\<^sub>C x\<close> using  \<open>xx \<longlonglongrightarrow> x\<close>
+      by (simp add: isCont_tendsto_compose)
+    thus ?thesis using  \<open>\<forall> n::nat. c *\<^sub>C (xx n) \<in> A\<close> 
+      by (meson closure_sequential)
+  qed
+  moreover have "0 \<in> (closure A)"
+    using assms closure_subset complex_vector.subspace_def
+    by (metis in_mono)    
+  ultimately show ?thesis
+    by (simp add: complex_vector.subspaceI) 
+qed
+
+lemma csubspace_set_plus:
+  assumes \<open>csubspace A\<close> and \<open>csubspace B\<close>
+  shows \<open>csubspace (A + B)\<close>
+proof -
+  define C where \<open>C = {\<psi>+\<phi>| \<psi> \<phi>. \<psi>\<in>A \<and> \<phi>\<in>B}\<close>
+  have  "x\<in>C \<Longrightarrow> y\<in>C \<Longrightarrow> x+y\<in>C" for x y
+    using C_def assms(1) assms(2) complex_vector.subspace_add complex_vector.subspace_sums by blast
+  moreover have "c *\<^sub>C x \<in> C" if \<open>x\<in>C\<close> for x c
+  proof -
+    have "csubspace C"
+      by (simp add: C_def assms(1) assms(2) complex_vector.subspace_sums)
+    then show ?thesis
+      using that by (simp add: complex_vector.subspace_def)
+  qed
+  moreover have  "0 \<in> C"
+    using  \<open>C = {\<psi> + \<phi> |\<psi> \<phi>. \<psi> \<in> A \<and> \<phi> \<in> B}\<close> add.inverse_neutral add_uminus_conv_diff assms(1) assms(2) diff_0  mem_Collect_eq
+      add.right_inverse
+    by (metis (mono_tags, lifting) complex_vector.subspace_0)
+  ultimately show ?thesis
+    unfolding C_def complex_vector.subspace_def
+    by (smt mem_Collect_eq set_plus_elim set_plus_intro)    
+qed
+
+lemma closed_csubspace_0[simp]:
+  "closed_csubspace ({0} :: ('a::{complex_vector,t1_space}) set)"
+proof-
+  have \<open>csubspace {0}\<close>
+    using add.right_neutral complex_vector.subspace_def scaleC_right.zero
+    by blast    
+  moreover have "closed ({0} :: 'a set)"
+    by simp 
+  ultimately show ?thesis 
+    by (simp add: closed_csubspace_def)
+qed
+
+lemma closed_csubspace_UNIV[simp]: "closed_csubspace (UNIV::('a::{complex_vector,topological_space}) set)"
+proof-
+  have \<open>csubspace UNIV\<close>
+    by simp  
+  moreover have \<open>closed UNIV\<close>
+    by simp
+  ultimately show ?thesis 
+    unfolding closed_csubspace_def by auto
+qed
+
+lemma closed_csubspace_inter[simp]:
+  assumes "closed_csubspace A" and "closed_csubspace B"
+  shows "closed_csubspace (A\<inter>B)"
+proof-
+  obtain C where \<open>C = A \<inter> B\<close> by blast
+  have \<open>csubspace C\<close>
+  proof-
+    have "x\<in>C \<Longrightarrow> y\<in>C \<Longrightarrow> x+y\<in>C" for x y
+      by (metis IntD1 IntD2 IntI \<open>C = A \<inter> B\<close> assms(1) assms(2) complex_vector.subspace_def closed_csubspace_def)
+    moreover have "x\<in>C \<Longrightarrow> c *\<^sub>C x \<in> C" for x c
+      by (metis IntD1 IntD2 IntI \<open>C = A \<inter> B\<close> assms(1) assms(2) complex_vector.subspace_def closed_csubspace_def)
+    moreover have "0 \<in> C" 
+      using  \<open>C = A \<inter> B\<close> assms(1) assms(2) complex_vector.subspace_def closed_csubspace_def by fastforce
+    ultimately show ?thesis 
+      by (simp add: complex_vector.subspace_def)
+  qed
+  moreover have \<open>closed C\<close>
+    using  \<open>C = A \<inter> B\<close>
+    by (simp add: assms(1) assms(2) closed_Int closed_csubspace.closed)
+  ultimately show ?thesis
+    using  \<open>C = A \<inter> B\<close>
+    by (simp add: closed_csubspace_def)
+qed
+
+
+lemma closed_csubspace_INF[simp]:
+  assumes a1: "\<forall>A\<in>\<A>. closed_csubspace A"
+  shows "closed_csubspace (\<Inter>\<A>)"
+proof-
+  have \<open>csubspace (\<Inter>\<A>)\<close>
+    by (simp add: assms closed_csubspace.subspace complex_vector.subspace_Inter)
+  moreover have \<open>closed (\<Inter>\<A>)\<close>
+    by (simp add: assms closed_Inter closed_csubspace.closed)
+  ultimately show ?thesis 
+    by (simp add: closed_csubspace.intro)
+qed
+
+
+typedef (overloaded) ('a::"{complex_vector,topological_space}") 
+  ccsubspace = \<open>{S::'a set. closed_csubspace S}\<close>
+  morphisms space_as_set Abs_clinear_space
+  using Complex_Vector_Spaces.closed_csubspace_UNIV by blast
+
+setup_lifting type_definition_ccsubspace
+
+lemma csubspace_space_as_set[simp]: \<open>csubspace (space_as_set S)\<close>
+  by (metis closed_csubspace_def mem_Collect_eq space_as_set)
+
+instantiation ccsubspace :: (complex_normed_vector) scaleC begin
+lift_definition scaleC_ccsubspace :: "complex \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" is
+  "\<lambda>c S. (*\<^sub>C) c ` S"
+proof
+  show "csubspace ((*\<^sub>C) c ` S)"
+    if "closed_csubspace S"
+    for c :: complex
+      and S :: "'a set"
+    using that
+    by (simp add: closed_csubspace.subspace complex_vector.linear_subspace_image) 
+  show "closed ((*\<^sub>C) c ` S)"
+    if "closed_csubspace S"
+    for c :: complex
+      and S :: "'a set"
+    using that
+    by (simp add: closed_scaleC closed_csubspace.closed) 
+qed
+
+lift_definition scaleR_ccsubspace :: "real \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" is
+  "\<lambda>c S. (*\<^sub>R) c ` S"
+proof
+  show "csubspace ((*\<^sub>R) r ` S)"
+    if "closed_csubspace S"
+    for r :: real
+      and S :: "'a set"
+    using that   using bounded_clinear_def bounded_clinear_scaleC_right scaleR_scaleC
+    by (simp add: scaleR_scaleC closed_csubspace.subspace complex_vector.linear_subspace_image)
+  show "closed ((*\<^sub>R) r ` S)"
+    if "closed_csubspace S"
+    for r :: real
+      and S :: "'a set"
+    using that 
+    by (simp add: closed_scaling closed_csubspace.closed)
+qed
+
+instance 
+proof
+  show "((*\<^sub>R) r::'a ccsubspace \<Rightarrow> _) = (*\<^sub>C) (complex_of_real r)" for r :: real
+    by (simp add: scaleR_scaleC scaleC_ccsubspace_def scaleR_ccsubspace_def)    
+qed
+end
+
+instantiation ccsubspace :: ("{complex_vector,t1_space}") bot begin
+lift_definition bot_ccsubspace :: \<open>'a ccsubspace\<close> is \<open>{0}\<close>
+  by simp
+instance..
+end
+
+lemma zero_cblinfun_image[simp]: "0 *\<^sub>C S = bot" for S :: "_ ccsubspace"
+proof transfer
+  have "(0::'b) \<in> (\<lambda>x. 0) ` S"
+    if "closed_csubspace S"
+    for S::"'b set"
+    using that unfolding closed_csubspace_def
+    by (simp add: complex_vector.linear_subspace_image complex_vector.module_hom_zero 
+        complex_vector.subspace_0)
+  thus "(*\<^sub>C) 0 ` S = {0::'b}"
+    if "closed_csubspace (S::'b set)"
+    for S :: "'b set"
+    using that 
+    by (auto intro !: exI [of _ 0])
+qed
+
+lemma csubspace_scaleC_invariant: 
+  fixes a S
+  assumes \<open>a \<noteq> 0\<close> and \<open>csubspace S\<close>
+  shows \<open>(*\<^sub>C) a ` S = S\<close>
+proof-
+  have  \<open>x \<in> (*\<^sub>C) a ` S \<Longrightarrow> x \<in> S\<close>
+    for x
+    using assms(2) complex_vector.subspace_scale by blast 
+  moreover have  \<open>x \<in> S \<Longrightarrow> x \<in> (*\<^sub>C) a ` S\<close>
+    for x
+  proof -
+    assume "x \<in> S"
+    hence "\<exists>c aa. (c / a) *\<^sub>C aa \<in> S \<and> c *\<^sub>C aa = x"
+      using assms(2) complex_vector.subspace_def scaleC_one by metis
+    hence "\<exists>aa. aa \<in> S \<and> a *\<^sub>C aa = x"
+      using assms(1) by auto
+    thus ?thesis
+      by (meson image_iff)
+  qed 
+  ultimately show ?thesis by blast
+qed
+
+
+lemma ccsubspace_scaleC_invariant[simp]: "a \<noteq> 0 \<Longrightarrow> a *\<^sub>C S = S" for S :: "_ ccsubspace"
+  apply transfer
+  by (simp add: closed_csubspace.subspace csubspace_scaleC_invariant)
+
+
+instantiation ccsubspace :: ("{complex_vector,topological_space}") "top"
+begin
+lift_definition top_ccsubspace :: \<open>'a ccsubspace\<close> is \<open>UNIV\<close>
+  by simp
+
+instance ..
+end
+
+lemma ccsubspace_top_not_bot[simp]: 
+  "(top::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> bot"
+  (* The type class t1_space is needed because the definition of bot in ccsubspace needs it *)
+  by (metis UNIV_not_singleton bot_ccsubspace.rep_eq top_ccsubspace.rep_eq)
+
+lemma ccsubspace_bot_not_top[simp]:
+  "(bot::'a::{complex_vector,t1_space,not_singleton} ccsubspace) \<noteq> top"
+  using ccsubspace_top_not_bot by metis
+
+instantiation ccsubspace :: ("{complex_vector,topological_space}") "Inf"
+begin
+lift_definition Inf_ccsubspace::\<open>'a ccsubspace set \<Rightarrow> 'a ccsubspace\<close>
+  is \<open>\<lambda> S. \<Inter> S\<close>
+proof
+  fix S :: "'a set set"
+  assume closed: "closed_csubspace x" if \<open>x \<in> S\<close> for x
+  show "csubspace (\<Inter> S::'a set)"
+    by (simp add: closed closed_csubspace.subspace) 
+  show "closed (\<Inter> S::'a set)"
+    by (simp add: closed closed_csubspace.closed) 
+qed
+
+instance ..
+end
+
+lift_definition ccspan :: "'a::complex_normed_vector set \<Rightarrow> 'a ccsubspace"
+  is "\<lambda>G. closure (cspan G)"
+proof (rule closed_csubspace.intro)
+  fix S :: "'a set"
+  show "csubspace (closure (cspan S))"
+    by (simp add: closure_is_csubspace)    
+  show "closed (closure (cspan S))"
+    by simp
+qed
+
+lemma ccspan_canonical_basis[simp]: "ccspan (set canonical_basis) = top"
+  using ccspan.rep_eq space_as_set_inject top_ccsubspace.rep_eq
+    closure_UNIV is_generator_set
+  by metis
+
+lemma ccspan_Inf_def: \<open>ccspan A = Inf {S. A \<subseteq> space_as_set S}\<close>
+  for A::\<open>('a::cbanach) set\<close>
+proof-
+  have \<open>x \<in> space_as_set (ccspan A) 
+    \<Longrightarrow> x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
+    for x::'a
+  proof-
+    assume \<open>x \<in> space_as_set (ccspan A)\<close>
+    hence "x \<in> closure (cspan A)"
+      by (simp add: ccspan.rep_eq)
+    hence \<open>x \<in> closure (complex_vector.span A)\<close>
+      unfolding ccspan_def
+      by simp
+    hence \<open>\<exists> y::nat \<Rightarrow> 'a. (\<forall> n. y n \<in> (complex_vector.span A)) \<and> y \<longlonglongrightarrow> x\<close>
+      by (simp add: closure_sequential)
+    then obtain y where \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close> and \<open>y \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>y n \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close>
+      for n
+      using  \<open>\<forall> n. y n \<in> (complex_vector.span A)\<close>
+      by auto
+
+    have \<open>closed_csubspace S \<Longrightarrow> closed S\<close>
+      for S::\<open>'a set\<close>
+      by (simp add: closed_csubspace.closed)
+    hence \<open>closed ( \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S})\<close>
+      by simp
+    hence \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close> using \<open>y \<longlonglongrightarrow> x\<close>
+      using \<open>\<And>n. y n \<in> \<Inter> {S. complex_vector.span A \<subseteq> S \<and> closed_csubspace S}\<close> closed_sequentially 
+      by blast
+    moreover have \<open>{S. A \<subseteq> S \<and> closed_csubspace S} \<subseteq> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close>
+      using Collect_mono_iff
+      by (simp add: Collect_mono_iff closed_csubspace.subspace complex_vector.span_minimal)
+    ultimately have \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> closed_csubspace S}\<close>
+      by blast     
+    moreover have "(x::'a) \<in> \<Inter> {x. A \<subseteq> x \<and> closed_csubspace x}"
+      if "(x::'a) \<in> \<Inter> {S. A \<subseteq> S \<and> closed_csubspace S}"
+      for x :: 'a
+        and A :: "'a set"
+      using that
+      by simp
+    ultimately show \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close> 
+      apply transfer.
+  qed
+  moreover have \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})
+             \<Longrightarrow> x \<in> space_as_set (ccspan A)\<close>
+    for x::'a
+  proof-
+    assume \<open>x \<in> space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
+    hence \<open>x \<in> \<Inter> {S. A \<subseteq> S \<and> closed_csubspace S}\<close>
+      apply transfer
+      by blast
+    moreover have \<open>{S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S} \<subseteq> {S. A \<subseteq> S \<and> closed_csubspace S}\<close>
+      using Collect_mono_iff complex_vector.span_superset by fastforce
+    ultimately have \<open>x \<in> \<Inter> {S. (complex_vector.span A) \<subseteq> S \<and> closed_csubspace S}\<close>
+      by blast 
+    thus \<open>x \<in> space_as_set (ccspan A)\<close>
+      by (metis (no_types, lifting) Inter_iff space_as_set closure_subset mem_Collect_eq ccspan.rep_eq)      
+  qed
+  ultimately have \<open>space_as_set (ccspan A) = space_as_set (Inf {S. A \<subseteq> space_as_set S})\<close>
+    by blast
+  thus ?thesis
+    using space_as_set_inject by auto 
+qed
+
+lemma cspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> cspan { a *\<^sub>C \<psi> } = cspan {\<psi>}"
+  for \<psi>::"'a::complex_vector"
+  by (smt complex_vector.dependent_single complex_vector.independent_insert 
+      complex_vector.scale_eq_0_iff complex_vector.span_base complex_vector.span_redundant 
+      complex_vector.span_scale doubleton_eq_iff insert_absorb insert_absorb2 insert_commute 
+      singletonI)
+
+lemma closure_is_closed_csubspace[simp]:
+  fixes S::\<open>'a::complex_normed_vector set\<close>
+  assumes \<open>csubspace S\<close>
+  shows \<open>closed_csubspace (closure S)\<close>
+proof-
+  fix x y :: 'a and c :: complex
+  have "x + y \<in> closure S"
+    if "x \<in> closure S"
+      and "y \<in> closure S"
+  proof-
+    have \<open>\<exists> r. (\<forall> n::nat. r n \<in> S) \<and> r \<longlonglongrightarrow> x\<close>
+      using closure_sequential that(1) by auto
+    then obtain r where \<open>\<forall> n::nat. r n \<in> S\<close> and \<open>r \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>\<exists> s. (\<forall> n::nat. s n \<in> S) \<and> s \<longlonglongrightarrow> y\<close>
+      using closure_sequential that(2) by auto
+    then obtain s where \<open>\<forall> n::nat. s n \<in> S\<close> and \<open>s \<longlonglongrightarrow> y\<close>
+      by blast
+    have \<open>\<forall> n::nat. r n + s n \<in> S\<close>
+      using \<open>\<forall>n. r n \<in> S\<close> \<open>\<forall>n. s n \<in> S\<close> assms complex_vector.subspace_add by blast 
+    moreover have \<open>(\<lambda> n. r n + s n) \<longlonglongrightarrow> x + y\<close>
+      by (simp add: \<open>r \<longlonglongrightarrow> x\<close> \<open>s \<longlonglongrightarrow> y\<close> tendsto_add)
+    ultimately show ?thesis
+      using assms that(1) that(2)
+      by (simp add: complex_vector.subspace_add) 
+  qed
+  moreover have "c *\<^sub>C x \<in> closure S"
+    if "x \<in> closure S"
+  proof-
+    have \<open>\<exists> y. (\<forall> n::nat. y n \<in> S) \<and> y \<longlonglongrightarrow> x\<close>
+      using Elementary_Topology.closure_sequential that by auto
+    then obtain y where \<open>\<forall> n::nat. y n \<in> S\<close> and \<open>y \<longlonglongrightarrow> x\<close>
+      by blast
+    have \<open>isCont (scaleC c) x\<close>
+      by simp
+    hence \<open>(\<lambda> n. scaleC c (y n)) \<longlonglongrightarrow> scaleC c x\<close>
+      using  \<open>y \<longlonglongrightarrow> x\<close>
+      by (simp add: isCont_tendsto_compose) 
+    from  \<open>\<forall> n::nat. y n \<in> S\<close>
+    have  \<open>\<forall> n::nat. scaleC c (y n) \<in> S\<close>
+      using assms complex_vector.subspace_scale by auto
+    thus ?thesis
+      using assms that
+      by (simp add: complex_vector.subspace_scale) 
+  qed
+  moreover have "0 \<in> closure S"
+    by (simp add: assms complex_vector.subspace_0)
+  moreover have "closed (closure S)"
+    by auto
+  ultimately show ?thesis
+    by (simp add: assms closed_csubspace_def)
+qed
+
+lemma ccspan_singleton_scaleC[simp]: "(a::complex)\<noteq>0 \<Longrightarrow> ccspan {a *\<^sub>C \<psi>} = ccspan {\<psi>}"
+  apply transfer by simp
+
+lemma clinear_continuous_at:
+  assumes \<open>bounded_clinear f\<close> 
+  shows \<open>isCont f x\<close>
+  by (simp add: assms bounded_clinear.bounded_linear linear_continuous_at)
+
+lemma clinear_continuous_within:
+  assumes \<open>bounded_clinear f\<close> 
+  shows \<open>continuous (at x within s) f\<close>
+  by (simp add: assms bounded_clinear.bounded_linear linear_continuous_within)
+
+lemma antilinear_continuous_at:
+  assumes \<open>bounded_antilinear f\<close> 
+  shows \<open>isCont f x\<close>
+  by (simp add: assms bounded_antilinear.bounded_linear linear_continuous_at)
+
+lemma antilinear_continuous_within:
+  assumes \<open>bounded_antilinear f\<close> 
+  shows \<open>continuous (at x within s) f\<close>
+  by (simp add: assms bounded_antilinear.bounded_linear linear_continuous_within)
+
+lemma bounded_clinear_eq_on:
+  fixes A B :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector"
+  assumes \<open>bounded_clinear A\<close> and \<open>bounded_clinear B\<close> and
+    eq: \<open>\<And>x. x \<in> G \<Longrightarrow> A x = B x\<close> and t: \<open>t \<in> closure (cspan G)\<close>
+  shows \<open>A t = B t\<close>
+proof -
+  have eq': \<open>A t = B t\<close> if \<open>t \<in> cspan G\<close> for t
+    using _ _ that eq apply (rule complex_vector.linear_eq_on)
+    by (auto simp: assms bounded_clinear.clinear)
+  have \<open>A t - B t = 0\<close>
+    using _ _ t apply (rule continuous_constant_on_closure)
+    by (auto simp add: eq' assms(1) assms(2) clinear_continuous_at continuous_at_imp_continuous_on)
+  then show ?thesis
+    by auto
+qed
+
+instantiation ccsubspace :: ("{complex_vector,topological_space}") "order"
+begin
+lift_definition less_eq_ccsubspace :: \<open>'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> bool\<close>
+  is  \<open>(\<subseteq>)\<close>.
+declare less_eq_ccsubspace_def[code del]
+lift_definition less_ccsubspace :: \<open>'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> bool\<close>
+  is \<open>(\<subset>)\<close>.
+declare less_ccsubspace_def[code del]
+instance
+proof
+  fix x y z :: "'a ccsubspace"
+  show "(x < y) = (x \<le> y \<and> \<not> y \<le> x)"
+    by (simp add: less_eq_ccsubspace.rep_eq less_le_not_le less_ccsubspace.rep_eq)    
+  show "x \<le> x"
+    by (simp add: less_eq_ccsubspace.rep_eq)    
+  show "x \<le> z" if "x \<le> y" and "y \<le> z"
+    using that less_eq_ccsubspace.rep_eq by auto 
+  show "x = y" if "x \<le> y" and "y \<le> x"
+    using that by (simp add: space_as_set_inject less_eq_ccsubspace.rep_eq) 
+qed
+end
+
+lemma ccspan_leqI:
+  assumes \<open>M \<subseteq> space_as_set S\<close>
+  shows \<open>ccspan M \<le> S\<close>
+  using assms apply transfer
+  by (simp add: closed_csubspace.closed closure_minimal complex_vector.span_minimal)
+
+lemma ccspan_mono:
+  assumes \<open>A \<subseteq> B\<close>
+  shows \<open>ccspan A \<le> ccspan B\<close>
+  apply (transfer fixing: A B)
+  by (simp add: assms closure_mono complex_vector.span_mono)
+
+lemma bounded_sesquilinear_add:
+  \<open>bounded_sesquilinear (\<lambda> x y. A x y + B x y)\<close> if \<open>bounded_sesquilinear A\<close> and \<open>bounded_sesquilinear B\<close>
+proof
+  fix a a' :: 'a and b b' :: 'b and r :: complex
+  show "A (a + a') b + B (a + a') b = (A a b + B a b) + (A a' b + B a' b)"
+    by (simp add: bounded_sesquilinear.add_left that(1) that(2))
+  show \<open>A a (b + b') + B a (b + b') = (A a b + B a b) + (A a b' + B a b')\<close>
+    by (simp add: bounded_sesquilinear.add_right that(1) that(2))
+  show \<open>A (r *\<^sub>C a) b + B (r *\<^sub>C a) b = cnj r *\<^sub>C (A a b + B a b)\<close>
+    by (simp add: bounded_sesquilinear.scaleC_left scaleC_add_right that(1) that(2))
+  show \<open>A a (r *\<^sub>C b) + B a (r *\<^sub>C b) = r *\<^sub>C (A a b + B a b)\<close>
+    by (simp add: bounded_sesquilinear.scaleC_right scaleC_add_right that(1) that(2))
+  show \<open>\<exists>K. \<forall>a b. norm (A a b + B a b) \<le> norm a * norm b * K\<close>
+  proof-
+    have \<open>\<exists> KA. \<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
+      by (simp add: bounded_sesquilinear.bounded that(1))
+    then obtain KA where \<open>\<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
+      by blast
+    have \<open>\<exists> KB. \<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
+      by (simp add: bounded_sesquilinear.bounded that(2))
+    then obtain KB where \<open>\<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
+      by blast
+    have \<open>norm (A a b + B a b) \<le> norm a * norm b * (KA + KB)\<close>
+      for a b
+    proof-
+      have \<open>norm (A a b + B a b) \<le> norm (A a b) +  norm (B a b)\<close>
+        using norm_triangle_ineq by blast
+      also have \<open>\<dots> \<le> norm a * norm b * KA + norm a * norm b * KB\<close>
+        using  \<open>\<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
+          \<open>\<forall> a b. norm (B a b) \<le> norm a * norm b * KB\<close>
+        using add_mono by blast
+      also have \<open>\<dots>=  norm a * norm b * (KA + KB)\<close>
+        by (simp add: mult.commute ring_class.ring_distribs(2))
+      finally show ?thesis 
+        by blast
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
+lemma bounded_sesquilinear_uminus:
+  \<open>bounded_sesquilinear (\<lambda> x y. - A x y)\<close> if \<open>bounded_sesquilinear A\<close>
+proof
+  fix a a' :: 'a and b b' :: 'b and r :: complex
+  show "- A (a + a') b = (- A a b) + (- A a' b)"
+    by (simp add: bounded_sesquilinear.add_left that)
+  show \<open>- A a (b + b') = (- A a b) + (- A a b')\<close>
+    by (simp add: bounded_sesquilinear.add_right that)
+  show \<open>- A (r *\<^sub>C a) b = cnj r *\<^sub>C (- A a b)\<close>
+    by (simp add: bounded_sesquilinear.scaleC_left that)
+  show \<open>- A a (r *\<^sub>C b) = r *\<^sub>C (- A a b)\<close>
+    by (simp add: bounded_sesquilinear.scaleC_right that)
+  show \<open>\<exists>K. \<forall>a b. norm (- A a b) \<le> norm a * norm b * K\<close>
+  proof-
+    have \<open>\<exists> KA. \<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
+      by (simp add: bounded_sesquilinear.bounded that(1))
+    then obtain KA where \<open>\<forall> a b. norm (A a b) \<le> norm a * norm b * KA\<close>
+      by blast
+    have \<open>norm (- A a b) \<le> norm a * norm b * KA\<close>
+      for a b
+      by (simp add: \<open>\<forall>a b. norm (A a b) \<le> norm a * norm b * KA\<close>)
+    thus ?thesis by blast
+  qed
+qed
+
+lemma bounded_sesquilinear_diff:
+  \<open>bounded_sesquilinear (\<lambda> x y. A x y - B x y)\<close> if \<open>bounded_sesquilinear A\<close> and \<open>bounded_sesquilinear B\<close>
+proof -
+  have \<open>bounded_sesquilinear (\<lambda> x y. - B x y)\<close>
+    using that(2) by (rule bounded_sesquilinear_uminus)
+  then have \<open>bounded_sesquilinear (\<lambda> x y. A x y + (- B x y))\<close>
+    using that(1) by (rule bounded_sesquilinear_add[rotated])
+  then show ?thesis
+    by auto
+qed
+
+lemma ccsubspace_leI:
+  assumes t1: "space_as_set A \<subseteq> space_as_set B"
+  shows "A \<le> B"
+  using t1 apply transfer by -
+
+lemma ccspan_of_empty[simp]: "ccspan {} = bot"
+proof transfer
+  show "closure (cspan {}) = {0::'a}"
+    by simp
+qed
+
+
+instantiation ccsubspace :: ("{complex_vector,topological_space}") inf begin 
+lift_definition inf_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" 
+  is "(\<inter>)" by simp
+instance .. end
+
+lemma space_as_set_inf[simp]: "space_as_set (A \<sqinter> B) = space_as_set A \<inter> space_as_set B"
+  by (rule inf_ccsubspace.rep_eq)
+
+instantiation ccsubspace :: ("{complex_vector,topological_space}") order_top begin
+instance 
+proof
+  show "a \<le> \<top>"
+    for a :: "'a ccsubspace"
+    apply transfer
+    by simp
+qed
+end
+
+
+instantiation ccsubspace :: ("{complex_vector,t1_space}") order_bot begin
+instance 
+proof
+  show "(\<bottom>::'a ccsubspace) \<le> a"
+    for a :: "'a ccsubspace"
+    apply transfer
+    apply auto
+    using closed_csubspace.subspace complex_vector.subspace_0 by blast
+qed
+end
+
+
+instantiation ccsubspace :: ("{complex_vector,topological_space}") semilattice_inf begin
+instance 
+proof
+  fix x y z :: \<open>'a ccsubspace\<close>
+  show "x \<sqinter> y \<le> x"
+    apply transfer by simp
+  show "x \<sqinter> y \<le> y"
+    apply transfer by simp
+  show "x \<le> y \<sqinter> z" if "x \<le> y" and "x \<le> z"
+    using that apply transfer by simp
+qed  
+end
 
 
 instantiation ccsubspace :: ("{complex_vector,t1_space}") zero begin
@@ -2067,6 +2243,237 @@ lemma zero_ccsubspace_transfer[transfer_rule]: \<open>pcr_ccsubspace (=) {0} 0\<
   unfolding zero_ccsubspace_def by transfer_prover
 instance ..
 end
+
+
+subsection \<open>Closed sums\<close>
+
+definition closed_sum:: \<open>'a::{semigroup_add,topological_space} set \<Rightarrow> 'a set \<Rightarrow> 'a set\<close> where
+  \<open>closed_sum A B = closure (A + B)\<close>
+
+notation closed_sum (infixl "+\<^sub>M" 65)
+
+lemma closed_sum_comm: \<open>A +\<^sub>M B = B +\<^sub>M A\<close> for A B :: "_::ab_semigroup_add"
+  by (simp add: add.commute closed_sum_def)
+
+lemma closed_sum_left_subset: \<open>0 \<in> B \<Longrightarrow> A \<subseteq> A +\<^sub>M B\<close> for A B :: "_::monoid_add"
+  by (metis add.right_neutral closed_sum_def closure_subset in_mono set_plus_intro subsetI)
+
+lemma closed_sum_right_subset: \<open>0 \<in> A \<Longrightarrow> B \<subseteq> A +\<^sub>M B\<close> for A B :: "_::monoid_add"
+  by (metis add.left_neutral closed_sum_def closure_subset set_plus_intro subset_iff)
+
+lemma finite_cspan_closed_csubspace:
+  assumes "finite (S::'a::complex_normed_vector set)"
+  shows "closed_csubspace (cspan S)"
+  by (simp add: assms closed_csubspace.intro)
+
+lemma closed_sum_is_sup:
+  fixes A B C:: \<open>('a::{complex_vector,topological_space}) set\<close>
+  assumes \<open>closed_csubspace C\<close>
+  assumes \<open>A \<subseteq> C\<close> and \<open>B \<subseteq> C\<close>
+  shows \<open>(A +\<^sub>M B) \<subseteq> C\<close>
+proof -
+  have \<open>A + B \<subseteq> C\<close>
+    using assms unfolding set_plus_def
+    using closed_csubspace.subspace complex_vector.subspace_add by blast
+  then show \<open>(A +\<^sub>M B) \<subseteq> C\<close>
+    unfolding closed_sum_def
+    using \<open>closed_csubspace C\<close>
+    by (simp add: closed_csubspace.closed closure_minimal)
+qed
+
+lemma closed_subspace_closed_sum:
+  fixes A B::"('a::complex_normed_vector) set"
+  assumes a1: \<open>csubspace A\<close> and a2: \<open>csubspace B\<close>
+  shows \<open>closed_csubspace (A +\<^sub>M B)\<close>
+  using a1 a2 closed_sum_def 
+  by (metis closure_is_closed_csubspace csubspace_set_plus)
+
+
+lemma closed_sum_assoc:
+  fixes A B C::"'a::real_normed_vector set"
+  shows \<open>A +\<^sub>M (B +\<^sub>M C) = (A +\<^sub>M B) +\<^sub>M C\<close>
+proof -
+  have \<open>A + closure B \<subseteq> closure (A + B)\<close> for A B :: "'a set"
+    by (meson closure_subset closure_sum dual_order.trans order_refl set_plus_mono2)
+  then have \<open>A +\<^sub>M (B +\<^sub>M C) = closure (A + (B + C))\<close>
+    unfolding closed_sum_def
+    by (meson antisym_conv closed_closure closure_minimal closure_mono closure_subset equalityD1 set_plus_mono2)
+  moreover 
+  have \<open>closure A + B \<subseteq> closure (A + B)\<close> for A B :: "'a set"
+    by (meson closure_subset closure_sum dual_order.trans order_refl set_plus_mono2)
+  then have \<open>(A +\<^sub>M B) +\<^sub>M C = closure ((A + B) + C)\<close>
+    unfolding closed_sum_def
+    by (meson closed_closure closure_minimal closure_mono closure_subset eq_iff set_plus_mono2)
+  ultimately show ?thesis
+    by (simp add: ab_semigroup_add_class.add_ac(1))
+qed
+
+
+lemma closed_sum_zero_left[simp]:
+  fixes A :: \<open>('a::{monoid_add, topological_space}) set\<close>
+  shows \<open>{0} +\<^sub>M A = closure A\<close>
+  unfolding closed_sum_def
+  by (metis add.left_neutral set_zero)
+
+lemma closed_sum_zero_right[simp]:
+  fixes A :: \<open>('a::{monoid_add, topological_space}) set\<close>
+  shows \<open>A +\<^sub>M {0} = closure A\<close>
+  unfolding closed_sum_def
+  by (metis add.right_neutral set_zero)
+
+lemma closed_sum_closure_right[simp]:
+  fixes A B :: \<open>'a::real_normed_vector set\<close>
+  shows \<open>A +\<^sub>M closure B = A +\<^sub>M B\<close>
+  by (metis closed_sum_assoc closed_sum_def closed_sum_zero_right closure_closure)
+
+lemma closed_sum_closure_left[simp]:
+  fixes A B :: \<open>'a::real_normed_vector set\<close>
+  shows \<open>closure A +\<^sub>M B = A +\<^sub>M B\<close>
+  by (simp add: closed_sum_comm)
+
+lemma closed_sum_mono_left:
+  assumes \<open>A \<subseteq> B\<close>
+  shows \<open>A +\<^sub>M C \<subseteq> B +\<^sub>M C\<close>
+  by (simp add: assms closed_sum_def closure_mono set_plus_mono2)
+
+lemma closed_sum_mono_right:
+  assumes \<open>A \<subseteq> B\<close>
+  shows \<open>C +\<^sub>M A \<subseteq> C +\<^sub>M B\<close>
+  by (simp add: assms closed_sum_def closure_mono set_plus_mono2)
+
+instantiation ccsubspace :: (complex_normed_vector) sup begin
+lift_definition sup_ccsubspace :: "'a ccsubspace \<Rightarrow> 'a ccsubspace \<Rightarrow> 'a ccsubspace" 
+  \<comment> \<open>Note that \<^term>\<open>A+B\<close> would not be a closed subspace, we need the closure. See, e.g., \<^url>\<open>https://math.stackexchange.com/a/1786792/403528\<close>.\<close>
+  is "\<lambda>A B::'a set. A +\<^sub>M B"
+  by (simp add: closed_subspace_closed_sum) 
+instance .. 
+end
+
+lemma closed_sum_cspan[simp]:
+  shows \<open>cspan X +\<^sub>M cspan Y = closure (cspan (X \<union> Y))\<close>
+  by (smt (verit, best) Collect_cong closed_sum_def complex_vector.span_Un set_plus_def)
+
+lemma closure_image_closed_sum: 
+  assumes \<open>bounded_linear U\<close>
+  shows \<open>closure (U ` (A +\<^sub>M B)) = closure (U ` A) +\<^sub>M closure (U ` B)\<close>
+proof -
+  have \<open>closure (U ` (A +\<^sub>M B)) = closure (U ` closure (closure A + closure B))\<close>
+    unfolding closed_sum_def
+    by (smt (verit, best) closed_closure closure_minimal closure_mono closure_subset closure_sum set_plus_mono2 subset_antisym)
+  also have \<open>\<dots> = closure (U ` (closure A + closure B))\<close>
+    using assms closure_bounded_linear_image_subset_eq by blast
+  also have \<open>\<dots> = closure (U ` closure A + U ` closure B)\<close>
+    apply (subst image_set_plus)
+    by (simp_all add: assms bounded_linear.linear)
+  also have \<open>\<dots> = closure (closure (U ` A) + closure (U ` B))\<close>
+    by (smt (verit, ccfv_SIG) assms closed_closure closure_bounded_linear_image_subset closure_bounded_linear_image_subset_eq closure_minimal closure_mono closure_sum dual_order.eq_iff set_plus_mono2)
+  also have \<open>\<dots> = closure (U ` A) +\<^sub>M closure (U ` B)\<close>
+    using closed_sum_def by blast
+  finally show ?thesis
+    by -
+qed
+
+
+
+lemma ccspan_union: "ccspan A \<squnion> ccspan B = ccspan (A \<union> B)"
+  apply transfer by simp
+
+instantiation ccsubspace :: (complex_normed_vector) "Sup"
+begin
+lift_definition Sup_ccsubspace::\<open>'a ccsubspace set \<Rightarrow> 'a ccsubspace\<close>
+  is \<open>\<lambda>S. closure (complex_vector.span (Union S))\<close>
+proof
+  show "csubspace (closure (complex_vector.span (\<Union> S::'a set)))"
+    if "\<And>x::'a set. x \<in> S \<Longrightarrow> closed_csubspace x"
+    for S :: "'a set set"
+    using that
+    by (simp add: closure_is_closed_csubspace) 
+  show "closed (closure (complex_vector.span (\<Union> S::'a set)))"
+    if "\<And>x. (x::'a set) \<in> S \<Longrightarrow> closed_csubspace x"
+    for S :: "'a set set"
+    using that
+    by simp 
+qed
+
+instance..
+end
+
+
+instance ccsubspace :: ("{complex_normed_vector}") semilattice_sup
+proof
+  fix x y z :: \<open>'a ccsubspace\<close>
+  show \<open>x \<le> sup x y\<close>
+    apply transfer
+    by (simp add: closed_csubspace_def closed_sum_left_subset complex_vector.subspace_0)
+
+  show "y \<le> sup x y"
+    apply transfer
+    by (simp add: closed_csubspace_def closed_sum_right_subset complex_vector.subspace_0)
+
+  show "sup x y \<le> z" if "x \<le> z" and "y \<le> z"
+    using that apply transfer
+    apply (rule closed_sum_is_sup) by auto
+qed
+
+instance ccsubspace :: ("{complex_normed_vector}") complete_lattice
+proof
+  show "Inf A \<le> x"
+    if "x \<in> A"
+    for x :: "'a ccsubspace"
+      and A :: "'a ccsubspace set"
+    using that 
+    apply transfer
+    by auto
+
+  have b1: "z \<subseteq> \<Inter> A"
+    if "Ball A closed_csubspace" and
+      "closed_csubspace z" and
+      "(\<And>x. closed_csubspace x \<Longrightarrow> x \<in> A \<Longrightarrow> z \<subseteq> x)"
+    for z::"'a set" and A
+    using that
+    by auto 
+  show "z \<le> Inf A"
+    if "\<And>x::'a ccsubspace. x \<in> A \<Longrightarrow> z \<le> x"
+    for A :: "'a ccsubspace set"
+      and z :: "'a ccsubspace"
+    using that 
+    apply transfer
+    using b1 by blast
+
+  show "x \<le> Sup A"
+    if "x \<in> A"
+    for x :: "'a ccsubspace"
+      and A :: "'a ccsubspace set"
+    using that 
+    apply transfer
+    by (meson Union_upper closure_subset complex_vector.span_superset dual_order.trans)  
+
+  show "Sup A \<le> z"
+    if "\<And>x::'a ccsubspace. x \<in> A \<Longrightarrow> x \<le> z"
+    for A :: "'a ccsubspace set"
+      and z :: "'a ccsubspace"
+    using that apply transfer
+  proof -
+    fix A :: "'a set set" and z :: "'a set"
+    assume A_closed: "Ball A closed_csubspace"
+    assume "closed_csubspace z"
+    assume in_z: "\<And>x. closed_csubspace x \<Longrightarrow> x \<in> A \<Longrightarrow> x \<subseteq> z"
+    from A_closed in_z
+    have \<open>V \<subseteq> z\<close> if \<open>V \<in> A\<close> for V
+      by (simp add: that)
+    then have \<open>\<Union> A \<subseteq> z\<close>
+      by (simp add: Sup_le_iff)
+    with \<open>closed_csubspace z\<close>
+    show "closure (cspan (\<Union> A)) \<subseteq> z"
+      by (simp add: closed_csubspace_def closure_minimal complex_vector.span_def subset_hull)
+  qed
+
+  show "Inf {} = (top::'a ccsubspace)"
+    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> z \<le> x) \<Longrightarrow> z \<le> Inf A\<close> top.extremum_uniqueI by auto
+
+  show "Sup {} = (bot::'a ccsubspace)"
+    using \<open>\<And>z A. (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z\<close> bot.extremum_uniqueI by auto 
+qed
 
 instantiation ccsubspace :: (complex_normed_vector) comm_monoid_add begin
 definition plus_ccsubspace :: "'a ccsubspace \<Rightarrow> _ \<Rightarrow> _"
@@ -2083,6 +2490,18 @@ proof
 qed
 end
 
+lemma ccsubspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
+  for x y z :: "'a::complex_normed_vector ccsubspace"
+  unfolding plus_ccsubspace_def by auto
+
+lemma ccsubspace_Sup_empty: "Sup {} = (0::_ ccsubspace)"
+  unfolding zero_ccsubspace_def by auto
+
+lemma ccsubspace_add_right_incr[simp]: "a \<le> a + c" for a::"_ ccsubspace"
+  by (simp add: add_increasing2)
+
+lemma ccsubspace_add_left_incr[simp]: "a \<le> c + a" for a::"_ ccsubspace"
+  by (simp add: add_increasing)
 
 subsection \<open>Conjugate space\<close>
 
@@ -2373,6 +2792,7 @@ context bounded_clinear begin
 interpretation bounded_linear f by (rule bounded_linear)
 lemmas continuous = continuous
 lemmas uniform_limit = uniform_limit
+lemmas Cauchy = Cauchy
 end
 
 context bounded_antilinear begin
@@ -2382,467 +2802,19 @@ lemmas uniform_limit = uniform_limit
 end
 
 
-subsection \<open>Unsorted\<close>
+context bounded_cbilinear begin
+interpretation bounded_bilinear prod by simp
+lemmas tendsto = tendsto
+lemmas isCont = isCont
+end
 
-(* TODO sort *)
+context bounded_sesquilinear begin
+interpretation bounded_bilinear prod by simp
+lemmas tendsto = tendsto
+lemmas isCont = isCont
+end
 
-lemma isomorphic_equal_cdim:
-  assumes lin_f: \<open>clinear f\<close>
-  assumes inj_f: \<open>inj_on f (cspan S)\<close>
-  assumes im_S: \<open>f ` S = T\<close>
-  shows \<open>cdim S = cdim T\<close>
-proof -
-  obtain SB where SB_span: "cspan SB = cspan S" and indep_SB: \<open>cindependent SB\<close>
-    by (metis complex_vector.basis_exists complex_vector.span_mono complex_vector.span_span subset_antisym)
-  with lin_f inj_f have indep_fSB: \<open>cindependent (f ` SB)\<close>
-    apply (rule_tac complex_vector.linear_independent_injective_image)
-    by auto
-  from lin_f have \<open>cspan (f ` SB) = f ` cspan SB\<close>
-    by (meson complex_vector.linear_span_image)
-  also from SB_span lin_f have \<open>\<dots> = cspan T\<close>
-    by (metis complex_vector.linear_span_image im_S)
-  finally have \<open>cdim T = card (f ` SB)\<close>
-    using indep_fSB complex_vector.dim_eq_card by blast
-  also have \<open>\<dots> = card SB\<close>
-    apply (rule card_image) using inj_f
-    by (metis SB_span complex_vector.linear_inj_on_span_iff_independent_image indep_fSB lin_f)
-  also have \<open>\<dots> = cdim S\<close>
-    using indep_SB SB_span
-    by (metis complex_vector.dim_eq_card)
-  finally show ?thesis by simp
-qed
-
-lemma ccsubspace_plus_sup: "y \<le> x \<Longrightarrow> z \<le> x \<Longrightarrow> y + z \<le> x" 
-  for x y z :: "'a::complex_normed_vector ccsubspace"
-  unfolding plus_ccsubspace_def by auto
-
-lemma ccsubspace_Sup_empty: "Sup {} = (0::_ ccsubspace)"
-  unfolding zero_ccsubspace_def by auto
-
-lemma ccsubspace_add_right_incr[simp]: "a \<le> a + c" for a::"_ ccsubspace"
-  by (simp add: add_increasing2)
-
-lemma ccsubspace_add_left_incr[simp]: "a \<le> c + a" for a::"_ ccsubspace"
-  by (simp add: add_increasing)
-
-lemma cindependent_inter_scaleC_cindependent:
-  assumes a1: "cindependent (B::'a::complex_vector set)" (* and a2: "c \<noteq> 0" *) and a3: "c \<noteq> 1"
-  shows "B \<inter> (*\<^sub>C) c ` B = {}"
-proof (rule classical, cases \<open>c = 0\<close>)
-  case True
-  then show ?thesis
-    using a1 by (auto simp add: complex_vector.dependent_zero)
-next
-  case False
-  assume "\<not>(B \<inter> (*\<^sub>C) c ` B = {})"
-  hence "B \<inter> (*\<^sub>C) c ` B \<noteq> {}"
-    by blast
-  then obtain x where u1: "x \<in> B \<inter> (*\<^sub>C) c ` B"
-    by blast
-  then obtain b where u2: "x = b" and u3: "b\<in>B"
-    by blast
-  then  obtain b' where u2': "x = c *\<^sub>C b'" and u3': "b'\<in>B"
-    using u1
-    by blast
-  have g1: "b = c *\<^sub>C b'"
-    using u2 and u2' by simp
-  hence "b \<in> complex_vector.span {b'}"
-    using complex_vector.span_base False by force 
-  hence "b = b'"
-    by (metis  u3' a1 complex_vector.dependent_def complex_vector.span_base 
-        complex_vector.span_scale insertE insert_Diff u2 u2' u3) 
-  hence "b' = c *\<^sub>C b'"
-    using g1 by blast
-  thus ?thesis
-    by (metis a1 a3 complex_vector.dependent_zero complex_vector.scale_right_imp_eq
-        mult_cancel_right2 scaleC_scaleC u3')
-qed
-
-lemma real_independent_from_complex_independent:
-  assumes "cindependent (B::'a::complex_vector set)"
-  defines "B' == ((*\<^sub>C) \<i> ` B)"
-  shows "independent (B \<union> B')"
-proof (rule notI)
-  assume \<open>dependent (B \<union> B')\<close>
-  then obtain T f0 x where [simp]: \<open>finite T\<close> and \<open>T \<subseteq> B \<union> B'\<close> and f0_sum: \<open>(\<Sum>v\<in>T. f0 v *\<^sub>R v) = 0\<close>
-      and x: \<open>x \<in> T\<close> and f0_x: \<open>f0 x \<noteq> 0\<close>
-    by (auto simp: real_vector.dependent_explicit)
-  define f T1 T2 T' f' x' where \<open>f v = (if v \<in> T then f0 v else 0)\<close> 
-    and \<open>T1 = T \<inter> B\<close> and \<open>T2 = scaleC (-\<i>) ` (T \<inter> B')\<close>
-    and \<open>T' = T1 \<union> T2\<close> and \<open>f' v = f v + \<i> * f (\<i> *\<^sub>C v)\<close>
-    and \<open>x' = (if x \<in> T1 then x else -\<i> *\<^sub>C x)\<close> for v
-  have \<open>B \<inter> B' = {}\<close>
-    by (simp add: assms cindependent_inter_scaleC_cindependent)
-  have \<open>T' \<subseteq> B\<close> 
-    by (auto simp: T'_def T1_def T2_def B'_def)
-  have [simp]: \<open>finite T'\<close> \<open>finite T1\<close> \<open>finite T2\<close>
-    by (auto simp add: T'_def T1_def T2_def)
-  have f_sum: \<open>(\<Sum>v\<in>T. f v *\<^sub>R v) = 0\<close>
-    unfolding f_def using f0_sum by auto
-  have f_x: \<open>f x \<noteq> 0\<close>
-    using f0_x x by (auto simp: f_def)
-  have f'_sum: \<open>(\<Sum>v\<in>T'. f' v *\<^sub>C v) = 0\<close>
-  proof -
-    have \<open>(\<Sum>v\<in>T'. f' v *\<^sub>C v) = (\<Sum>v\<in>T'. complex_of_real (f v) *\<^sub>C v) + (\<Sum>v\<in>T'. (\<i> * complex_of_real (f (\<i> *\<^sub>C v))) *\<^sub>C v)\<close>
-      by (auto simp: f'_def sum.distrib scaleC_add_left)
-    also have \<open>(\<Sum>v\<in>T'. complex_of_real (f v) *\<^sub>C v) = (\<Sum>v\<in>T1. f v *\<^sub>R v)\<close> (is \<open>_ = ?left\<close>)
-      apply (auto simp: T'_def scaleR_scaleC intro!: sum.mono_neutral_cong_right)
-      using T'_def T1_def \<open>T' \<subseteq> B\<close> f_def by auto
-    also have \<open>(\<Sum>v\<in>T'. (\<i> * complex_of_real (f (\<i> *\<^sub>C v))) *\<^sub>C v) = (\<Sum>v\<in>T2. (\<i> * complex_of_real (f (\<i> *\<^sub>C v))) *\<^sub>C v)\<close> (is \<open>_ = ?right\<close>)
-      apply (auto simp: T'_def intro!: sum.mono_neutral_cong_right)
-      by (smt (z3) B'_def IntE IntI T1_def T2_def \<open>f \<equiv> \<lambda>v. if v \<in> T then f0 v else 0\<close> add.inverse_inverse complex_vector.vector_space_axioms i_squared imageI mult_minus_left vector_space.vector_space_assms(3) vector_space.vector_space_assms(4))
-    also have \<open>?right = (\<Sum>v\<in>T\<inter>B'. f v *\<^sub>R v)\<close> (is \<open>_ = ?right\<close>)
-      apply (rule sum.reindex_cong[symmetric, where l=\<open>scaleC \<i>\<close>])
-      apply (auto simp: T2_def image_image scaleR_scaleC)
-      using inj_on_def by fastforce
-    also have \<open>?left + ?right = (\<Sum>v\<in>T. f v *\<^sub>R v)\<close>
-      apply (subst sum.union_disjoint[symmetric])
-      using \<open>B \<inter> B' = {}\<close> \<open>T \<subseteq> B \<union> B'\<close> apply (auto simp: T1_def)
-      by (metis Int_Un_distrib Un_Int_eq(4) sup.absorb_iff1)
-    also have \<open>\<dots> = 0\<close>
-      by (rule f_sum)
-    finally show ?thesis
-      by -
-  qed
-
-  have x': \<open>x' \<in> T'\<close>
-    using \<open>T \<subseteq> B \<union> B'\<close> x by (auto simp: x'_def T'_def T1_def T2_def)
-
-  have f'_x': \<open>f' x' \<noteq> 0\<close>
-    using Complex_eq Complex_eq_0 f'_def f_x x'_def by auto
-
-  from \<open>finite T'\<close> \<open>T' \<subseteq> B\<close> f'_sum x' f'_x'
-  have \<open>cdependent B\<close>
-    using complex_vector.independent_explicit_module by blast
-  with assms show False
-    by auto
-qed
-
-lemma crepresentation_from_representation: 
-  assumes a1: "cindependent B" and a2: "b \<in> B" and a3: "finite B"
-  shows "crepresentation B \<psi> b = (representation (B \<union> (*\<^sub>C) \<i> ` B) \<psi> b)
-                           + \<i> *\<^sub>C (representation (B \<union> (*\<^sub>C) \<i> ` B) \<psi> (\<i> *\<^sub>C b))"
-proof (cases "\<psi> \<in> cspan B")
-  define B' where "B' = B \<union> (*\<^sub>C) \<i> ` B"
-  case True
-  define r  where "r v = real_vector.representation B' \<psi> v" for v
-  define r' where "r' v = real_vector.representation B' \<psi> (\<i> *\<^sub>C v)" for v
-  define f  where "f v = r v + \<i> *\<^sub>C r' v" for v
-  define g  where "g v = crepresentation B \<psi> v" for v
-  have "(\<Sum>v | g v \<noteq> 0. g v *\<^sub>C v) = \<psi>"
-    unfolding g_def
-    using Collect_cong Collect_mono_iff DiffD1 DiffD2 True a1 
-      complex_vector.finite_representation
-      complex_vector.sum_nonzero_representation_eq sum.mono_neutral_cong_left
-    by fastforce
-  moreover have "finite {v. g v \<noteq> 0}"
-    unfolding g_def
-    by (simp add: complex_vector.finite_representation)
-  moreover have "v \<in> B"
-    if "g v \<noteq> 0" for v
-    using that unfolding g_def
-    by (simp add: complex_vector.representation_ne_zero)        
-  ultimately have rep1: "(\<Sum>v\<in>B. g v *\<^sub>C v) = \<psi>"    
-    unfolding g_def
-    using a3 True a1 complex_vector.sum_representation_eq by blast
-  have l0': "inj ((*\<^sub>C) \<i>::'a \<Rightarrow>'a)"
-    unfolding inj_def 
-    by simp 
-  have l0: "inj ((*\<^sub>C) (- \<i>)::'a \<Rightarrow>'a)"
-    unfolding inj_def 
-    by simp 
-  have l1: "(*\<^sub>C) (- \<i>) ` B \<inter> B = {}"
-    using cindependent_inter_scaleC_cindependent[where B=B and c = "- \<i>"]
-    by (metis Int_commute a1 add.inverse_inverse complex_i_not_one i_squared mult_cancel_left1 
-        neg_equal_0_iff_equal)
-  have l2: "B \<inter> (*\<^sub>C) \<i> ` B = {}"
-    by (simp add: a1 cindependent_inter_scaleC_cindependent)
-  have rr1: "r (\<i> *\<^sub>C v) = r' v" for v
-    unfolding r_def r'_def
-    by simp 
-  have k1: "independent B'"
-    unfolding B'_def using a1 real_independent_from_complex_independent by simp
-  have "\<psi> \<in> span B'"
-    using B'_def True cspan_as_span by blast    
-  have "v \<in> B'"
-    if "r v \<noteq> 0"
-    for v
-    unfolding r_def
-    using r_def real_vector.representation_ne_zero that by auto
-  have "finite B'"
-    unfolding B'_def using a3
-    by simp 
-  have "(\<Sum>v\<in>B'. r v *\<^sub>R v) = \<psi>"
-    unfolding r_def 
-    using True  Real_Vector_Spaces.real_vector.sum_representation_eq[where B = B' and basis = B' 
-        and v = \<psi>]  
-    by (smt Real_Vector_Spaces.dependent_raw_def \<open>\<psi> \<in> Real_Vector_Spaces.span B'\<close> \<open>finite B'\<close> 
-        equalityD2 k1)
-  have d1: "(\<Sum>v\<in>B. r (\<i> *\<^sub>C v) *\<^sub>R (\<i> *\<^sub>C v)) = (\<Sum>v\<in>(*\<^sub>C) \<i> ` B. r v *\<^sub>R v)"
-    using l0'
-    by (metis (mono_tags, lifting) inj_eq inj_on_def sum.reindex_cong)
-  have "(\<Sum>v\<in>B. (r v + \<i> * (r' v)) *\<^sub>C v) = (\<Sum>v\<in>B. r v *\<^sub>C v + (\<i> * r' v) *\<^sub>C v)"
-    by (meson scaleC_left.add)
-  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>C v) + (\<Sum>v\<in>B. (\<i> * r' v) *\<^sub>C v)"
-    using sum.distrib by fastforce
-  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>C v) + (\<Sum>v\<in>B. \<i> *\<^sub>C (r' v *\<^sub>C v))"
-    by auto
-  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>B. \<i> *\<^sub>C (r (\<i> *\<^sub>C v) *\<^sub>R v))"
-    unfolding r'_def r_def
-    by (metis (mono_tags, lifting) scaleR_scaleC sum.cong) 
-  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>B. r (\<i> *\<^sub>C v) *\<^sub>R (\<i> *\<^sub>C v))"
-    by (metis (no_types, lifting) complex_vector.scale_left_commute scaleR_scaleC)      
-  also have "\<dots> = (\<Sum>v\<in>B. r v *\<^sub>R v) + (\<Sum>v\<in>(*\<^sub>C) \<i> ` B. r v *\<^sub>R v)"
-    using d1
-    by simp
-  also have "\<dots> = \<psi>"
-    using l2 \<open>(\<Sum>v\<in>B'. r v *\<^sub>R v) = \<psi>\<close>
-    unfolding B'_def
-    by (simp add: a3 sum.union_disjoint) 
-  finally have "(\<Sum>v\<in>B. f v *\<^sub>C v) = \<psi>" unfolding r'_def r_def f_def by simp
-  hence "0 = (\<Sum>v\<in>B. f v *\<^sub>C v) - (\<Sum>v\<in>B. crepresentation B \<psi> v *\<^sub>C v)"
-    using rep1
-    unfolding g_def
-    by simp
-  also have "\<dots> = (\<Sum>v\<in>B. f v *\<^sub>C v - crepresentation B \<psi> v *\<^sub>C v)"
-    by (simp add: sum_subtractf)
-  also have "\<dots> = (\<Sum>v\<in>B. (f v - crepresentation B \<psi> v) *\<^sub>C v)"
-    by (metis scaleC_left.diff)
-  finally have "0 = (\<Sum>v\<in>B. (f v - crepresentation B \<psi> v) *\<^sub>C v)".
-  hence "(\<Sum>v\<in>B. (f v - crepresentation B \<psi> v) *\<^sub>C v) = 0"
-    by simp
-  hence "f b - crepresentation B \<psi> b = 0"
-    using a1 a2 a3 complex_vector.independentD[where s = B and t = B 
-        and u = "\<lambda>v. f v - crepresentation B \<psi> v" and v = b]
-      order_refl  by smt
-  hence "crepresentation B \<psi> b = f b"
-    by simp
-  thus ?thesis unfolding f_def r_def r'_def B'_def by auto
-next
-  define B' where "B' = B \<union> (*\<^sub>C) \<i> ` B"
-  case False
-  have b2: "\<psi> \<notin> real_vector.span B'"
-    unfolding B'_def
-    using False cspan_as_span by auto    
-  have "\<psi> \<notin> complex_vector.span B"
-    using False by blast
-  have "crepresentation B \<psi> b = 0"
-    unfolding complex_vector.representation_def
-    by (simp add: False)
-  moreover have "real_vector.representation B' \<psi> b = 0"
-    unfolding real_vector.representation_def
-    by (simp add: b2)
-  moreover have "real_vector.representation B' \<psi> ((*\<^sub>C) \<i> b) = 0"
-    unfolding real_vector.representation_def
-    by (simp add: b2)
-  ultimately show ?thesis unfolding B'_def by simp
-qed
-
-lemma finite_cspan_crepresentation_bounded:
-  fixes B :: "'a::complex_normed_vector set"
-  assumes a1: "finite B" and a2: "cindependent B"
-  shows "\<exists>D>0. \<forall>\<psi> b. norm (crepresentation B \<psi> b) \<le> norm \<psi> * D"
-proof -
-  define B' where "B' = (B \<union> scaleC \<i> ` B)"
-  have independent_B': "independent B'"
-    using B'_def \<open>cindependent B\<close>
-    by (simp add: real_independent_from_complex_independent a1)
-  have "finite B'"
-    unfolding B'_def using \<open>finite B\<close> by simp
-  obtain D' where "D' > 0" and D': "norm (real_vector.representation B' \<psi> b) \<le> norm \<psi> * D'" 
-    for \<psi> b
-    apply atomize_elim
-    using independent_B' \<open>finite B'\<close>
-    by (simp add: finite_span_representation_bounded)
-
-  define D where "D = 2*D'" 
-  from \<open>D' > 0\<close> have \<open>D > 0\<close>
-    unfolding D_def by simp
-  have "norm (crepresentation B \<psi> b) \<le> norm \<psi> * D" for \<psi> b
-  proof (cases "b\<in>B")
-    case True
-    have d3: "norm \<i> = 1"
-      by simp          
-
-    have "norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
-          = norm \<i> * norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-      using norm_scaleC by blast
-    also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-      using d3 by simp
-    finally have d2:"norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))
-          = norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))".
-    have "norm (crepresentation B \<psi> b)
-        = norm (complex_of_real (real_vector.representation B' \<psi> b)
-            + \<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-      by (simp add: B'_def True a1 a2 crepresentation_from_representation)      
-    also have "\<dots> \<le> norm (complex_of_real (real_vector.representation B' \<psi> b))
-             + norm (\<i> *\<^sub>C complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-      using norm_triangle_ineq by blast
-    also have "\<dots> = norm (complex_of_real (real_vector.representation B' \<psi> b))
-                  + norm (complex_of_real (real_vector.representation B' \<psi> (\<i> *\<^sub>C b)))"
-      using d2 by simp
-    also have "\<dots> = norm (real_vector.representation B' \<psi> b)
-                  + norm (real_vector.representation B' \<psi> (\<i> *\<^sub>C b))"
-      by simp
-    also have "\<dots> \<le> norm \<psi> * D' + norm \<psi> * D'"
-      by (rule add_mono; rule D')
-    also have "\<dots> \<le> norm \<psi> * D"
-      unfolding D_def by linarith
-    finally show ?thesis
-      by auto
-  next
-    case False
-    hence "crepresentation B \<psi> b = 0"
-      using complex_vector.representation_ne_zero by blast      
-    thus ?thesis
-      by (smt \<open>0 < D\<close> norm_ge_zero norm_zero split_mult_pos_le)
-  qed
-  with \<open>D > 0\<close>
-  show ?thesis
-    by auto
-qed
-
-lemma bounded_clinear_finite_dim[simp]:
-  fixes f :: \<open>'a::{cfinite_dim,complex_normed_vector} \<Rightarrow> 'b::complex_normed_vector\<close>
-  assumes \<open>clinear f\<close>
-  shows \<open>bounded_clinear f\<close>
-proof -
-  include notation_norm
-  obtain basis :: \<open>'a set\<close> where b1: "complex_vector.span basis = UNIV"
-    and b2: "cindependent basis"
-    and b3:"finite basis" 
-    using finite_basis by auto
-  have "\<exists>C>0. \<forall>\<psi> b. cmod (crepresentation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C"
-    using finite_cspan_crepresentation_bounded[where B = basis] b2 b3 by blast
-  then obtain C where s1: "cmod (crepresentation basis \<psi> b) \<le> \<parallel>\<psi>\<parallel> * C" 
-    and s2: "C > 0"
-  for \<psi> b by blast
-  define M where "M = C * (\<Sum>a\<in>basis. \<parallel>f a\<parallel>)"
-  have "\<parallel>f x\<parallel> \<le> \<parallel>x\<parallel> * M"
-    for x
-  proof-
-    define r where "r b = crepresentation basis x b" for b
-    have x_span: "x \<in> complex_vector.span basis"
-      by (simp add: b1)
-    have f0: "v \<in> basis"
-      if "r v \<noteq> 0" for v
-      using complex_vector.representation_ne_zero r_def that by auto       
-    have w:"{a|a. r a \<noteq> 0} \<subseteq> basis"
-      using f0 by blast
-    hence f1: "finite {a|a. r a \<noteq> 0}"
-      using b3 rev_finite_subset by auto 
-    have f2: "(\<Sum>a| r a \<noteq> 0. r a *\<^sub>C a) = x"
-      unfolding r_def
-      using b2 complex_vector.sum_nonzero_representation_eq x_span
-        Collect_cong  by fastforce
-    have g1: "(\<Sum>a\<in>basis. crepresentation basis x a *\<^sub>C a) = x"
-      by (simp add: b2 b3 complex_vector.sum_representation_eq x_span)
-    have f3: "(\<Sum>a\<in>basis. r a *\<^sub>C a) = x"
-      unfolding r_def
-      by (simp add: g1) 
-    hence "f x = f (\<Sum>a\<in>basis. r a *\<^sub>C a)"
-      by simp
-    also have "\<dots> = (\<Sum>a\<in>basis. r a *\<^sub>C f a)"
-      by (smt (verit, ccfv_SIG) assms complex_vector.linear_scale complex_vector.linear_sum sum.cong)
-    finally have "f x = (\<Sum>a\<in>basis. r a *\<^sub>C f a)".
-    hence "\<parallel>f x\<parallel> = \<parallel>(\<Sum>a\<in>basis. r a *\<^sub>C f a)\<parallel>"
-      by simp
-    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a *\<^sub>C f a\<parallel>)"
-      by (simp add: sum_norm_le)
-    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>r a\<parallel> * \<parallel>f a\<parallel>)"
-      by simp
-    also have "\<dots> \<le> (\<Sum>a\<in>basis. \<parallel>x\<parallel> * C * \<parallel>f a\<parallel>)"      
-      using sum_mono s1 unfolding r_def
-      by (simp add: sum_mono mult_right_mono)
-    also have "\<dots> \<le> \<parallel>x\<parallel> * C * (\<Sum>a\<in>basis. \<parallel>f a\<parallel>)"
-      using sum_distrib_left
-      by (smt sum.cong)
-    also have "\<dots> = \<parallel>x\<parallel> * M"
-      unfolding M_def
-      by linarith 
-    finally show ?thesis .
-  qed
-  thus ?thesis
-    using assms bounded_clinear_def bounded_clinear_axioms_def by blast
-qed
-
-lemma CARD_1_vec_0[simp]: \<open>(\<psi> :: _ ::{complex_vector,CARD_1}) = 0\<close>
-  by auto
-
-
-lemma scaleC_cindependent:
-  assumes a1: "cindependent (B::'a::complex_vector set)" and a3: "c \<noteq> 0"
-  shows "cindependent ((*\<^sub>C) c ` B)"
-proof-
-  have "u y = 0"
-    if g1: "y\<in>S" and g2: "(\<Sum>x\<in>S. u x *\<^sub>C x) = 0" and g3: "finite S" and g4: "S\<subseteq>(*\<^sub>C) c ` B"
-    for u y S
-  proof-
-    define v where "v x = u (c *\<^sub>C x)" for x
-    obtain S' where "S'\<subseteq>B" and S_S': "S = (*\<^sub>C) c ` S'"
-      by (meson g4 subset_imageE)      
-    have "inj ((*\<^sub>C) c::'a\<Rightarrow>_)"
-      unfolding inj_def
-      using a3 by auto 
-    hence "finite S'"
-      using S_S' finite_imageD g3 subset_inj_on by blast            
-    have "t \<in> (*\<^sub>C) (inverse c) ` S"
-      if "t \<in> S'" for t
-    proof-
-      have "c *\<^sub>C t \<in> S"
-        using \<open>S = (*\<^sub>C) c ` S'\<close> that by blast
-      hence "(inverse c) *\<^sub>C (c *\<^sub>C t) \<in> (*\<^sub>C) (inverse c) ` S"
-        by blast
-      moreover have "(inverse c) *\<^sub>C (c *\<^sub>C t) = t"
-        by (simp add: a3)
-      ultimately show ?thesis by simp
-    qed
-    moreover have "t \<in> S'"
-      if "t \<in> (*\<^sub>C) (inverse c) ` S" for t
-    proof-
-      obtain t' where "t = (inverse c) *\<^sub>C t'" and "t' \<in> S"
-        using \<open>t \<in> (*\<^sub>C) (inverse c) ` S\<close> by auto
-      have "c *\<^sub>C t = c *\<^sub>C ((inverse c) *\<^sub>C t')"
-        using \<open>t = (inverse c) *\<^sub>C t'\<close> by simp
-      also have "\<dots> = (c * (inverse c)) *\<^sub>C t'"
-        by simp
-      also have "\<dots> = t'"
-        by (simp add: a3)
-      finally have "c *\<^sub>C t = t'".
-      thus ?thesis using \<open>t' \<in> S\<close>
-        using \<open>S = (*\<^sub>C) c ` S'\<close> a3 complex_vector.scale_left_imp_eq by blast 
-    qed
-    ultimately have "S' = (*\<^sub>C) (inverse c) ` S"
-      by blast 
-    hence "inverse c *\<^sub>C y \<in> S'"
-      using that(1) by blast 
-    have t: "inj (((*\<^sub>C) c)::'a \<Rightarrow> _)"
-      using a3 complex_vector.injective_scale[where c = c]
-      by blast
-    have "0 = (\<Sum>x\<in>(*\<^sub>C) c ` S'. u x *\<^sub>C x)"
-      using \<open>S = (*\<^sub>C) c ` S'\<close> that(2) by auto
-    also have "\<dots> = (\<Sum>x\<in>S'. v x *\<^sub>C (c *\<^sub>C x))"
-      unfolding v_def
-      using t Groups_Big.comm_monoid_add_class.sum.reindex[where h = "((*\<^sub>C) c)" and A = S' 
-          and g = "\<lambda>x. u x *\<^sub>C x"] subset_inj_on by auto     
-    also have "\<dots> = c *\<^sub>C (\<Sum>x\<in>S'. v x *\<^sub>C x)"
-      by (metis (mono_tags, lifting) complex_vector.scale_left_commute scaleC_right.sum sum.cong)
-    finally have "0 = c *\<^sub>C (\<Sum>x\<in>S'. v x *\<^sub>C x)".
-    hence "(\<Sum>x\<in>S'. v x *\<^sub>C x) = 0"
-      using a3 by auto
-    hence "v (inverse c *\<^sub>C y) = 0"
-      using \<open>inverse c *\<^sub>C y \<in> S'\<close> \<open>finite S'\<close> \<open>S' \<subseteq> B\<close> a1
-        complex_vector.independentD
-      by blast 
-    thus "u y = 0"
-      unfolding v_def
-      by (simp add: a3) 
-  qed
-  thus ?thesis
-    using complex_vector.dependent_explicit
-    by (simp add: complex_vector.dependent_explicit ) 
-qed
-
-
+lemmas tendsto_scaleC [tendsto_intros] =
+  bounded_cbilinear.tendsto [OF bounded_cbilinear_scaleC]
 
 end
