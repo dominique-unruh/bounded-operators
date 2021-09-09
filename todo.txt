@@ -1,3 +1,2 @@
-- Write abstract
 - Submit to AFP
 - Migrate to infsum
