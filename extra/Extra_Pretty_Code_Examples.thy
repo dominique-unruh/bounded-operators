@@ -38,27 +38,27 @@ proof - (* Sledgehammer proof *)
 qed
 
 (* Ensure that complex numbers with zero-imaginary part are rendered as reals *)
-lemma [code_post]: 
+lemma complex_number_code_post[code_post]: 
   shows "Complex a 0 = complex_of_real a"
-  and "complex_of_real 0 = 0"
-  and "complex_of_real 1 = 1"
-  and "complex_of_real (a/b) = complex_of_real a / complex_of_real b"
-  and "complex_of_real (numeral n) = numeral n"
-  and "complex_of_real (-r) = - complex_of_real r"
+    and "complex_of_real 0 = 0"
+    and "complex_of_real 1 = 1"
+    and "complex_of_real (a/b) = complex_of_real a / complex_of_real b"
+    and "complex_of_real (numeral n) = numeral n"
+    and "complex_of_real (-r) = - complex_of_real r"
   using complex_eq_cancel_iff2 by auto
 
 (* Make real number implementation more readable *)
-lemma [code_post]:
+lemma real_number_code_post[code_post]:
   shows "real_of (Abs_mini_alg (p, 0, b)) = real_of_rat p"
-  and "real_of (Abs_mini_alg (p, q, 2)) = real_of_rat p + real_of_rat q * sqrt 2"
-  and "sqrt 0 = 0"
-  and "sqrt (real 0) = 0"
-  and "x * (0::real) = 0"
-  and "(0::real) * x = 0"
-  and "(0::real) + x = x"
-  and "x + (0::real) = x"
-  and "(1::real) * x = x"
-  and "x * (1::real) = x"
+    and "real_of (Abs_mini_alg (p, q, 2)) = real_of_rat p + real_of_rat q * sqrt 2"
+    and "sqrt 0 = 0"
+    and "sqrt (real 0) = 0"
+    and "x * (0::real) = 0"
+    and "(0::real) * x = 0"
+    and "(0::real) + x = x"
+    and "x + (0::real) = x"
+    and "(1::real) * x = x"
+    and "x * (1::real) = x"
   by (auto simp add: eq_onp_same_args real_of.abs_eq)
 
 (* Hide IArray in output *)

@@ -12,10 +12,10 @@ theory Complex_L2
   imports 
     Complex_Bounded_Linear_Function
 
-    "HOL-Analysis.L2_Norm"
-    "HOL-Library.Rewrite"
-    "HOL-Analysis.Infinite_Set_Sum"
-    "Complex_Bounded_Operators-Extra.Extra_Infinite_Set_Sum"
+"HOL-Analysis.L2_Norm"
+"HOL-Library.Rewrite"
+"HOL-Analysis.Infinite_Set_Sum"
+"Complex_Bounded_Operators.Extra_Infinite_Set_Sum"
 begin
 
 unbundle cblinfun_notation
@@ -214,7 +214,7 @@ lemma ell2_ket:
   fixes a
   defines \<open>f \<equiv> (\<lambda>i. if a = i then 1 else 0)\<close>
   shows has_ell2_norm_ket: \<open>has_ell2_norm f\<close>
-  and ell2_norm_ket: \<open>ell2_norm f = 1\<close>
+    and ell2_norm_ket: \<open>ell2_norm f = 1\<close>
 proof -
   have finite_bound: \<open>(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) \<le> 1\<close> if \<open>finite F\<close> for F
   proof - 
@@ -254,7 +254,7 @@ proof -
   have \<open>(SUP F\<in>{F. finite F}. sum (\<lambda>i. norm (f i)^2) F) = 1\<close>
     using finite_bound 
     by (auto intro!: cSup_eq_maximum rev_image_eqI[where x=\<open>{a}\<close>]
-             simp: f_def)
+        simp: f_def)
   then show \<open>ell2_norm f = 1\<close>
     unfolding ell2_norm_def by simp
 qed
@@ -272,7 +272,7 @@ proof -
     by auto
   also have "\<dots> \<le> (\<Squnion> (sum (\<lambda>i. (cmod (x i))\<^sup>2) ` Collect finite))" 
     apply (rule cSUP_upper2[where x=\<open>{i}\<close>])
-      apply auto by (metis assms has_ell2_norm_def)
+    apply auto by (metis assms has_ell2_norm_def)
   also have \<open>\<dots> = (ell2_norm x)^2\<close>
     by (smt (verit, best) SUP_cong calculation ell2_norm_def norm_ge_zero norm_power_ineq real_sqrt_pow2 sum.cong)
   finally show ?thesis
@@ -514,7 +514,7 @@ proof
   show "norm (a + b) \<le> norm a + norm b"
     apply transfer by (fact ell2_norm_triangle)
   show "norm (r *\<^sub>R (a::'a ell2)) = \<bar>r\<bar> * norm a" for r
-      and a :: "'a ell2"
+    and a :: "'a ell2"
     apply transfer
     by (simp add: ell2_norm_smult(2)) 
   show "norm (r *\<^sub>C a) = cmod r * norm a" for r
@@ -810,7 +810,7 @@ proof
     by (metis Cauchy_def dist_norm less_eq_real_def)
   have normF_xx: \<open>normF F (\<lambda>a. x n a - x m a) \<le> \<epsilon>\<close> if \<open>finite F\<close> \<open>\<epsilon>>0\<close> \<open>n\<ge>I \<epsilon>\<close> \<open>m\<ge>I \<epsilon>\<close> for \<epsilon> n m F
     apply (subst asm_rl[of \<open>(\<lambda>a. x n a - x m a) = Rep_ell2 (X n - X m)\<close>])
-     apply (simp add: x_def minus_ell2.rep_eq)
+    apply (simp add: x_def minus_ell2.rep_eq)
     using that cauchyX by (metis Rep_ell2 mem_Collect_eq normF_ell2norm norm_ell2.rep_eq order_trans)
   have normF_xl_lim: \<open>(\<lambda>m. normF F (\<lambda>a. x m a - l a)) \<longlonglongrightarrow> 0\<close> if \<open>finite F\<close> for F
   proof -
@@ -979,7 +979,7 @@ proof -
     using Rep_ell2 by blast
   then have summable: "f abs_summable_on UNIV"
     using f_def has_ell2_norm_infsetsum by fastforce
-  
+
   have \<open>norm \<psi> = (ell2_norm (Rep_ell2 \<psi>))\<close>
     apply transfer by simp
   also have \<open>\<dots> = sqrt (infsetsum' f UNIV)\<close>
@@ -1178,7 +1178,7 @@ end
 lemma canonical_basis_length_ell2[code_unfold, simp]:
   "length (canonical_basis ::'a::enum ell2 list) = CARD('a)"
   unfolding canonical_basis_ell2_def apply simp
-    using card_UNIV_length_enum by metis
+  using card_UNIV_length_enum by metis
 
 lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"
 proof-
@@ -1210,7 +1210,7 @@ lemma equal_ket:
   assumes \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
   shows \<open>A = B\<close>
   apply (rule cblinfun_eq_gen_eqI[where G=\<open>range ket\<close>])
-   using assms by auto
+  using assms by auto
 
 lemma antilinear_equal_ket:
   fixes f g :: \<open>'a::finite ell2 \<Rightarrow> _\<close>
@@ -1230,7 +1230,7 @@ proof -
   have "f o from_conjugate_space = g o from_conjugate_space"
     apply (rule ext)
     apply (rule complex_vector.linear_eq_on_span[where f="f o from_conjugate_space" and g="g o from_conjugate_space" and B=\<open>to_conjugate_space ` range ket\<close>])
-       apply (simp, simp)
+    apply (simp, simp)
     using assms(3) by (auto simp: to_conjugate_space_inverse)
   then show "f = g"
     by (smt (verit) UNIV_I from_conjugate_space_inverse surj_def surj_fun_eq to_conjugate_space_inject) 
@@ -1307,8 +1307,8 @@ lemma clinear_eq_butterfly_ketI:
   assumes "clinear F" and "clinear G"
   assumes "\<And>i j. F (butterfly (ket i) (ket j)) = G (butterfly (ket i) (ket j))"
   shows "F = G"
- apply (rule complex_vector.linear_eq_on_span[where f=F, THEN ext, rotated 3])
-     apply (subst cspan_butterfly_ket)
+  apply (rule complex_vector.linear_eq_on_span[where f=F, THEN ext, rotated 3])
+  apply (subst cspan_butterfly_ket)
   using assms by auto
 
 lemma sum_butterfly_ket[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = id_cblinfun\<close>
@@ -1370,7 +1370,7 @@ lemma classical_operator_existsI:
 lemma classical_operator_exists_inj:
   assumes "inj_map \<pi>"
   shows "classical_operator_exists \<pi>"
-  (* Probably a shorter proof is possible using cblinfun_extension_exists_bounded_dense *)
+    (* Probably a shorter proof is possible using cblinfun_extension_exists_bounded_dense *)
 proof -
   define C0 where "C0 \<psi> = (\<lambda>b. case inv_map \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)" for \<psi> :: "'a\<Rightarrow>complex"
 
@@ -1944,4 +1944,3 @@ qed
 unbundle no_cblinfun_notation
 
 end
-

@@ -44,7 +44,7 @@ class complemented_lattice = bounded_lattice + uminus + minus +
 
 lemma dual_complemented_lattice:
   "class.complemented_lattice (\<lambda>x y. x \<squnion> (- y)) uminus sup greater_eq greater inf \<top> \<bottom>"
-  proof (rule class.complemented_lattice.intro)
+proof (rule class.complemented_lattice.intro)
   show "class.bounded_lattice (\<squnion>) (\<lambda>x y. (y::'a) \<le> x) (\<lambda>x y. y < x) (\<sqinter>) \<top> \<bottom>"
     by (rule dual_bounded_lattice)
   show "class.complemented_lattice_axioms (\<lambda>x y. (x::'a) \<squnion> - y) uminus (\<squnion>) (\<sqinter>) \<top> \<bottom>"
@@ -70,11 +70,11 @@ class orthocomplemented_lattice = complemented_lattice +
 
 lemma dual_orthocomplemented_lattice:
   "class.orthocomplemented_lattice (\<lambda>x y. x \<squnion> - y) uminus sup greater_eq greater inf \<top> \<bottom>"
-  proof (rule class.orthocomplemented_lattice.intro)
+proof (rule class.orthocomplemented_lattice.intro)
   show "class.complemented_lattice (\<lambda>x y. (x::'a) \<squnion> - y) uminus (\<squnion>) (\<lambda>x y. y \<le> x) (\<lambda>x y. y < x) (\<sqinter>) \<top> \<bottom>"
     by (rule dual_complemented_lattice)
   show "class.orthocomplemented_lattice_axioms uminus (\<lambda>x y. (y::'a) \<le> x)"
-      by (unfold_locales, auto simp add: diff_eq intro: ortho_antimono)
+    by (unfold_locales, auto simp add: diff_eq intro: ortho_antimono)
 qed
 
 
@@ -198,7 +198,7 @@ proof (rule class.orthomodular_lattice.intro)
         and y :: 'a
       using that local.compl_eq_compl_iff local.ortho_antimono local.orthomodular by fastforce
   qed
-    
+
 qed
 
 

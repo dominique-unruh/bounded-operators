@@ -3,7 +3,7 @@ section \<open>\<open>One_Dimensional_Spaces\<close> -- One dimensional complex 
 theory One_Dimensional_Spaces
   imports
     Complex_Inner_Product
-    "Complex_Bounded_Operators-Extra.Extra_Operator_Norm"
+    "Complex_Bounded_Operators.Extra_Operator_Norm"
 begin
 
 text \<open>The class \<open>one_dim\<close> applies to one-dimensional vector spaces.
@@ -117,11 +117,11 @@ proof
 qed
 
 instance one_dim \<subseteq> complex_normed_algebra_1
-  proof intro_classes
+proof intro_classes
   show "norm (1::'a) = 1"
     by (metis complex_inner_1_left norm_eq_sqrt_cinner norm_one one_cinner_one)
 qed
-  
+
 
 text \<open>This is the canonical isomorphism between any two one dimensional spaces. Specifically,
   if 1 denotes the element of the canonical basis (which is specified by type class \<^class>\<open>basis_enum\<close>,
@@ -206,7 +206,7 @@ proof (rule ext)
   fix y :: 'a
   from \<open>f x = g x\<close>
   have \<open>one_dim_iso x *\<^sub>C f 1 = one_dim_iso x *\<^sub>C g 1\<close>
-   by (metis assms(2) assms(3) complex_vector.linear_scale one_dim_scaleC_1)
+    by (metis assms(2) assms(3) complex_vector.linear_scale one_dim_scaleC_1)
   hence "f 1 = g 1"
     using assms(1) one_dim_iso_of_zero' by auto
   then show "f y = g y"

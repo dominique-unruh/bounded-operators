@@ -2,7 +2,7 @@ section \<open>\<open>Cblinfun_Code_Examples\<close> -- Examples and test cases 
 
 theory Cblinfun_Code_Examples
   imports
-    "Complex_Bounded_Operators-Extra.Extra_Pretty_Code_Examples"
+    "Complex_Bounded_Operators.Extra_Pretty_Code_Examples"
     Cblinfun_Code
 begin
 

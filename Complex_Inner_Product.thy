@@ -13,7 +13,7 @@ theory Complex_Inner_Product
     Complex_Vector_Spaces
     "HOL-Analysis.Infinite_Set_Sum" 
 
-    Complex_Inner_Product0
+Complex_Inner_Product0
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -581,7 +581,7 @@ next
 
     have span: \<open>cspan (insert a' A) = cspan (insert s S)\<close>
       using a'_span s_span spanA apply auto
-      apply (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
+       apply (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
       by (metis (full_types) complex_vector.span_breakdown_eq complex_vector.span_redundant insert_commute s_span)
 
     show ?thesis
@@ -635,7 +635,7 @@ proof -
     by (simp add: a1)
   have \<open>{\<Sum>a\<in>t. r a *\<^sub>C a |t r. finite t \<and> t \<subseteq> T} = {\<Sum>a\<in>T. r a *\<^sub>C a |r. True}\<close>
     apply auto
-     apply (rule_tac x=\<open>\<lambda>a. if a \<in> t then r a else 0\<close> in exI)
+    apply (rule_tac x=\<open>\<lambda>a. if a \<in> t then r a else 0\<close> in exI)
     apply (simp add: \<open>finite T\<close> sum.mono_neutral_cong_right)
     using \<open>finite T\<close> by blast
 
@@ -1730,7 +1730,7 @@ lemma cadjoint_exists:
   shows \<open>\<exists>F. is_cadjoint F G\<close>
 proof -
   include notation_norm
-   have [simp]: \<open>clinear G\<close>
+  have [simp]: \<open>clinear G\<close>
     using assms unfolding bounded_clinear_def by blast
   define g :: \<open>'a \<Rightarrow> 'b \<Rightarrow> complex\<close> 
     where \<open>g x y = \<langle>x , G y\<rangle>\<close> for x y
@@ -1814,7 +1814,7 @@ lemma cadjoint_eqI:
   assumes \<open>\<And>x y. \<langle>F x, y\<rangle> = \<langle>x, G y\<rangle>\<close>
   shows \<open>G\<^sup>\<dagger> = F\<close>
   by (metis assms cadjoint_def is_cadjoint_def is_cadjoint_unique someI_ex)
-  
+
 lemma cadjoint_bounded_clinear:
   fixes A :: "'a::chilbert_space \<Rightarrow> 'b::complex_inner"
   assumes a1: "bounded_clinear A"
@@ -1917,7 +1917,7 @@ proof -
     using a1 is_projection_on_fixes_image that by fastforce
   ultimately have 1: \<open>cinner (\<pi> x) y = cinner x (\<pi> y)\<close> if \<open>y\<in>M\<close> for x y
     using that by metis
-    
+
   have \<open>cinner (\<pi> x) y = 0\<close> if \<open>y \<in> orthogonal_complement M\<close> for x y
     by (meson a1 is_projection_on_in_image orthogonal_complement_orthoI' that)
   also have \<open>0 = cinner x (\<pi> y)\<close> if \<open>y \<in> orthogonal_complement M\<close> for x y
@@ -2220,8 +2220,8 @@ lift_definition cinner_conjugate_space :: "'a conjugate_space \<Rightarrow> 'a c
   \<open>\<lambda>x y. cinner y x\<close>.
 instance
   apply (intro_classes; transfer)
-       apply (simp_all add: )
-    apply (simp add: cinner_add_right)
+  apply (simp_all add: )
+  apply (simp add: cinner_add_right)
   using cinner_ge_zero norm_eq_sqrt_cinner by auto
 end
 

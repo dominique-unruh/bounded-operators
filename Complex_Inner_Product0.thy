@@ -6,7 +6,7 @@ section \<open>\<open>Complex_Inner_Product0\<close> -- Inner Product Spaces and
 theory Complex_Inner_Product0
   imports Complex_Main Complex_Vector_Spaces
     "HOL-Analysis.Inner_Product"
-    "Complex_Bounded_Operators-Extra.Extra_Ordered_Fields"
+    "Complex_Bounded_Operators.Extra_Ordered_Fields"
 begin
 
 subsection \<open>Complex inner product spaces\<close>
@@ -31,11 +31,11 @@ setup \<open>Sign.add_const_constraint
 class complex_inner = complex_vector + sgn_div_norm + dist_norm + uniformity_dist + open_uniformity +
   fixes cinner :: "'a \<Rightarrow> 'a \<Rightarrow> complex"
   assumes cinner_commute: "cinner x y = cnj (cinner y x)"
-  and cinner_add_left: "cinner (x + y) z = cinner x z + cinner y z"
-  and cinner_scaleC_left [simp]: "cinner (scaleC r x) y = (cnj r) * (cinner x y)"
-  and cinner_ge_zero [simp]: "0 \<le> cinner x x"
-  and cinner_eq_zero_iff [simp]: "cinner x x = 0 \<longleftrightarrow> x = 0"
-  and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (cinner x x))"
+    and cinner_add_left: "cinner (x + y) z = cinner x z + cinner y z"
+    and cinner_scaleC_left [simp]: "cinner (scaleC r x) y = (cnj r) * (cinner x y)"
+    and cinner_ge_zero [simp]: "0 \<le> cinner x x"
+    and cinner_eq_zero_iff [simp]: "cinner x x = 0 \<longleftrightarrow> x = 0"
+    and norm_eq_sqrt_cinner: "norm x = sqrt (cmod (cinner x x))"
 begin
 
 lemma cinner_zero_left [simp]: "cinner 0 x = 0"
@@ -432,11 +432,11 @@ subsection \<open>Gradient derivative\<close>
 
 definition\<^marker>\<open>tag important\<close>
   cgderiv ::
-    "['a::complex_inner \<Rightarrow> complex, 'a, 'a] \<Rightarrow> bool"
-          ("(cGDERIV (_)/ (_)/ :> (_))" [1000, 1000, 60] 60)
-          where
-  (* Must be "cinner D" not "\<lambda>h. cinner h D", otherwise not even "cGDERIV id x :> 1" holds *)
-  "cGDERIV f x :> D \<longleftrightarrow> FDERIV f x :> cinner D"
+  "['a::complex_inner \<Rightarrow> complex, 'a, 'a] \<Rightarrow> bool"
+  ("(cGDERIV (_)/ (_)/ :> (_))" [1000, 1000, 60] 60)
+  where
+    (* Must be "cinner D" not "\<lambda>h. cinner h D", otherwise not even "cGDERIV id x :> 1" holds *)
+    "cGDERIV f x :> D \<longleftrightarrow> FDERIV f x :> cinner D"
 
 lemma cgderiv_deriv [simp]: "cGDERIV f x :> D \<longleftrightarrow> DERIV f x :> cnj D"
   by (simp only: cgderiv_def has_field_derivative_def cinner_complex_def[THEN ext])
@@ -464,30 +464,30 @@ lemma cGDERIV_const: "cGDERIV (\<lambda>x. k) x :> 0"
   unfolding cgderiv_def cinner_zero_left[THEN ext] by (rule has_derivative_const)
 
 lemma cGDERIV_add:
-    "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
+  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
      \<Longrightarrow> cGDERIV (\<lambda>x. f x + g x) x :> df + dg"
   unfolding cgderiv_def cinner_add_left[THEN ext] by (rule has_derivative_add)
 
 lemma cGDERIV_minus:
-    "cGDERIV f x :> df \<Longrightarrow> cGDERIV (\<lambda>x. - f x) x :> - df"
+  "cGDERIV f x :> df \<Longrightarrow> cGDERIV (\<lambda>x. - f x) x :> - df"
   unfolding cgderiv_def cinner_minus_left[THEN ext] by (rule has_derivative_minus)
 
 lemma cGDERIV_diff:
-    "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
+  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
      \<Longrightarrow> cGDERIV (\<lambda>x. f x - g x) x :> df - dg"
   unfolding cgderiv_def cinner_diff_left by (rule has_derivative_diff)
 
 lemma cGDERIV_scaleC:
-    "\<lbrakk>DERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
+  "\<lbrakk>DERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
      \<Longrightarrow> cGDERIV (\<lambda>x. scaleC (f x) (g x)) x
       :> (scaleC (cnj (f x)) dg + scaleC (cnj df) (cnj (g x)))"
   unfolding cgderiv_def has_field_derivative_def cinner_add_left cinner_scaleC_left
   apply (rule has_derivative_subst)
-   apply (erule (1) has_derivative_scaleC)
+  apply (erule (1) has_derivative_scaleC)
   by (simp add: ac_simps)
 
 lemma GDERIV_mult:
-    "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
+  "\<lbrakk>cGDERIV f x :> df; cGDERIV g x :> dg\<rbrakk>
      \<Longrightarrow> cGDERIV (\<lambda>x. f x * g x) x :> cnj (f x) *\<^sub>C dg + cnj (g x) *\<^sub>C df"
   unfolding cgderiv_def
   apply (rule has_derivative_subst)
@@ -496,7 +496,7 @@ lemma GDERIV_mult:
   by (simp add: cinner_add ac_simps)
 
 lemma cGDERIV_inverse:
-    "\<lbrakk>cGDERIV f x :> df; f x \<noteq> 0\<rbrakk>
+  "\<lbrakk>cGDERIV f x :> df; f x \<noteq> 0\<rbrakk>
      \<Longrightarrow> cGDERIV (\<lambda>x. inverse (f x)) x :> - cnj ((inverse (f x))\<^sup>2) *\<^sub>C df"
   by (metis DERIV_inverse cGDERIV_DERIV_compose complex_cnj_cnj complex_cnj_minus numerals(2))
 

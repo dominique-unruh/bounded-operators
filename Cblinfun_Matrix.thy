@@ -4,9 +4,9 @@ theory Cblinfun_Matrix
   imports
     Complex_L2
 
-    "Jordan_Normal_Form.Gram_Schmidt"
-    "HOL-Analysis.Starlike"
-    "Complex_Bounded_Operators-Extra.Extra_Jordan_Normal_Form"
+"Jordan_Normal_Form.Gram_Schmidt"
+"HOL-Analysis.Starlike"
+"Complex_Bounded_Operators.Extra_Jordan_Normal_Form"
 begin
 
 hide_const (open) Order.bottom Order.top
@@ -86,7 +86,7 @@ next
     by (auto simp: complex_vector.representation_sum complex_vector.representation_scale)
   also have \<open>\<dots> = w!j\<close>
     apply (subst sum_single[where i=j])
-      apply (auto simp: complex_vector.representation_basis)
+    apply (auto simp: complex_vector.representation_basis)
     using \<open>j < n\<close> \<open>length basis = n\<close> basis_def distinct_canonical_basis nth_eq_iff_index_eq by blast
   also have \<open>\<dots> = v $ j\<close>
     by (simp add: w_def)
@@ -197,12 +197,12 @@ proof -
   also have "\<dots> = sqrt (cmod (\<Sum>x = 0..<dim_vec (vec_of_basis_enum \<psi>). 
                     let z = vec_of_basis_enum \<psi> $ x in (Re z)\<^sup>2 + (Im z)\<^sup>2))"
     apply (subst sum.cong, rule refl)
-     apply (subst vec_index_conjugate)
+    apply (subst vec_index_conjugate)
     by (auto simp: Let_def complex_mult_cnj)
   also have "\<dots> = ?rhs"
     unfolding Let_def norm_of_real
     apply (subst abs_of_nonneg)
-     apply (rule sum_nonneg)
+    apply (rule sum_nonneg)
     by auto
   finally show ?thesis
     by -
@@ -581,7 +581,7 @@ proof auto
   then show \<open>is_ortho_set (set S)\<close>
     by (smt (verit, ccfv_SIG) cinner_eq_zero_iff corthogonal_def cscalar_prod_vec_of_basis_enum in_set_conv_nth is_ortho_set_def length_map nth_map)
   show \<open>distinct S\<close>
-      using assm corthogonal_distinct distinct_map by blast 
+    using assm corthogonal_distinct distinct_map by blast 
 next
   assume \<open>is_ortho_set (set S)\<close> and \<open>distinct S\<close>
   then show \<open>corthogonal (map vec_of_basis_enum S)\<close>
@@ -602,7 +602,7 @@ definition mat_of_cblinfun :: \<open>'a::{basis_enum,complex_normed_vector} \<Ri
   \<open>mat_of_cblinfun f = 
     mat (length (canonical_basis :: 'b list)) (length (canonical_basis :: 'a list)) (
     \<lambda> (i, j). crepresentation (set (canonical_basis::'b list)) (f *\<^sub>V ((canonical_basis::'a list)!j)) ((canonical_basis::'b list)!i))\<close>
-  for f
+for f
 
 lift_definition cblinfun_of_mat :: \<open>complex mat \<Rightarrow> 'a::{basis_enum,complex_normed_vector} \<Rightarrow>\<^sub>C\<^sub>L'b::{basis_enum,complex_normed_vector}\<close> is  
   \<open>\<lambda>M. \<lambda>v. (if M\<in>carrier_mat (length (canonical_basis :: 'b list)) (length (canonical_basis :: 'a list))
@@ -712,7 +712,7 @@ next
       using only_basis by auto
     also have \<open>\<dots> = (\<Sum>b\<in>set BasisB. (\<Sum>a\<in>set BasisA. crepresentation (set BasisB) (F *\<^sub>V a) b * crepresentation (set BasisA) u a) *\<^sub>C b)\<close>
       apply (subst sum.reindex_bij_betw[where h=\<open>nth BasisA\<close> and T=\<open>set BasisA\<close>])
-       apply (metis BasisA_def \<open>length BasisA = nA\<close> atLeast0LessThan bij_betw_nth distinct_canonical_basis)
+      apply (metis BasisA_def \<open>length BasisA = nA\<close> atLeast0LessThan bij_betw_nth distinct_canonical_basis)
       by simp
     also have \<open>\<dots> = (\<Sum>a\<in>set BasisA. crepresentation (set BasisA) u a *\<^sub>C (\<Sum>b\<in>set BasisB. crepresentation (set BasisB) (F *\<^sub>V a) b *\<^sub>C b))\<close>
       apply (simp add: scaleC_sum_left scaleC_sum_right)
@@ -730,7 +730,7 @@ next
       by auto
   qed
   also have \<open>crepresentation (set BasisB) (F *\<^sub>V u) v = vec_of_basis_enum (F *\<^sub>V u) $ i\<close>
-      by (auto simp: vec_of_list_index vec_of_basis_enum_def v_def simp flip: BasisB_def)
+    by (auto simp: vec_of_list_index vec_of_basis_enum_def v_def simp flip: BasisB_def)
   finally show \<open>vec_of_basis_enum (F *\<^sub>V u) $ i = (mat_of_cblinfun F *\<^sub>v vec_of_basis_enum u) $ i\<close>
     by simp
 qed
@@ -1059,7 +1059,7 @@ proof -
       case False
       hence "\<exists>R. f (Enum.enum!c) = Some R"
         apply (induction "f (Enum.enum!c)")
-         apply simp
+        apply simp
         by simp
       then obtain R where R0: "f (Enum.enum!c) = Some R"
         by blast
@@ -1363,7 +1363,7 @@ lemma mk_projector_orthog_correct:
        = mat_of_cblinfun (Proj (ccspan (set S)))"
 proof -
   define Snorm where "Snorm = map (\<lambda>s. s /\<^sub>R norm s) S"
-  
+
   have "distinct Snorm"
   proof (insert ortho distinct, unfold Snorm_def, induction S)
     case Nil
@@ -1473,14 +1473,14 @@ proof -
                     * mat_of_rows d [conjugate (vec_of_basis_enum a)])
             + mat_of_cblinfun sumS"
       apply (cases S)
-       apply (auto simp add: factor' sumS_def d_def mat_of_cblinfun_zero)[1]
+      apply (auto simp add: factor' sumS_def d_def mat_of_cblinfun_zero)[1]
       by (auto simp add: IH[symmetric] factor' d_def)
 
     also have "\<dots> = factor \<cdot>\<^sub>m (mat_of_cols d [vec_of_basis_enum a] *
          mat_adjoint (mat_of_cols d [vec_of_basis_enum a])) + mat_of_cblinfun sumS"
       apply (rule arg_cong[where f="\<lambda>x. _ \<cdot>\<^sub>m (_ * x) + _"])
       apply (rule mat_eq_iff[THEN iffD2])
-        apply (auto simp add: mat_adjoint_def)
+      apply (auto simp add: mat_adjoint_def)
       apply (subst mat_of_rows_index) apply auto
       apply (subst mat_of_rows_index) apply auto
       apply (subst mat_of_cols_index) apply auto

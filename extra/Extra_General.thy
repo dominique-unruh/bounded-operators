@@ -125,25 +125,7 @@ class not_singleton =
 
 lemma not_singleton_existence[simp]:
   \<open>\<exists> x::('a::not_singleton). x \<noteq> t\<close>
-proof (rule ccontr)
-  assume \<open>\<nexists>x::'a. x \<noteq> t\<close> 
-  have \<open>\<exists>x::'a. \<exists>y. x \<noteq> y\<close>
-    using not_singleton_card
-    by blast
-  then obtain x y::'a where \<open>x \<noteq> y\<close>
-    by blast
-  have \<open>\<forall>x::'a. x = t\<close>
-    using \<open>\<nexists>x::'a. x \<noteq> t\<close> by simp
-  hence \<open>x = t\<close>
-    by blast
-  moreover have \<open>y = t\<close>
-    using \<open>\<forall>x::'a. x = t\<close>
-    by blast
-  ultimately have \<open>x = y\<close>
-    by simp
-  thus False
-    using \<open>x \<noteq> y\<close> by auto 
-qed
+  using not_singleton_card[where ?'a = 'a] by (metis (full_types))
 
 lemma UNIV_not_singleton[simp]: "(UNIV::_::not_singleton set) \<noteq> {x}"
   using not_singleton_existence[of x] by blast
@@ -243,7 +225,7 @@ proof (unfold cauchy_filter_def le_filter_def, auto)
 
   obtain P' where evP': "eventually P' F" and P'_dist: "P' x \<and> P' y \<Longrightarrow> dist x y < e" for x y
     apply atomize_elim using assms e by auto
-  
+
   from evP' P'_dist P
   show "eventually P (F \<times>\<^sub>F F)"
     unfolding eventually_uniformity_metric eventually_prod_filter eventually_filtermap by metis
@@ -339,7 +321,7 @@ lemma Im_abs[simp]: "Im (abs x) = 0"
 
 
 lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
-  proof (cases x)
+proof (cases x)
   show "cnj x * x = \<bar>x\<bar>\<^sup>2"
     if "x = Complex x1 x2"
     for x1 :: real
@@ -349,7 +331,7 @@ lemma cnj_x_x: "cnj x * x = (abs x)\<^sup>2"
 qed
 
 lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
-  proof (cases x)
+proof (cases x)
   show "0 \<le> cnj x * x"
     if "x = Complex x1 x2"
     for x1 :: real
@@ -456,7 +438,7 @@ proof (induction l)
 qed
 
 lemma map_filter_Some[simp]: "List.map_filter (\<lambda>x. Some (f x)) l = map f l"
-  proof (induction l)
+proof (induction l)
   show "List.map_filter (\<lambda>x. Some (f x)) [] = map f []"
     by (simp add: map_filter_simps)
   show "List.map_filter (\<lambda>x. Some (f x)) (a # l) = map f (a # l)"

@@ -16,12 +16,12 @@ theory Complex_Vector_Spaces
     "HOL-Analysis.Starlike"
     "HOL-Types_To_Sets.Types_To_Sets"
 
-    "Complex_Bounded_Operators-Extra.Extra_Vector_Spaces"
-    "Complex_Bounded_Operators-Extra.Extra_Ordered_Fields"
-    "Complex_Bounded_Operators-Extra.Extra_Lattice"
-    "Complex_Bounded_Operators-Extra.Extra_General"
+"Complex_Bounded_Operators.Extra_Vector_Spaces"
+"Complex_Bounded_Operators.Extra_Ordered_Fields"
+"Complex_Bounded_Operators.Extra_Lattice"
+"Complex_Bounded_Operators.Extra_General"
 
-    Complex_Vector_Spaces0
+Complex_Vector_Spaces0
 begin
 
 bundle notation_norm begin
@@ -46,7 +46,7 @@ lemma Reals_in_Complexs: "\<real> \<subseteq> \<complex>"
 lemma (in clinear) "linear f"
   apply standard
   by (simp_all add: add scaleC scaleR_scaleC)
-    
+
 lemma (in bounded_clinear) bounded_linear: "bounded_linear f"
   by (simp add: add bounded bounded_linear.intro bounded_linear_axioms.intro linearI scaleC scaleR_scaleC)
 
@@ -319,7 +319,7 @@ lemma real_independent_from_complex_independent:
 proof (rule notI)
   assume \<open>dependent (B \<union> B')\<close>
   then obtain T f0 x where [simp]: \<open>finite T\<close> and \<open>T \<subseteq> B \<union> B'\<close> and f0_sum: \<open>(\<Sum>v\<in>T. f0 v *\<^sub>R v) = 0\<close>
-      and x: \<open>x \<in> T\<close> and f0_x: \<open>f0 x \<noteq> 0\<close>
+    and x: \<open>x \<in> T\<close> and f0_x: \<open>f0 x \<noteq> 0\<close>
     by (auto simp: real_vector.dependent_explicit)
   define f T1 T2 T' f' x' where \<open>f v = (if v \<in> T then f0 v else 0)\<close> 
     and \<open>T1 = T \<inter> B\<close> and \<open>T2 = scaleC (-\<i>) ` (T \<inter> B')\<close>
@@ -730,7 +730,7 @@ qed
 locale bounded_sesquilinear =
   fixes 
     prod :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector \<Rightarrow> 'c::complex_normed_vector"
-      (infixl "**" 70)
+    (infixl "**" 70)
   assumes add_left: "prod (a + a') b = prod a b + prod a' b"
     and add_right: "prod a (b + b') = prod a b + prod a b'"
     and scaleC_left: "prod (r *\<^sub>C a) b = (cnj r) *\<^sub>C (prod a b)"
@@ -746,12 +746,12 @@ lemma (in bounded_sesquilinear) bounded_bilinear[simp]: "bounded_bilinear prod"
 
 lemma (in bounded_sesquilinear) bounded_antilinear_left: "bounded_antilinear (\<lambda>a. prod a b)"
   apply standard
-    apply (auto simp add: scaleC_left add_left)
+  apply (auto simp add: scaleC_left add_left)
   by (metis ab_semigroup_mult_class.mult_ac(1) bounded)
 
 lemma (in bounded_sesquilinear) bounded_clinear_right: "bounded_clinear (\<lambda>b. prod a b)"
   apply standard
-    apply (auto simp add: scaleC_right add_right)
+  apply (auto simp add: scaleC_right add_right)
   by (metis ab_semigroup_mult_class.mult_ac(1) ordered_field_class.sign_simps(34) pos_bounded)
 
 lemma (in bounded_sesquilinear) comp1:
@@ -1042,7 +1042,7 @@ setup \<open>Sign.add_const_constraint (\<^const_name>\<open>cspan\<close>, SOME
 lemma cdim_UNIV_basis_enum[simp]: \<open>cdim (UNIV::'a::basis_enum set) = length (canonical_basis::'a list)\<close>
   apply (subst is_generator_set[symmetric])
   apply (subst complex_vector.dim_span_eq_card_independent)
-   apply (rule is_cindependent_set)
+  apply (rule is_cindependent_set)
   using distinct_canonical_basis distinct_card by blast
 
 lemma finite_basis: "\<exists>basis::'a::cfinite_dim set. finite basis \<and> cindependent basis \<and> cspan basis = UNIV"

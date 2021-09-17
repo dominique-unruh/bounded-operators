@@ -5,7 +5,7 @@ theory Extra_Infinite_Set_Sum
                If we define our own instantiation, it would be impossible to load both
                \<^session>\<open>Jordan_Normal_Form\<close> and this theory.\<close>
 
-    Extra_General
+Extra_General
 begin
 
 
@@ -422,7 +422,7 @@ proof -
     by (simp add: abs_summable_on_comparison_test[where g=g])
   show "infsetsum f A \<le> infsetsum g A"
     unfolding fsplit gsplit
-      by (smt (verit, ccfv_SIG) Im_eq Re_leq Refsum Regsum a2 a3 b1 b2 fsplit gsplit infsetsum_cong infsetsum_mono less_eq_complex_def)
+    by (smt (verit, ccfv_SIG) Im_eq Re_leq Refsum Regsum a2 a3 b1 b2 fsplit gsplit infsetsum_cong infsetsum_mono less_eq_complex_def)
 qed
 
 lemma infsetsum_subset_complex:
@@ -1421,7 +1421,7 @@ proof-
         by (metis diff_strict_left_mono diff_zero ereal_less_eq(3) ereal_minus(1) not_le sum_SUP)
       then obtain F where "F\<in>{F. finite F \<and> F \<subseteq> A}" and "ereal (sum (\<lambda>x. norm (f x)) F) > ?SUP - ereal (\<delta>)"
         by (meson less_SUP_iff)
-        
+
       hence "sum (\<lambda>x. norm (f x)) F > infsetsum (\<lambda>x. norm (f x)) A -  (\<delta>)"
         unfolding sum_SUP[symmetric] by auto
       hence "\<delta> > infsetsum (\<lambda>x. norm (f x)) (A-F)"
@@ -1558,8 +1558,8 @@ qed
 lemma abs_summable_partition:
   fixes T :: "'b set" and I :: "'a set"
   assumes "\<And>i. f abs_summable_on S i"
-  and "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on I"
-  and "T \<subseteq> (\<Union>i\<in>I. S i)"
+    and "(\<lambda>i. \<Sum>\<^sub>ax\<in>S i. norm (f x)) abs_summable_on I"
+    and "T \<subseteq> (\<Union>i\<in>I. S i)"
   shows "f abs_summable_on T"
 proof (rule abs_summable_finiteI)
   fix F assume finite_F: "finite F" and FT: "F \<subseteq> T"
@@ -1609,8 +1609,8 @@ proof (rule abs_summable_finiteI)
       by (metis (mono_tags) Collect_conj_eq Int_Collect J_def some_in_eq that)
     have xy: "x = y"
       if "x \<in> J" and "y \<in> J" and "a x = a y" and "\<And>i. i \<in> J \<Longrightarrow> a i \<in> F \<and> a i \<in> S' i"
-           and "\<And>i j. i \<noteq> j \<Longrightarrow> S' i \<inter> S' j = {}"
-         for x y     
+        and "\<And>i j. i \<noteq> j \<Longrightarrow> S' i \<inter> S' j = {}"
+      for x y     
       using that a S'_disj
       by (metis S'_disj disjoint_iff_not_equal)
     hence "inj_on a J"
@@ -1809,9 +1809,9 @@ qed
 lemma infsetsum_0D:
   fixes f :: "'a \<Rightarrow> real"
   assumes "infsetsum f A = 0"
-  and abs_sum: "f abs_summable_on A"
-  and nneg: "\<And>x. x \<in> A \<Longrightarrow> f x \<ge> 0"
-  and "x \<in> A"
+    and abs_sum: "f abs_summable_on A"
+    and nneg: "\<And>x. x \<in> A \<Longrightarrow> f x \<ge> 0"
+    and "x \<in> A"
   shows "f x = 0"
 proof -
   from abs_sum have [simp]: "f abs_summable_on (A-{x})"
@@ -1846,9 +1846,9 @@ qed
 lemma sum_leq_infsetsum:
   fixes f :: "_ \<Rightarrow> real"
   assumes "f abs_summable_on N"
-  and "finite M"
-  and "M \<subseteq> N"
-  and "\<And>x. x\<in>N-M \<Longrightarrow> f x \<ge> 0"
+    and "finite M"
+    and "M \<subseteq> N"
+    and "\<And>x. x\<in>N-M \<Longrightarrow> f x \<ge> 0"
   shows "sum f M \<le> infsetsum f N"
 proof -
   have "infsetsum f M \<le> infsetsum f N"
@@ -1904,7 +1904,7 @@ qed
 
 lemma abs_summable_on_zero_diff:
   assumes "f abs_summable_on A"
-  and "\<And>x. x \<in> B - A \<Longrightarrow> f x = 0"
+    and "\<And>x. x \<in> B - A \<Longrightarrow> f x = 0"
   shows "f abs_summable_on B"
 proof (subst asm_rl [of "B = (B-A) \<union> (A\<inter>B)"])
   show "B = B - A \<union> A \<inter> B"
@@ -1919,7 +1919,7 @@ proof (subst asm_rl [of "B = (B-A) \<union> (A\<inter>B)"])
   ultimately have "f abs_summable_on B - A"
     by (rule abs_summable_on_comparison_test' [where g = "\<lambda>x. 0"])   
   moreover have "f abs_summable_on A \<inter> B"
-      using abs_summable_on_subset assms(1) by blast
+    using abs_summable_on_subset assms(1) by blast
   ultimately show "f abs_summable_on B - A \<union> A \<inter> B"
     by (rule abs_summable_on_union)    
 qed
@@ -2112,7 +2112,7 @@ proof -
       apply (rule exI[of _ F])
       using \<open>finite F\<close> \<open>F \<subseteq> S\<close> Fx geq by force
   qed
-  
+
   show ?thesis
     unfolding infsetsum'_converges_def
     apply (rule exI[of _ B])

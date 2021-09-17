@@ -6,21 +6,12 @@
 section \<open>\<open>Complex_Euclidean_Space0\<close> -- Finite-Dimensional Inner Product Spaces\<close>
 
 theory Complex_Euclidean_Space0
-imports
-  "HOL-Analysis.L2_Norm"
-  "Complex_Inner_Product"
-  "HOL-Analysis.Product_Vector"
-  "HOL-Library.Rewrite"
+  imports
+    "HOL-Analysis.L2_Norm"
+    "Complex_Inner_Product"
+    "HOL-Analysis.Product_Vector"
+    "HOL-Library.Rewrite"
 begin
-
-
-subsection\<^marker>\<open>tag unimportant\<close> \<open>Interlude: Some properties of real sets\<close>
-
-lemma seq_mono_lemma:
-  assumes "\<forall>(n::nat) \<ge> m. (d n :: real) < e n"
-    and "\<forall>n \<ge> m. e n \<le> e m"
-  shows "\<forall>n \<ge> m. d n < e m"
-  using assms by force
 
 
 subsection \<open>Type class of Euclidean spaces\<close>
@@ -70,7 +61,7 @@ lemma norm_some_CBasis [simp]: "norm (SOME i. i \<in> CBasis) = 1"
   by (simp add: SOME_CBasis)
 
 lemma (in ceuclidean_space) cinner_sum_left_CBasis[simp]:
-    "b \<in> CBasis \<Longrightarrow> cinner (\<Sum>i\<in>CBasis. f i *\<^sub>C i) b = cnj (f b)"
+  "b \<in> CBasis \<Longrightarrow> cinner (\<Sum>i\<in>CBasis. f i *\<^sub>C i) b = cnj (f b)"
   by (simp add: cinner_sum_left cinner_CBasis if_distrib comm_monoid_add_class.sum.If_cases)
 
 (* Not present in Euclidean_Space *)
@@ -124,17 +115,17 @@ qed auto
 lemma (in ceuclidean_space) bchoice_CBasis_iff:
   fixes P :: "'a \<Rightarrow> complex \<Rightarrow> bool"
   shows "(\<forall>i\<in>CBasis. \<exists>x\<in>A. P i x) \<longleftrightarrow> (\<exists>x. \<forall>i\<in>CBasis. cinner x i \<in> A \<and> P i (cinner x i))"
-by (simp add: choice_CBasis_iff Bex_def)
+  by (simp add: choice_CBasis_iff Bex_def)
 
 lemma (in ceuclidean_space) ceuclidean_representation_sum_fun:
-    "(\<lambda>x. \<Sum>b\<in>CBasis. cinner b (f x) *\<^sub>C b) = f"
+  "(\<lambda>x. \<Sum>b\<in>CBasis. cinner b (f x) *\<^sub>C b) = f"
   apply (rule ext) 
   apply (simp add: ceuclidean_representation_sum)
   by (meson local.cinner_commute)
 
 lemma euclidean_isCont:
   assumes "\<And>b. b \<in> CBasis \<Longrightarrow> isCont (\<lambda>x. (cinner b (f x)) *\<^sub>C b) x"
-    shows "isCont f x"
+  shows "isCont f x"
   apply (subst ceuclidean_representation_sum_fun [symmetric])
   apply (rule isCont_sum)
   by (blast intro: assms)
@@ -150,16 +141,16 @@ lemma sum_cinner_CBasis_scaleC [simp]:
   fixes f :: "'a::ceuclidean_space \<Rightarrow> 'b::complex_vector"
   assumes "b \<in> CBasis" shows "(\<Sum>i\<in>CBasis. (cinner i b) *\<^sub>C f i) = f b"
   by (simp add: comm_monoid_add_class.sum.remove [OF finite_CBasis assms]
-         assms cinner_not_same_CBasis comm_monoid_add_class.sum.neutral)
+      assms cinner_not_same_CBasis comm_monoid_add_class.sum.neutral)
 
 lemma sum_cinner_CBasis_eq [simp]:
   assumes "b \<in> CBasis" shows "(\<Sum>i\<in>CBasis. (cinner i b) * f i) = f b"
   by (simp add: comm_monoid_add_class.sum.remove [OF finite_CBasis assms]
-         assms cinner_not_same_CBasis comm_monoid_add_class.sum.neutral)
+      assms cinner_not_same_CBasis comm_monoid_add_class.sum.neutral)
 
 lemma sum_if_cinner [simp]:
   assumes "i \<in> CBasis" "j \<in> CBasis"
-    shows "cinner (\<Sum>k\<in>CBasis. if k = i then f i *\<^sub>C i else g k *\<^sub>C k) j = (if j=i then cnj (f j) else cnj (g j))"
+  shows "cinner (\<Sum>k\<in>CBasis. if k = i then f i *\<^sub>C i else g k *\<^sub>C k) j = (if j=i then cnj (f j) else cnj (g j))"
 proof (cases "i=j")
   case True
   with assms show ?thesis
@@ -177,7 +168,7 @@ next
 qed
 
 lemma norm_le_componentwise:
-   "(\<And>b. b \<in> CBasis \<Longrightarrow> cmod(cinner x b) \<le> cmod(cinner y b)) \<Longrightarrow> norm x \<le> norm y"
+  "(\<And>b. b \<in> CBasis \<Longrightarrow> cmod(cinner x b) \<le> cmod(cinner y b)) \<Longrightarrow> norm x \<le> norm y"
   apply (auto simp: cnorm_le ceuclidean_cinner [of x x] ceuclidean_cinner [of y y] power2_eq_square intro!: sum_mono)
   apply (smt (verit, best) mult.commute sum.cong)
   by (simp add: ordered_field_class.sign_simps(33))
@@ -290,7 +281,7 @@ qed
 end
 
 lemma cinner_Pair_0: "cinner x (0, b) = cinner (snd x) b" "cinner x (a, 0) = cinner (fst x) a"
-    by (cases x, simp)+
+  by (cases x, simp)+
 
 instantiation prod :: (ceuclidean_space, ceuclidean_space) ceuclidean_space
 begin

@@ -5,10 +5,10 @@
 section \<open>\<open>Complex_Bounded_Linear_Function0\<close> -- Bounded Linear Function\<close>
 
 theory Complex_Bounded_Linear_Function0
-imports
-  "HOL-Analysis.Bounded_Linear_Function"
-  Complex_Inner_Product
-  Complex_Euclidean_Space0
+  imports
+    "HOL-Analysis.Bounded_Linear_Function"
+    Complex_Inner_Product
+    Complex_Euclidean_Space0
 begin
 
 unbundle cinner_syntax
@@ -24,13 +24,13 @@ proof -
       by (auto intro!: onorm_scaleC_left_lemma bounded_clinear_cinner_right)
     also have "\<dots> \<le>  norm i * norm (f i)"
       apply (rule mult_right_mono)
-       apply (simp add: complex_inner_class.Cauchy_Schwarz_ineq2 onorm_bound)
+      apply (simp add: complex_inner_class.Cauchy_Schwarz_ineq2 onorm_bound)
       by simp
     finally have "onorm (\<lambda>x. (i \<bullet>\<^sub>C x) *\<^sub>C f i) \<le> norm (f i)" using \<open>i \<in> CBasis\<close>
       by simp
   } hence "onorm (\<lambda>x. \<Sum>i\<in>CBasis. (i \<bullet>\<^sub>C x) *\<^sub>C f i) \<le> (\<Sum>i\<in>CBasis. norm (f i))"
     by (auto intro!: order_trans[OF onorm_sum_le] bounded_clinear_scaleC_const
-      sum_mono bounded_clinear_cinner_right bounded_clinear.bounded_linear)
+        sum_mono bounded_clinear_cinner_right bounded_clinear.bounded_linear)
   also have "(\<lambda>x. \<Sum>i\<in>CBasis. (i \<bullet>\<^sub>C x) *\<^sub>C f i) = (\<lambda>x. f (\<Sum>i\<in>CBasis. (i \<bullet>\<^sub>C x) *\<^sub>C i))"
     by (simp add: clinear.scaleC linear_sum bounded_clinear.clinear clinear.linear assms)
   also have "\<dots> = f"
@@ -273,8 +273,8 @@ lemma norm_cblinfun_eqI:
   assumes "0 \<le> n"
   shows "norm f = n"
   by (auto simp: norm_cblinfun_def
-    intro!: antisym onorm_bound assms order_trans[OF _ le_onorm] bounded_clinear.bounded_linear
-    bounded_linear_intros)
+      intro!: antisym onorm_bound assms order_trans[OF _ le_onorm] bounded_clinear.bounded_linear
+      bounded_linear_intros)
 
 lemma norm_cblinfun: "norm (cblinfun_apply f x) \<le> norm f * norm x"
   apply transfer by (simp add: bounded_clinear.bounded_linear onorm)
@@ -326,7 +326,7 @@ end
 
 
 instance cblinfun :: (complex_normed_vector, cbanach) cbanach
-(* The proof is almost the same as for \<open>instance blinfun :: (real_normed_vector, banach) banach\<close> *)
+  (* The proof is almost the same as for \<open>instance blinfun :: (real_normed_vector, banach) banach\<close> *)
 proof
   fix X::"nat \<Rightarrow> 'a \<Rightarrow>\<^sub>C\<^sub>L 'b"
   assume "Cauchy X"
@@ -349,7 +349,7 @@ proof
           have "norm (X m x - X n x) = norm ((X m - X n) x)"
             by (simp add: cblinfun.cbilinear_simps)
           also have "\<dots> \<le> norm (X m - X n) * norm x"
-             by (rule norm_cblinfun)
+            by (rule norm_cblinfun)
           also have "\<dots> \<le> norm (X m - X n) * 1"
             using \<open>norm x \<le> 1\<close> norm_ge_zero by (rule mult_left_mono)
           also have "\<dots> = norm (X m - X n)" by simp
@@ -365,7 +365,7 @@ proof
       by (simp_all add: y_def inverse_eq_divide)
     have "convergent (\<lambda>n. norm x *\<^sub>R X n y)"
       by (intro bounded_bilinear.convergent[OF bounded_bilinear_scaleR] convergent_const
-        convergent_norm1 y)
+          convergent_norm1 y)
     also have "(\<lambda>n. norm x *\<^sub>R X n y) = (\<lambda>n. X n x)"
       by (metis cblinfun.scaleC_right scaleR_scaleC xy)
     finally have "convergent (\<lambda>n. X n x)" .
@@ -466,7 +466,7 @@ lemma norm_cblinfun_ceuclidean_le:
   fixes a::"'a::ceuclidean_space \<Rightarrow>\<^sub>C\<^sub>L 'b::complex_normed_vector"
   shows "norm a \<le> sum (\<lambda>x. norm (a x)) CBasis"
   apply (rule norm_cblinfun_bound)
-   apply (simp add: sum_nonneg)
+  apply (simp add: sum_nonneg)
   apply (subst ceuclidean_representation[symmetric, where 'a='a])
   apply (simp only: cblinfun.cbilinear_simps sum_distrib_right)
   apply (rule order.trans[OF norm_sum sum_mono])
@@ -529,7 +529,7 @@ lemma cblinfun_of_matrix_minus: "cblinfun_of_matrix x - cblinfun_of_matrix y = c
 lemma norm_cblinfun_of_matrix:
   "norm (cblinfun_of_matrix a) \<le> (\<Sum>i\<in>CBasis. \<Sum>j\<in>CBasis. cmod (a i j))"
   apply (rule norm_cblinfun_bound)
-   apply (simp add: sum_nonneg)
+  apply (simp add: sum_nonneg)
   apply (simp only: cblinfun_of_matrix_apply sum_distrib_right)
   apply (rule order_trans[OF norm_sum sum_mono])
   apply (rule order_trans[OF norm_sum sum_mono])
@@ -581,7 +581,7 @@ lemma
   shows "continuous_on s f"
   using assms
   by (auto intro!: continuous_at_imp_continuous_on intro!: ctendsto_componentwise1
-    simp: continuous_on_eq_continuous_within continuous_def)
+      simp: continuous_on_eq_continuous_within continuous_def)
 
 lemma bounded_antilinear_cblinfun_matrix: "bounded_antilinear (\<lambda>x. (x::_\<Rightarrow>\<^sub>C\<^sub>L _) j \<bullet>\<^sub>C i)"
   by (auto intro!: bounded_linear_intros)
@@ -659,7 +659,7 @@ qed (auto simp: assms intro!: cblinfun.comp)
 lemma transfer_bounded_cbilinear_bounded_clinear[transfer_rule]:
   "(rel_fun (rel_fun (=) (pcr_cblinfun (=) (=))) (=)) bounded_cbilinear bounded_clinear"
   by (auto simp: pcr_cblinfun_def cr_cblinfun_def rel_fun_def OO_def
-    intro!: transfer_bounded_cbilinear_bounded_clinearI)
+      intro!: transfer_bounded_cbilinear_bounded_clinearI)
 
 (* Not present in Bounded_Linear_Function *)
 lemma transfer_bounded_sesquilinear_bounded_antilinearI:
@@ -697,7 +697,7 @@ qed
 lemma transfer_bounded_sesquilinear_bounded_antilinear[transfer_rule]:
   "(rel_fun (rel_fun (=) (pcr_cblinfun (=) (=))) (=)) bounded_sesquilinear bounded_antilinear"
   by (auto simp: pcr_cblinfun_def cr_cblinfun_def rel_fun_def OO_def
-    intro!: transfer_bounded_sesquilinear_bounded_antilinearI)
+      intro!: transfer_bounded_sesquilinear_bounded_antilinearI)
 
 context bounded_cbilinear
 begin
@@ -728,7 +728,7 @@ lemma norm_cblinfun_id[simp]:
   "norm (id_cblinfun::'a::{complex_normed_vector, not_singleton} \<Rightarrow>\<^sub>C\<^sub>L 'a) = 1"
   apply transfer
   apply (rule onorm_id[internalize_sort' 'a])
-   apply standard[1]
+  apply standard[1]
   by simp
 
 lemma norm_blinfun_id_le:
@@ -861,11 +861,11 @@ defined analogously.
 \<close>
 
 definition\<^marker>\<open>tag important\<close> cstrong_operator_topology::"('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector) topology"
-where "cstrong_operator_topology = pullback_topology UNIV cblinfun_apply euclidean"
+  where "cstrong_operator_topology = pullback_topology UNIV cblinfun_apply euclidean"
 
 lemma cstrong_operator_topology_topspace:
   "topspace cstrong_operator_topology = UNIV"
-unfolding cstrong_operator_topology_def topspace_pullback_topology topspace_euclidean by auto
+  unfolding cstrong_operator_topology_def topspace_pullback_topology topspace_euclidean by auto
 
 lemma cstrong_operator_topology_basis:
   fixes f::"('a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L'b::complex_normed_vector)" and U::"'i \<Rightarrow> 'b set" and x::"'i \<Rightarrow> 'a"
@@ -918,5 +918,5 @@ lemma cstrong_operator_topology_weaker_than_euclidean:
   "continuous_map euclidean cstrong_operator_topology (\<lambda>f. f)"
   apply (subst continuous_on_cstrong_operator_topo_iff_coordinatewise)
   by (auto simp add: linear_continuous_on continuous_at_imp_continuous_on linear_continuous_at 
-                     bounded_clinear.bounded_linear)
+      bounded_clinear.bounded_linear)
 end
