@@ -1,5 +1,19 @@
 section \<open>\<open>Cblinfun_Code\<close> -- Support for code generation\<close>
 
+text \<open>This theory provides support for code generation involving on complex vector spaces and
+  bounded operators (e.g., types \<open>cblinfun\<close> and \<open>ell2\<close>).
+  To fully support code generation, in addition to importing this theory,
+  one need to activate support for code generation (import theory \<open>Jordan_Normal_Form.Matrix_Impl\<close>)
+  and for real and complex numbers (import theory \<open>Real_Impl.Real_Impl\<close> for support of reals of the 
+  form \<open>a + b * sqrt c\<close> or \<open>Algebraic_Numbers.Real_Factorization\<close> (much slower) for support of algebraic reals;
+  support of complex numbers comes "for free").
+
+  The builtin support for real and complex numbers (in \<open>Complex_Main\<close>) is not sufficient because it
+  does not support the computation of square-roots which are used in the setup below.
+
+  It is also recommended to import \<open>HOL-Library.Code_Target_Numeral\<close> for faster support of nats 
+  and integers.\<close>
+
 theory Cblinfun_Code
   imports
     Cblinfun_Matrix Containers.Set_Impl Jordan_Normal_Form.Matrix_Kernel

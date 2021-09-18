@@ -3,6 +3,8 @@ section \<open>\<open>Cblinfun_Code_Examples\<close> -- Examples and test cases 
 theory Cblinfun_Code_Examples
   imports
     "Complex_Bounded_Operators-Extra.Extra_Pretty_Code_Examples"
+    Jordan_Normal_Form.Matrix_Impl
+    "HOL-Library.Code_Target_Numeral"
     Cblinfun_Code
 begin
 
