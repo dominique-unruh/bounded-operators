@@ -214,7 +214,7 @@ lemma ell2_ket:
   fixes a
   defines \<open>f \<equiv> (\<lambda>i. if a = i then 1 else 0)\<close>
   shows has_ell2_norm_ket: \<open>has_ell2_norm f\<close>
-  and ell2_norm_ket: \<open>ell2_norm f = 1\<close>
+    and ell2_norm_ket: \<open>ell2_norm f = 1\<close>
 proof -
   have finite_bound: \<open>(\<Sum>i\<in>F. (cmod (if a = i then 1 else 0))\<^sup>2) \<le> 1\<close> if \<open>finite F\<close> for F
   proof - 
@@ -254,7 +254,7 @@ proof -
   have \<open>(SUP F\<in>{F. finite F}. sum (\<lambda>i. norm (f i)^2) F) = 1\<close>
     using finite_bound 
     by (auto intro!: cSup_eq_maximum rev_image_eqI[where x=\<open>{a}\<close>]
-             simp: f_def)
+        simp: f_def)
   then show \<open>ell2_norm f = 1\<close>
     unfolding ell2_norm_def by simp
 qed
@@ -514,7 +514,7 @@ proof
   show "norm (a + b) \<le> norm a + norm b"
     apply transfer by (fact ell2_norm_triangle)
   show "norm (r *\<^sub>R (a::'a ell2)) = \<bar>r\<bar> * norm a" for r
-      and a :: "'a ell2"
+    and a :: "'a ell2"
     apply transfer
     by (simp add: ell2_norm_smult(2)) 
   show "norm (r *\<^sub>C a) = cmod r * norm a" for r
@@ -979,7 +979,7 @@ proof -
     using Rep_ell2 by blast
   then have summable: "f abs_summable_on UNIV"
     using f_def has_ell2_norm_infsetsum by fastforce
-  
+
   have \<open>norm \<psi> = (ell2_norm (Rep_ell2 \<psi>))\<close>
     apply transfer by simp
   also have \<open>\<dots> = sqrt (infsetsum' f UNIV)\<close>
@@ -1178,7 +1178,7 @@ end
 lemma canonical_basis_length_ell2[code_unfold, simp]:
   "length (canonical_basis ::'a::enum ell2 list) = CARD('a)"
   unfolding canonical_basis_ell2_def apply simp
-    using card_UNIV_length_enum by metis
+  using card_UNIV_length_enum by metis
 
 lemma ket_canonical_basis: "ket x = canonical_basis ! enum_idx x"
 proof-
@@ -1210,7 +1210,7 @@ lemma equal_ket:
   assumes \<open>\<And> x. cblinfun_apply A (ket x) = cblinfun_apply B (ket x)\<close>
   shows \<open>A = B\<close>
   apply (rule cblinfun_eq_gen_eqI[where G=\<open>range ket\<close>])
-   using assms by auto
+  using assms by auto
 
 lemma antilinear_equal_ket:
   fixes f g :: \<open>'a::finite ell2 \<Rightarrow> _\<close>
@@ -1307,14 +1307,14 @@ lemma clinear_eq_butterfly_ketI:
   assumes "clinear F" and "clinear G"
   assumes "\<And>i j. F (butterfly (ket i) (ket j)) = G (butterfly (ket i) (ket j))"
   shows "F = G"
- apply (rule complex_vector.linear_eq_on_span[where f=F, THEN ext, rotated 3])
+  apply (rule complex_vector.linear_eq_on_span[where f=F, THEN ext, rotated 3])
      apply (subst cspan_butterfly_ket)
   using assms by auto
 
 lemma sum_butterfly_ket[simp]: \<open>(\<Sum>(i::'a::finite)\<in>UNIV. butterfly (ket i) (ket i)) = id_cblinfun\<close>
   apply (rule equal_ket)
   apply (subst complex_vector.linear_sum[where f=\<open>\<lambda>y. y *\<^sub>V ket _\<close>])
-  apply (auto simp add: scaleC_cblinfun.rep_eq cblinfun.add_left clinearI butterfly_def cblinfun_compose_image cinner_ket)
+   apply (auto simp add: scaleC_cblinfun.rep_eq cblinfun.add_left clinearI butterfly_def cblinfun_compose_image cinner_ket)
   apply (subst sum.mono_neutral_cong_right[where S=\<open>{_}\<close>])
   by auto
 
@@ -1370,7 +1370,7 @@ lemma classical_operator_existsI:
 lemma classical_operator_exists_inj:
   assumes "inj_map \<pi>"
   shows "classical_operator_exists \<pi>"
-  (* Probably a shorter proof is possible using cblinfun_extension_exists_bounded_dense *)
+    (* Probably a shorter proof is possible using cblinfun_extension_exists_bounded_dense *)
 proof -
   define C0 where "C0 \<psi> = (\<lambda>b. case inv_map \<pi> b of None \<Rightarrow> 0 | Some x \<Rightarrow> \<psi> x)" for \<psi> :: "'a\<Rightarrow>complex"
 
@@ -1678,10 +1678,10 @@ proof -
     apply (transfer fixing: \<pi> x) unfolding C0_def
     apply (rule ext, rename_tac b)
     apply (case_tac "inv_map \<pi> b"; cases "\<pi> x")
-    apply auto
-    apply (metis inv_map_def option.simps(3) range_eqI)
-    apply (metis f_inv_into_f inv_map_def option.distinct(1) option.sel)
-    apply (metis f_inv_into_f inv_map_def option.sel option.simps(3))
+       apply auto
+       apply (metis inv_map_def option.simps(3) range_eqI)
+      apply (metis f_inv_into_f inv_map_def option.distinct(1) option.sel)
+     apply (metis f_inv_into_f inv_map_def option.sel option.simps(3))
     by (metis (no_types, lifting) assms f_inv_into_f inj_map_def inv_map_def option.sel option.simps(3))
 
   have "C *\<^sub>V ket x = (case \<pi> x of None \<Rightarrow> 0 | Some i \<Rightarrow> ket i)" for x
@@ -1798,7 +1798,7 @@ proof-
           case True
           hence ij: "Some j = inv_map \<pi> i"
             unfolding inv_map_def apply auto
-            apply (metis a1 f_inv_into_f inj_map_def option.discI range_eqI)
+             apply (metis a1 f_inv_into_f inj_map_def option.discI range_eqI)
             by (metis range_eqI)
           have "i = c"
             using True s2 by auto
@@ -1873,7 +1873,7 @@ proof-
   have "(classical_operator Some) *\<^sub>V (ket i)  = id_cblinfun *\<^sub>V (ket i)"
     for i::'a
     apply (subst classical_operator_ket)
-    apply (rule classical_operator_exists_inj)
+     apply (rule classical_operator_exists_inj)
     by auto
   thus ?thesis
     using equal_ket[where A = "classical_operator (Some::'a \<Rightarrow> _ option)"
@@ -1923,7 +1923,7 @@ next
     apply (rule ext)
     unfolding inv_map_def o_def map_comp_def
     unfolding inv_def apply auto
-    apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
+     apply (metis \<open>inj \<pi>\<close> inv_def inv_f_f)
     using bij_def image_iff range_eqI
     by (metis a1)
   have "classical_operator (Some \<circ> \<pi>) o\<^sub>C\<^sub>L classical_operator (Some \<circ> \<pi>)*
@@ -1944,4 +1944,3 @@ qed
 unbundle no_cblinfun_notation
 
 end
-

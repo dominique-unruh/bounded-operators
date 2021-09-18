@@ -120,7 +120,7 @@ lemma closure_bounded_linear_image_subset_eq:
   assumes f: "bounded_linear f"
   shows "closure (f ` closure S) = closure (f ` S)"
   by (meson closed_closure closure_bounded_linear_image_subset closure_minimal closure_mono closure_subset f image_mono subset_antisym)
-  
+
 lemma not_singleton_real_normed_is_perfect_space[simp]: \<open>class.perfect_space (open :: 'a::{not_singleton,real_normed_vector} set \<Rightarrow> bool)\<close>
   apply standard
   by (metis UNIV_not_singleton clopen closed_singleton empty_not_insert)

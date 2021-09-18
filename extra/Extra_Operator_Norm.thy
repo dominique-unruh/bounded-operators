@@ -302,7 +302,7 @@ lemma onormI:
     and "x \<noteq> 0" and "norm (f x) = b * norm x"
   shows "onorm f = b"
   apply (unfold onorm_def, rule cSup_eq_maximum)
-  apply (smt (verit) UNIV_I assms(2) assms(3) image_iff nonzero_mult_div_cancel_right norm_eq_zero)
+   apply (smt (verit) UNIV_I assms(2) assms(3) image_iff nonzero_mult_div_cancel_right norm_eq_zero)
   by (smt (verit, del_insts) assms(1) assms(2) divide_nonneg_nonpos norm_ge_zero norm_le_zero_iff pos_divide_le_eq rangeE zero_le_mult_iff)
 
 

@@ -234,7 +234,7 @@ text \<open>We proceed to give code equations for operations involving both
 
 definition cblinfun_apply_code :: "'a ell2 \<Rightarrow>\<^sub>C\<^sub>L 'b ell2 \<Rightarrow> 'a ell2 \<Rightarrow> 'b ell2" 
   where [code del, code_abbrev]: "cblinfun_apply_code = (*\<^sub>V)"
-  \<comment> \<open>@{attribute code_abbrev} instructs the code generation to replace the
+    \<comment> \<open>@{attribute code_abbrev} instructs the code generation to replace the
      rhs \<^term>\<open>(*\<^sub>V)\<close> by the lhs \<^term>\<open>cblinfun_apply_code\<close> before starting 
      the actual code generation.\<close>
 
@@ -340,7 +340,7 @@ lemma bot_as_span[code]:
 
 lemma sup_spans[code]:
   \<comment> \<open>Code equation for the join (lub) of two subspaces (union of the generating lists)\<close>
- "SPAN A \<squnion> SPAN B = SPAN (A @ B)"
+  "SPAN A \<squnion> SPAN B = SPAN (A @ B)"
   unfolding SPAN_def 
   by (auto simp: ccspan_union image_Un filter_Un Let_def)
 
@@ -385,11 +385,11 @@ proof -
 
   show ?thesis
     unfolding SPAN_def d_def[symmetric] filter_set Let_def
-        A'_def[symmetric] B'_def[symmetric] image_set
+      A'_def[symmetric] B'_def[symmetric] image_set
     apply (subst ccspan_leq_using_vec)
     unfolding d_def[symmetric] map_map o_def
     apply (subst map_cong[where xs=A', OF refl])
-        apply (rule basis_enum_of_vec_inverse)
+     apply (rule basis_enum_of_vec_inverse)
      apply (simp add: A'_def d_def)
     apply (subst map_cong[where xs=B', OF refl])
      apply (rule basis_enum_of_vec_inverse)
@@ -437,7 +437,7 @@ proof -
 qed
 
 definition [code del, code_abbrev]: "range_cblinfun_code A = A *\<^sub>S top"
-\<comment> \<open>A new constant for the special case of applying an operator to the subspace \<^term>\<open>top\<close>
+  \<comment> \<open>A new constant for the special case of applying an operator to the subspace \<^term>\<open>top\<close>
   (i.e., for computing the range of the operator). We do this to be able to give
   more specialized code for this specific situation. (The generic code for
   \<^term>\<open>(*\<^sub>S)\<close> would work but is less efficient because it involves repeated matrix 
@@ -462,15 +462,15 @@ proof -
   also have "\<dots> = SPAN (map (\<lambda>i. mat_of_cblinfun A *\<^sub>v unit_vec dA i) [0..<dA])"
     unfolding apply_cblinfun_code dA_def[symmetric] Let_def
     apply (subst filter_True)
-    apply (meson carrier_vecD subset_code(1) unit_vecs_carrier)
+     apply (meson carrier_vecD subset_code(1) unit_vecs_carrier)
     by (simp add: unit_vecs_def o_def)
   also have "\<dots> = SPAN (map (\<lambda>x. mat_of_cblinfun A *\<^sub>v col (1\<^sub>m dA) x) [0..<dA])"
     apply (subst map_cong[OF refl])
     by auto
   also have "\<dots> = SPAN (map (col (mat_of_cblinfun A * 1\<^sub>m dA)) [0..<dA])"
     apply (subst map_cong[OF refl])
-    apply (subst col_mult2[symmetric])
-    apply (rule carrier_A)
+     apply (subst col_mult2[symmetric])
+        apply (rule carrier_A)
     by auto
   also have "\<dots> = SPAN (cols (mat_of_cblinfun A))"
     unfolding cols_def dA_def[symmetric]
@@ -522,8 +522,8 @@ proof -
     using Ag_carrier mat_kernel_def by blast
 
   interpret k: kernel dB dA Ag
-      apply standard using Ag_carrier by simp
-  
+    apply standard using Ag_carrier by simp
+
   have basis_base: "kernel.basis dA Ag (set base)"
     using row_echelon Ag_carrier unfolding base_def
     by (rule find_base_vectors(3))
@@ -618,7 +618,7 @@ text \<open>This is a hack to circumvent a bug in the code generation. The autom
   
   The fragment below circumvents this by forcing Isabelle to use the right type.
   (The logically useless fragment "\<open>let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_)\<close>" achieves this.)\<close>
-lemma [code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_.
+lemma uniformity_ell2_code[code]: "(uniformity :: ('a ell2 * _) filter) = Filter.abstract_filter (%_.
     Code.abort STR ''no uniformity'' (%_. 
     let x = ((=)::'a\<Rightarrow>_\<Rightarrow>_) in uniformity))"
   by simp

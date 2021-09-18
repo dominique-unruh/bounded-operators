@@ -123,7 +123,7 @@ global_interpretation complex_vector: vector_space_pair "scaleC::_\<Rightarrow>_
   defines cconstruct_raw_def: cconstruct = complex_vector.construct
 proof unfold_locales
   show "Vector_Spaces.linear (*) (*\<^sub>C) = clinear"
-  unfolding clinear_def complex_scaleC_def by auto
+    unfolding clinear_def complex_scaleC_def by auto
 qed (auto simp: clinear_def)
 
 (* Not needed since we did the global_interpretation with mandatory complex_vector-prefix:
@@ -150,7 +150,7 @@ lemmas scaleC_right_imp_eq = complex_vector.scale_right_imp_eq
 lemmas scaleC_cancel_left = complex_vector.scale_cancel_left
 lemmas scaleC_cancel_right = complex_vector.scale_cancel_right
 
-lemma [field_simps]:
+lemma divideC_field_simps[field_simps]: (* In Real_Vector_Spaces, these lemmas are unnamed *)
   "c \<noteq> 0 \<Longrightarrow> a = b /\<^sub>C c \<longleftrightarrow> c *\<^sub>C a = b"
   "c \<noteq> 0 \<Longrightarrow> b /\<^sub>C c = a \<longleftrightarrow> b = c *\<^sub>C a"
   "c \<noteq> 0 \<Longrightarrow> a + b /\<^sub>C c = (c *\<^sub>C a + b) /\<^sub>C c"
@@ -224,7 +224,7 @@ lemma inverse_scaleC_distrib: "inverse (scaleC a x) = scaleC (inverse a) (invers
 (* Defined in Real_Vector_Spaces:
 named_theorems vector_add_divide_simps "to simplify sums of scaled vectors" *)
 
-lemma [vector_add_divide_simps]:
+lemma complex_add_divide_simps[vector_add_divide_simps]:  (* In Real_Vector_Spaces, these lemmas are unnamed *)
   "v + (b / z) *\<^sub>C w = (if z = 0 then v else (z *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
   "a *\<^sub>C v + (b / z) *\<^sub>C w = (if z = 0 then a *\<^sub>C v else ((a * z) *\<^sub>C v + b *\<^sub>C w) /\<^sub>C z)"
   "(a / z) *\<^sub>C v + w = (if z = 0 then w else (a *\<^sub>C v + z *\<^sub>C w) /\<^sub>C z)"
@@ -463,7 +463,7 @@ lemma Complexs_0 [simp]: "0 \<in> \<complex>" and Complexs_1 [simp]: "1 \<in> \<
 
 lemma Complexs_add [simp]: "a \<in> \<complex> \<Longrightarrow> b \<in> \<complex> \<Longrightarrow> a + b \<in> \<complex>"
   apply (auto simp add: Complexs_def)
-    by (metis of_complex_add range_eqI) 
+  by (metis of_complex_add range_eqI) 
 
 lemma Complexs_minus [simp]: "a \<in> \<complex> \<Longrightarrow> - a \<in> \<complex>"
   by (auto simp: Complexs_def)
@@ -546,7 +546,7 @@ subclass (in ordered_complex_vector) ordered_real_vector
 lemma scaleC_mono:
   "a \<le> b \<Longrightarrow> x \<le> y \<Longrightarrow> 0 \<le> b \<Longrightarrow> 0 \<le> x \<Longrightarrow> a *\<^sub>C x \<le> b *\<^sub>C y"
   by (meson order_trans scaleC_left_mono scaleC_right_mono)
-  
+
 lemma scaleC_mono':
   "a \<le> b \<Longrightarrow> c \<le> d \<Longrightarrow> 0 \<le> a \<Longrightarrow> 0 \<le> c \<Longrightarrow> a *\<^sub>C c \<le> b *\<^sub>C d"
   by (rule scaleC_mono) (auto intro: order.trans)
@@ -586,11 +586,11 @@ lemma pos_le_minus_divideC_eq [field_simps]:
   "a \<le> - (b /\<^sub>C c) \<longleftrightarrow> c *\<^sub>C a \<le> - b" if "c > 0"
   using that
   by (metis local.ab_left_minus local.add.inverse_unique local.add.right_inverse local.add_minus_cancel local.le_minus_iff local.pos_divideC_le_eq local.scaleC_add_right local.scaleC_one local.scaleC_scaleC)
-  
+
 lemma pos_less_minus_divideC_eq [field_simps]:
   "a < - (b /\<^sub>C c) \<longleftrightarrow> c *\<^sub>C a < - b" if "c > 0"
-  using that by (metis le_less less_le_not_le pos_divideC_le_eq
-    pos_divideC_less_eq pos_le_minus_divideC_eq)
+  using that
+  by (metis le_less less_le_not_le pos_divideC_le_eq pos_divideC_less_eq pos_le_minus_divideC_eq)
 
 lemma pos_minus_divideC_le_eq [field_simps]:
   "- (b /\<^sub>C c) \<le> a \<longleftrightarrow> - b \<le> c *\<^sub>C a" if "c > 0"
@@ -636,10 +636,10 @@ lemma neg_le_minus_divideC_eq [field_simps]:
     for a b :: "'a :: ordered_complex_vector"
   using that pos_le_minus_divideC_eq [of "- c" a "- b"]
   by (metis neg_le_divideC_eq complex_vector.scale_minus_right)
-  
+
 lemma neg_less_minus_divideC_eq [field_simps]:
   "a < - (b /\<^sub>C c) \<longleftrightarrow> - b < c *\<^sub>C a" if "c < 0"
-   for a b :: "'a :: ordered_complex_vector"
+    for a b :: "'a :: ordered_complex_vector"
 proof -
   have *: "- b = c *\<^sub>C a \<longleftrightarrow> b = - (c *\<^sub>C a)"
     by (metis add.inverse_inverse)
@@ -649,16 +649,16 @@ qed
 
 lemma neg_minus_divideC_le_eq [field_simps]:
   "- (b /\<^sub>C c) \<le> a \<longleftrightarrow> c *\<^sub>C a \<le> - b" if "c < 0"
-    for a b :: "'a :: ordered_complex_vector"
+for a b :: "'a :: ordered_complex_vector"
   using that pos_minus_divideC_le_eq [of "- c" "- b" a]
   by (metis Complex_Vector_Spaces0.neg_divideC_le_eq complex_vector.scale_minus_right)
 
 lemma neg_minus_divideC_less_eq [field_simps]:
   "- (b /\<^sub>C c) < a \<longleftrightarrow> c *\<^sub>C a < - b" if "c < 0"
-    for a b :: "'a :: ordered_complex_vector"
+for a b :: "'a :: ordered_complex_vector"
   using that by (simp add: less_le_not_le neg_le_minus_divideC_eq neg_minus_divideC_le_eq)
 
-lemma [field_split_simps]:
+lemma divideC_field_splits_simps_1 [field_split_simps]: (* In Real_Vector_Spaces, these lemmas are unnamed *)
   "a = b /\<^sub>C c \<longleftrightarrow> (if c = 0 then a = 0 else c *\<^sub>C a = b)"
   "b /\<^sub>C c = a \<longleftrightarrow> (if c = 0 then a = 0 else b = c *\<^sub>C a)"
   "a + b /\<^sub>C c = (if c = 0 then a else (c *\<^sub>C a + b) /\<^sub>C c)"
@@ -667,10 +667,10 @@ lemma [field_split_simps]:
   "a /\<^sub>C c - b = (if c = 0 then - b else (a - c *\<^sub>C b) /\<^sub>C c)"
   "- (a /\<^sub>C c) + b = (if c = 0 then b else (- a + c *\<^sub>C b) /\<^sub>C c)"
   "- (a /\<^sub>C c) - b = (if c = 0 then - b else (- a - c *\<^sub>C b) /\<^sub>C c)"
-    for a b :: "'a :: complex_vector"
+  for a b :: "'a :: complex_vector"
   by (auto simp add: field_simps)
 
-lemma [field_split_simps]:
+lemma divideC_field_splits_simps_2 [field_split_simps]: (* In Real_Vector_Spaces, these lemmas are unnamed *)
   "0 < c \<Longrightarrow> a \<le> b /\<^sub>C c \<longleftrightarrow> (if c > 0 then c *\<^sub>C a \<le> b else if c < 0 then b \<le> c *\<^sub>C a else a \<le> 0)"
   "0 < c \<Longrightarrow> a < b /\<^sub>C c \<longleftrightarrow> (if c > 0 then c *\<^sub>C a < b else if c < 0 then b < c *\<^sub>C a else a < 0)"
   "0 < c \<Longrightarrow> b /\<^sub>C c \<le> a \<longleftrightarrow> (if c > 0 then b \<le> c *\<^sub>C a else if c < 0 then c *\<^sub>C a \<le> b else a \<ge> 0)"
@@ -764,7 +764,7 @@ lemma scaleC_le_0_iff:
   for b::"'a::ordered_complex_vector"
   apply (insert zero_le_scaleC_iff [of "-a" b])
   using less_complex_def that by force
-  
+
 
 lemma scaleC_le_cancel_left: "c *\<^sub>C a \<le> c *\<^sub>C b \<longleftrightarrow> (0 < c \<longrightarrow> a \<le> b) \<and> (c < 0 \<longrightarrow> b \<le> a)"
   if "c \<in> \<real>" (* Not present in Real_Vector_Spaces *)

@@ -334,7 +334,7 @@ proof intro_classes
   define basis where \<open>basis = {F a b| a b. a\<in>basisA \<and> b\<in>basisB}\<close>
   have \<open>cspan basis = UNIV\<close>
     apply (rule cblinfun_cspan_UNIV[where basisA=basisA and basisB=basisB])
-    apply (auto simp: basis_def)
+      apply (auto simp: basis_def)
     by (metis F_apply f_a f_not_a)
 
   moreover have \<open>finite basis\<close>
@@ -722,7 +722,7 @@ lemma cblinfun_compose_scaleR_left[simp]:
     and B::"'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b"
   shows \<open>(a *\<^sub>R A) o\<^sub>C\<^sub>L B = a *\<^sub>R (A o\<^sub>C\<^sub>L B)\<close>
   by (simp add: scaleR_scaleC)
-  
+
 lemma cblinfun_compose_scaleC_right[simp]:
   fixes A::"'b::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'c::complex_normed_vector" 
     and B::"'a::complex_normed_vector \<Rightarrow>\<^sub>C\<^sub>L 'b"
@@ -1228,7 +1228,7 @@ lemma cblinfun_image_INF_eq_general:
     and U :: "'b \<Rightarrow>\<^sub>C\<^sub>L'c::chilbert_space"
     and Uinv :: "'c \<Rightarrow>\<^sub>C\<^sub>L'b" 
   assumes UinvUUinv: "Uinv o\<^sub>C\<^sub>L U o\<^sub>C\<^sub>L Uinv = Uinv" and UUinvU: "U o\<^sub>C\<^sub>L Uinv o\<^sub>C\<^sub>L U = U"
-      \<comment> \<open>Meaning: \<^term>\<open>Uinv\<close> is a Pseudoinverse of \<^term>\<open>U\<close>\<close>
+    \<comment> \<open>Meaning: \<^term>\<open>Uinv\<close> is a Pseudoinverse of \<^term>\<open>U\<close>\<close>
     and V: "\<And>i. V i \<le> Uinv *\<^sub>S top"
   shows "U *\<^sub>S (INF i. V i) = (INF i. U *\<^sub>S V i)"
 proof (rule antisym)
@@ -1474,7 +1474,7 @@ proof -
     have \<open>A = 0\<close>
       apply (rule cblinfun_from_CARD_1_0[internalize_sort' 'a])
        apply (rule not_singleton_vs_CARD_1)
-      apply (rule False)
+       apply (rule False)
       by standard
     then show ?thesis
       by simp
@@ -1736,7 +1736,7 @@ proof-
     using P_def by presburger
   hence "(P o\<^sub>C\<^sub>L A) *\<^sub>S (c \<squnion> A* *\<^sub>S d) = P *\<^sub>S (A *\<^sub>S c \<squnion> d)"
     for c d
-  
+
     by (simp add: cblinfun_assoc_left(2))
   hence "P *\<^sub>S (A *\<^sub>S \<top> \<squnion> c) = (P o\<^sub>C\<^sub>L A) *\<^sub>S \<top>"
     for c
@@ -2170,7 +2170,7 @@ proof intro_classes
     | (trivial) \<open>\<And>A B :: 'a \<Rightarrow>\<^sub>C\<^sub>L 'b. A \<le> B \<longleftrightarrow> A = B\<close>
     apply atomize_elim by (auto simp: pos_def less_eq_cblinfun_def_heterogenous)
   note cases = this
-  
+
   have [simp]: \<open>pos 0\<close>
     unfolding pos_def by auto
 
@@ -2219,7 +2219,7 @@ proof intro_classes
       by auto
     then have \<open>a = 0\<close>
       apply (rule_tac pos_nondeg)
-      apply (auto simp: a_def b_def)
+       apply (auto simp: a_def b_def)
       by (smt (verit, best) add.commute bounded_cbilinear.add_left bounded_cbilinear_cblinfun_compose cblinfun_compose_zero_left diff_0 diff_add_cancel group_cancel.rule0 group_cancel.sub1)
     then show ?thesis
       unfolding a_def using \<open>unitary ?id\<close>
@@ -2671,11 +2671,11 @@ proof -
     by (simp add: bounded_clinear_CBlinfun_apply bounded_clinear_cinner_right)
   then have [simp]: \<open>norm f = norm x\<close>
     apply (auto intro!: norm_cblinfun_eqI[where x=x] simp: power2_norm_eq_cinner[symmetric])
-    apply (smt (verit, best) norm_eq_sqrt_cinner norm_ge_zero power2_norm_eq_cinner real_div_sqrt)
+     apply (smt (verit, best) norm_eq_sqrt_cinner norm_ge_zero power2_norm_eq_cinner real_div_sqrt)
     using Cauchy_Schwarz_ineq2 by blast
   show ?thesis
     apply (auto intro!: norm_cblinfun_eqI[where x=f])
-    apply (metis norm_eq_sqrt_cinner norm_imp_pos_and_ge real_div_sqrt)
+     apply (metis norm_eq_sqrt_cinner norm_imp_pos_and_ge real_div_sqrt)
     by (metis norm_cblinfun ordered_field_class.sign_simps(33))
 qed
 

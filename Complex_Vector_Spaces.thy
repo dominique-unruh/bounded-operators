@@ -46,7 +46,7 @@ lemma Reals_in_Complexs: "\<real> \<subseteq> \<complex>"
 lemma (in clinear) "linear f"
   apply standard
   by (simp_all add: add scaleC scaleR_scaleC)
-    
+
 lemma (in bounded_clinear) bounded_linear: "bounded_linear f"
   by (simp add: add bounded bounded_linear.intro bounded_linear_axioms.intro linearI scaleC scaleR_scaleC)
 
@@ -319,7 +319,7 @@ lemma real_independent_from_complex_independent:
 proof (rule notI)
   assume \<open>dependent (B \<union> B')\<close>
   then obtain T f0 x where [simp]: \<open>finite T\<close> and \<open>T \<subseteq> B \<union> B'\<close> and f0_sum: \<open>(\<Sum>v\<in>T. f0 v *\<^sub>R v) = 0\<close>
-      and x: \<open>x \<in> T\<close> and f0_x: \<open>f0 x \<noteq> 0\<close>
+    and x: \<open>x \<in> T\<close> and f0_x: \<open>f0 x \<noteq> 0\<close>
     by (auto simp: real_vector.dependent_explicit)
   define f T1 T2 T' f' x' where \<open>f v = (if v \<in> T then f0 v else 0)\<close> 
     and \<open>T1 = T \<inter> B\<close> and \<open>T2 = scaleC (-\<i>) ` (T \<inter> B')\<close>
@@ -347,7 +347,7 @@ proof (rule notI)
       by (smt (z3) B'_def IntE IntI T1_def T2_def \<open>f \<equiv> \<lambda>v. if v \<in> T then f0 v else 0\<close> add.inverse_inverse complex_vector.vector_space_axioms i_squared imageI mult_minus_left vector_space.vector_space_assms(3) vector_space.vector_space_assms(4))
     also have \<open>?right = (\<Sum>v\<in>T\<inter>B'. f v *\<^sub>R v)\<close> (is \<open>_ = ?right\<close>)
       apply (rule sum.reindex_cong[symmetric, where l=\<open>scaleC \<i>\<close>])
-      apply (auto simp: T2_def image_image scaleR_scaleC)
+        apply (auto simp: T2_def image_image scaleR_scaleC)
       using inj_on_def by fastforce
     also have \<open>?left + ?right = (\<Sum>v\<in>T. f v *\<^sub>R v)\<close>
       apply (subst sum.union_disjoint[symmetric])
@@ -594,7 +594,7 @@ lemma antilinear_imp_scaleC:
 proof -
   interpret clinear "D o cnj"
     apply standard apply auto
-    apply (simp add: additive.add assms antilinear.axioms(1))
+     apply (simp add: additive.add assms antilinear.axioms(1))
     using assms antilinear.scaleC by fastforce
   obtain d where "D o cnj = (\<lambda>x. x *\<^sub>C d)"
     using clinear_axioms complex_vector.linear_imp_scale by blast
@@ -617,17 +617,17 @@ lemma antilinearI:
 
 lemma antilinear_o_antilinear: "antilinear f \<Longrightarrow> antilinear g \<Longrightarrow> clinear (g o f)"
   apply (rule clinearI)
-  apply (simp add: additive.add antilinear_def)
+   apply (simp add: additive.add antilinear_def)
   by (simp add: antilinear.scaleC)
 
 lemma clinear_o_antilinear: "antilinear f \<Longrightarrow> clinear g \<Longrightarrow> antilinear (g o f)"
   apply (rule antilinearI)
-  apply (simp add: additive.add complex_vector.linear_add antilinear_def)
+   apply (simp add: additive.add complex_vector.linear_add antilinear_def)
   by (simp add: complex_vector.linear_scale antilinear.scaleC)
 
 lemma antilinear_o_clinear: "clinear f \<Longrightarrow> antilinear g \<Longrightarrow> antilinear (g o f)"
   apply (rule antilinearI)
-  apply (simp add: additive.add complex_vector.linear_add antilinear_def)
+   apply (simp add: additive.add complex_vector.linear_add antilinear_def)
   by (simp add: complex_vector.linear_scale antilinear.scaleC)
 
 locale bounded_antilinear = antilinear f for f :: "'a::complex_normed_vector \<Rightarrow> 'b::complex_normed_vector" +

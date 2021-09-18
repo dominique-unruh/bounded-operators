@@ -531,7 +531,7 @@ proof -
     by (auto simp add: complex_vector.span_base complex_vector.representation_basis)
   show ?thesis
     apply (rule eq_vecI)
-    apply (auto simp: vec_of_basis_enum_def)
+     apply (auto simp: vec_of_basis_enum_def)
     by (metis complex_vector.scale_cancel_right one_dim_inverse one_dim_scaleC_1 zero_neq_one)
 qed
 
@@ -581,7 +581,7 @@ proof auto
   then show \<open>is_ortho_set (set S)\<close>
     by (smt (verit, ccfv_SIG) cinner_eq_zero_iff corthogonal_def cscalar_prod_vec_of_basis_enum in_set_conv_nth is_ortho_set_def length_map nth_map)
   show \<open>distinct S\<close>
-      using assm corthogonal_distinct distinct_map by blast 
+    using assm corthogonal_distinct distinct_map by blast 
 next
   assume \<open>is_ortho_set (set S)\<close> and \<open>distinct S\<close>
   then show \<open>corthogonal (map vec_of_basis_enum S)\<close>
@@ -730,7 +730,7 @@ next
       by auto
   qed
   also have \<open>crepresentation (set BasisB) (F *\<^sub>V u) v = vec_of_basis_enum (F *\<^sub>V u) $ i\<close>
-      by (auto simp: vec_of_list_index vec_of_basis_enum_def v_def simp flip: BasisB_def)
+    by (auto simp: vec_of_list_index vec_of_basis_enum_def v_def simp flip: BasisB_def)
   finally show \<open>vec_of_basis_enum (F *\<^sub>V u) $ i = (mat_of_cblinfun F *\<^sub>v vec_of_basis_enum u) $ i\<close>
     by simp
 qed
@@ -1363,7 +1363,7 @@ lemma mk_projector_orthog_correct:
        = mat_of_cblinfun (Proj (ccspan (set S)))"
 proof -
   define Snorm where "Snorm = map (\<lambda>s. s /\<^sub>R norm s) S"
-  
+
   have "distinct Snorm"
   proof (insert ortho distinct, unfold Snorm_def, induction S)
     case Nil
@@ -1480,7 +1480,7 @@ proof -
          mat_adjoint (mat_of_cols d [vec_of_basis_enum a])) + mat_of_cblinfun sumS"
       apply (rule arg_cong[where f="\<lambda>x. _ \<cdot>\<^sub>m (_ * x) + _"])
       apply (rule mat_eq_iff[THEN iffD2])
-        apply (auto simp add: mat_adjoint_def)
+      apply (auto simp add: mat_adjoint_def)
       apply (subst mat_of_rows_index) apply auto
       apply (subst mat_of_rows_index) apply auto
       apply (subst mat_of_cols_index) apply auto
