@@ -1016,7 +1016,8 @@ instance real :: ordered_real_vector
   by standard (auto intro: mult_left_mono mult_right_mono)
 *)
 
-subsection \<open>Extra type constraints\<close>
+(* subsection \<open>Extra type constraints\<close> *)
+(* Everything is commented out, so we comment out the heading, too. *)
 
 (* These are already configured in Real_Vector_Spaces:
 
@@ -1370,7 +1371,8 @@ qed
 (* Inherited from real_normed_algebra_1 *)
 (* instance complex_normed_algebra_1 \<subseteq> perfect_space *)
 
-subsection \<open>Filters and Limits on Metric Space\<close>
+(* subsection \<open>Filters and Limits on Metric Space\<close> *)
+(* Everything is commented out, so we comment out the heading, too. *)
 
 (* Not specific to real/complex *)
 (* lemma (in metric_space) nhds_metric: "nhds x = (INF e\<in>{0 <..}. principal {y. dist y x < e})" *)
@@ -1428,7 +1430,8 @@ subsubsection \<open>Limits of Sequences\<close>
   assumes  "\<And>n::nat. norm (f n) < 1 / real (Suc n)"
   shows "f \<longlonglongrightarrow> 0" *)
 
-subsubsection \<open>Limits of Functions\<close>
+(* subsubsection \<open>Limits of Functions\<close> *)
+(* Everything is commented out, so we comment out the heading, too. *)
 
 (* Not specific to real/complex *)
 (* lemma LIM_def: "f \<midarrow>a\<rightarrow> L \<longleftrightarrow> (\<forall>r > 0. \<exists>s > 0. \<forall>x. x \<noteq> a \<and> dist x a < s \<longrightarrow> dist (f x) L < r)"
@@ -1463,7 +1466,8 @@ subsubsection \<open>Limits of Functions\<close>
   shows "(\<lambda>x. g (f x)) \<midarrow>a\<rightarrow> l" *)
 
 
-subsection \<open>Complete metric spaces\<close>
+(* subsection \<open>Complete metric spaces\<close> *)
+(* Everything is commented out, so we comment out the heading, too. *)
 
 subsection \<open>Cauchy sequences\<close>
 
@@ -1490,14 +1494,15 @@ lemma cCauchy_iff2: "Cauchy X \<longleftrightarrow> (\<forall>j. (\<exists>M. \<
 (* lemma (in metric_space) totally_bounded_metric:
   "totally_bounded S \<longleftrightarrow> (\<forall>e>0. \<exists>k. finite k \<and> S \<subseteq> (\<Union>x\<in>k. {y. dist x y < e}))" *)
 
-subsubsection \<open>Cauchy Sequences are Convergent\<close>
+(* subsubsection \<open>Cauchy Sequences are Convergent\<close> *)
+(* Everything is commented out, so we comment out the heading, too. *)
 
 (* Not specific to real/complex *)
 (* class complete_space *)
 (* lemma Cauchy_convergent_iff: "Cauchy X \<longleftrightarrow> convergent X"
   for X :: "nat \<Rightarrow> 'a::complete_space" *)
 
-text \<open>To prove that a Cauchy sequence converges, it suffices to show that a subsequence converges.\<close>
+(* text \<open>To prove that a Cauchy sequence converges, it suffices to show that a subsequence converges.\<close> *)
 
 (* Not specific to real/complex *)
 (* lemma Cauchy_converges_subseq:

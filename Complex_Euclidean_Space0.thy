@@ -204,7 +204,8 @@ lemma cnorm_le_l1: "norm x \<le> (\<Sum>b\<in>CBasis. cmod (cinner x b))"
   shows "(\<Sum>x\<in>P. norm (f x)) \<le> 2 * real CDIM('n) * e" *)
 
 
-subsection\<^marker>\<open>tag unimportant\<close> \<open>Subclass relationships\<close>
+(* subsection\<^marker>\<open>tag unimportant\<close> \<open>Subclass relationships\<close> *)
+(* Everything is commented out, so we comment out the heading, too. *)
 
 (* If we include this, instantiation prod :: (ceuclidean_space, ceuclidean_space) ceuclidean_space below fails *)
 (* instance ceuclidean_space \<subseteq> perfect_space
