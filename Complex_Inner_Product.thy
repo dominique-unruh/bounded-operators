@@ -10,9 +10,6 @@ section \<open>\<open>Complex_Inner_Product\<close> -- Complex Inner Product Spa
 
 theory Complex_Inner_Product
   imports 
-    Complex_Vector_Spaces
-    "HOL-Analysis.Infinite_Set_Sum" 
-
     Complex_Inner_Product0
 begin
 
@@ -28,7 +25,7 @@ no_notation cinner ("\<langle>_, _\<rangle>")
 end
 
 lemma cinner_real: "cinner x x \<in> \<real>"
-  by (meson cinner_ge_zero reals_zero_comparable_iff)
+  by (simp add: cdot_square_norm)
 
 lemmas cinner_commute' [simp] = cinner_commute[symmetric]
 
@@ -1843,12 +1840,12 @@ proof
   hence \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2 = \<bar> \<langle>x, A ((A\<^sup>\<dagger>) x)\<rangle> \<bar>\<close> for x
     by (simp add: b1)
   moreover have  \<open>\<bar>\<langle>x , A ((A\<^sup>\<dagger>) x)\<rangle>\<bar> \<le> \<parallel>x\<parallel> *  \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close> for x
-    by (simp add: abs_complex_def complex_inner_class.Cauchy_Schwarz_ineq2)
+    by (simp add: abs_complex_def complex_inner_class.Cauchy_Schwarz_ineq2 less_eq_complex_def)
   ultimately have b5: \<open>\<parallel> (A\<^sup>\<dagger>) x \<parallel>^2  \<le> \<parallel>x\<parallel> * \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel>\<close> for x
     by (metis complex_of_real_mono_iff)
   have \<open>\<exists>M. M \<ge> 0 \<and> (\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M *  \<parallel>(A\<^sup>\<dagger>) x\<parallel>)\<close>
     using a1
-    by (metis (mono_tags, hide_lams) bounded_clinear.bounded linear mult_nonneg_nonpos
+    by (metis (mono_tags, opaque_lifting) bounded_clinear.bounded linear mult_nonneg_nonpos
         mult_zero_right norm_ge_zero order.trans semiring_normalization_rules(7)) 
   then obtain M where q1: \<open>M \<ge> 0\<close> and q2: \<open>\<forall> x. \<parallel>A ((A\<^sup>\<dagger>) x)\<parallel> \<le> M * \<parallel>(A\<^sup>\<dagger>) x\<parallel>\<close>
     by blast

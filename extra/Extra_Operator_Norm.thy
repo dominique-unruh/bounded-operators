@@ -118,7 +118,7 @@ next
   moreover have \<open>Sup {norm (f x) |x. norm x = 1} \<ge> 0\<close>
   proof-
     have \<open>\<exists> x::'a. norm x = 1\<close>
-      by (metis (mono_tags, hide_lams) False assms bounded_linear.nonneg_bounded mult_zero_left norm_le_zero_iff norm_sgn)
+      by (metis (mono_tags, opaque_lifting) False assms bounded_linear.nonneg_bounded mult_zero_left norm_le_zero_iff norm_sgn)
     then obtain x::'a where \<open>norm x = 1\<close>
       by blast
     have \<open>norm (f x) \<ge> 0\<close>

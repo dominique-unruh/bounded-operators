@@ -1,8 +1,7 @@
 section \<open>\<open>Extra_Ordered_Fields\<close> -- Additional facts about ordered fields\<close>
 
 theory Extra_Ordered_Fields
-  imports Complex_Main 
-    Jordan_Normal_Form.Conjugate (* Defines ordering for complex. We have to use theirs, otherwise there will be conflicts *)
+  imports Complex_Main "HOL-Library.Complex_Order"
 begin
 
 
@@ -626,7 +625,7 @@ proof-
     for a b c::'a
     by (meson local.nonzero_eq_divide_eq)
   have f6: "0 < z"
-    using a2 a1 by (meson local.order.ordering_axioms ordering.strict_trans2)
+    using a2 a1 less_le_trans by blast
   have "z \<noteq> 0"
     using a2 a1 by (meson local.leD)
   moreover have "x / z \<noteq> y / w"
@@ -732,7 +731,7 @@ proof (rule)
   then consider (leq0) "inverse x \<le> 0" | (pos) "inverse x > 0" | (zero) "inverse x = 0"
     using local.antisym_conv1 by blast
   thus "x \<le> 0 \<or> 1 < x"
-    by (metis invx1 local.eq_iff local.inverse_1 local.inverse_less_imp_less 
+    by (metis invx1 order.eq_iff local.inverse_1 local.inverse_less_imp_less 
         local.inverse_nonpositive_iff_nonpositive local.inverse_positive_imp_positive)
 next
   assume "x \<le> 0 \<or> 1 < x"
@@ -872,9 +871,6 @@ code_identifier
   code_module Ordered_Fields \<rightharpoonup> (SML) Arith and (OCaml) Arith and (Haskell) Arith
 
 subsection\<open>Ordered Complex\<close>
-
-declare Conjugate.less_eq_complex_def[simp del]
-declare Conjugate.less_complex_def[simp del]
 
 subsection \<open>Ordering on complex numbers\<close>
 

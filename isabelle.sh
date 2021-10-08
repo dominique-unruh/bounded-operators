@@ -4,7 +4,7 @@
 
 set -e
 
-ISABELLE_DIR=/opt/Isabelle2021
+ISABELLE_DIR=~/svn/isabelle
 
 DIR="$(dirname "$BASH_SOURCE[0]")"
 
@@ -14,4 +14,4 @@ else
     FILES=()
 fi
 
-"$ISABELLE_DIR"/bin/isabelle jedit -l Lots-Of-Stuff -d "$DIR" "$@" "${FILES[@]}" &
+"$ISABELLE_DIR"/bin/isabelle jedit -l HOL-Analysis -d "$DIR" "$@" "${FILES[@]}" &

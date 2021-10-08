@@ -1362,7 +1362,7 @@ proof (cases "A \<noteq> {} \<and> A \<noteq> {0}")
     have basisT_finite: "class.finite TYPE('basisT)"
       apply intro_classes
       using \<open>finite B\<close> t
-      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
+      by (metis (mono_tags, opaque_lifting) ex_new_if_finite finite_imageI image_eqI type_definition_def)
     note finite_span_complete_aux(2)[internalize_sort "'basis::finite"]
     note this[OF basisT_finite t]
   }
@@ -1411,7 +1411,7 @@ proof (cases "B\<noteq>{}")
     have basisT_finite: "class.finite TYPE('basisT)"
       apply intro_classes 
       using \<open>finite B\<close> t
-      by (metis (mono_tags, hide_lams) ex_new_if_finite finite_imageI image_eqI type_definition_def)
+      by (metis (mono_tags, opaque_lifting) ex_new_if_finite finite_imageI image_eqI type_definition_def)
         (* Step 3: We take the finite_span_complete_aux and remove the requirement that 'basis::finite
                (instead, a precondition "class.finite TYPE('basisT)" is introduced) *)
     note finite_span_complete_aux(1)[internalize_sort "'basis::finite"]
@@ -2555,7 +2555,7 @@ lemma cspan_to_conjugate_space[simp]: "cspan (to_conjugate_space ` X) = to_conju
   unfolding complex_vector.span_def complex_vector.subspace_def hull_def
   apply transfer
   apply simp
-  by (metis (no_types, hide_lams) complex_cnj_cnj)
+  by (metis (no_types, opaque_lifting) complex_cnj_cnj)
 
 lemma surj_to_conjugate_space[simp]: "surj to_conjugate_space"
   by (meson surj_def to_conjugate_space_cases)

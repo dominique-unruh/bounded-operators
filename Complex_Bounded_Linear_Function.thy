@@ -970,7 +970,7 @@ proof (cases \<open>class.not_singleton TYPE('b)\<close>)
       using \<open>norm \<psi> = 1\<close>
       by (smt (verit, best) Im_complex_of_real Re_complex_of_real \<open>(A* *\<^sub>V \<psi>) \<bullet>\<^sub>C (A* *\<^sub>V \<psi>) = \<psi> \<bullet>\<^sub>C (A *\<^sub>V A* *\<^sub>V \<psi>)\<close> \<open>\<psi> \<bullet>\<^sub>C (A *\<^sub>V A* *\<^sub>V \<psi>) = \<psi> \<bullet>\<^sub>C ((A o\<^sub>C\<^sub>L A*) *\<^sub>V \<psi>)\<close> cdot_square_norm cinner_ge_zero cmod_Re complex_inner_class.Cauchy_Schwarz_ineq2 less_eq_complex_def mult_cancel_left1 mult_cancel_right1 norm_cblinfun) 
     finally show ?thesis
-      by auto
+      using complex_of_real_mono_iff by blast
   qed
   then have 1: \<open>(norm A)\<^sup>2 \<le> norm (A o\<^sub>C\<^sub>L A*)\<close>
     by (metis field_le_mult_one_interval less_eq_real_def ordered_field_class.sign_simps(5))
@@ -1318,7 +1318,7 @@ next
       by (simp add: closed_csubspace.closed)  
   qed
   hence "(U o\<^sub>C\<^sub>L Uinv) *\<^sub>S INFUV = INFUV"
-    by (metis (mono_tags, hide_lams) x cblinfun_image.rep_eq cblinfun_image_id id_cblinfun_apply image_cong 
+    by (metis (mono_tags, opaque_lifting) x cblinfun_image.rep_eq cblinfun_image_id id_cblinfun_apply image_cong 
         space_as_set_inject)
   hence "INFUV = U *\<^sub>S Uinv *\<^sub>S INFUV"
     by (simp add: cblinfun_compose_image)
@@ -1651,7 +1651,7 @@ proof-
     by (simp add: id_cblinfun.rep_eq minus_cblinfun.rep_eq)      
   thus ?thesis
     using u1 u2 cblinfun_apply_inject diff_diff_eq2 diff_eq_diff_eq eq_id_iff id_cblinfun.rep_eq
-    by (metis (no_types, hide_lams) M_def)
+    by (metis (no_types, opaque_lifting) M_def)
 qed
 
 lemma Proj_range_closed:
@@ -2268,7 +2268,7 @@ lemma positive_id_cblinfun[simp]: "id_cblinfun \<ge> 0"
 
 lemma positive_hermitianI: \<open>A = A*\<close> if \<open>A \<ge> 0\<close>
   apply (rule cinner_real_hermiteanI)
-  using that by (auto simp del: less_eq_complex_def simp: reals_zero_comparable_iff less_eq_cblinfun_def)
+  using that by (auto simp: complex_is_real_iff_compare0 less_eq_cblinfun_def)
 
 lemma positive_cblinfunI: \<open>A \<ge> 0\<close> if \<open>\<And>x. cinner x (A *\<^sub>V x) \<ge> 0\<close>
   unfolding less_eq_cblinfun_def using that by auto
@@ -2290,7 +2290,7 @@ proof -
     by (simp add: less_eq_cblinfun_def)
   also have \<open>\<dots> \<longleftrightarrow> (\<forall>\<psi>::'a. one_dim_iso B * (\<psi> \<bullet>\<^sub>C \<psi>) \<le> one_dim_iso A * (\<psi> \<bullet>\<^sub>C \<psi>))\<close>
     apply (subst A, subst B)
-    by (metis (no_types, hide_lams) cinner_scaleC_right id_cblinfun_apply scaleC_cblinfun.rep_eq)
+    by (metis (no_types, opaque_lifting) cinner_scaleC_right id_cblinfun_apply scaleC_cblinfun.rep_eq)
   also have \<open>\<dots> \<longleftrightarrow> one_dim_iso A \<ge> (one_dim_iso B :: complex)\<close>
     by (auto intro!: mult_right_mono elim!: allE[where x=1])
   finally show ?thesis

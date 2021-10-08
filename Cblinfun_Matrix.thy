@@ -152,7 +152,7 @@ lemma vec_of_basis_enum_uminus:
 
 lemma vec_of_basis_enum_minus:
   "vec_of_basis_enum (b1 - b2) = vec_of_basis_enum b1 - vec_of_basis_enum b2"
-  by (metis (mono_tags, hide_lams) carrier_vec_dim_vec diff_conv_add_uminus diff_zero index_add_vec(2) minus_add_uminus_vec vec_of_basis_enum_add vec_of_basis_enum_uminus)
+  by (metis (mono_tags, opaque_lifting) carrier_vec_dim_vec diff_conv_add_uminus diff_zero index_add_vec(2) minus_add_uminus_vec vec_of_basis_enum_add vec_of_basis_enum_uminus)
 
 lemma cinner_basis_enum_of_vec:
   defines "n \<equiv> length (canonical_basis :: 'a::onb_enum list)"
@@ -381,7 +381,7 @@ proof-
         using y1 y2 complex_vector.representation_basis[where 
             basis = "set (canonical_basis::'a ell2 list)" 
             and b = "(canonical_basis::'a ell2 list) ! j"]
-        by (metis (mono_tags, hide_lams) False enum_i_dim_vec basis_enum_of_vec_inverse basis_enum_of_vec_unit_vec canonical_basis_length_ell2 index_unit_vec(3) j_bound list_of_vec_index list_vec nth_map r1 vec_of_basis_enum_def)
+        by (metis (mono_tags, opaque_lifting) False enum_i_dim_vec basis_enum_of_vec_inverse basis_enum_of_vec_unit_vec canonical_basis_length_ell2 index_unit_vec(3) j_bound list_of_vec_index list_vec nth_map r1 vec_of_basis_enum_def)
       hence "vec_of_basis_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) $ j = 0"
         unfolding vec_of_basis_enum_def by (smt j_bound nth_map vec_of_list_index)        
       hence "vec_of_basis_enum ((canonical_basis::'a ell2 list) ! (enum_idx i)) $ j = 0"
@@ -901,7 +901,7 @@ proof -
       using that unfolding nB_def
       by simp
     have c2: "vec_of_basis_enum v \<in> carrier_vec nA"
-      by (metis (mono_tags, hide_lams) add.commute carrier_vec_dim_vec index_add_vec(2) 
+      by (metis (mono_tags, opaque_lifting) add.commute carrier_vec_dim_vec index_add_vec(2) 
           index_zero_vec(2) nA_def vec_of_basis_enum_add basis_enum_of_vec_inverse)      
     have "(M * N) *\<^sub>v vec_of_basis_enum v = M *\<^sub>v (N *\<^sub>v vec_of_basis_enum v)"
       using Matrix.assoc_mult_mat_vec a1 a2 c2 by blast      
@@ -1174,7 +1174,7 @@ proof (cases "a = 0")
     by (simp add: carrier_vecI d_def dim_vec_of_basis_enum')
 
   have \<open>mat_of_cblinfun (proj a) = mat_of_cblinfun (proj (a /\<^sub>R norm a))\<close>
-    by (metis (mono_tags, hide_lams) ccspan_singleton_scaleC complex_vector.scale_eq_0_iff nonzero_imp_inverse_nonzero norm_eq_zero scaleR_scaleC scale_left_imp_eq)
+    by (metis (mono_tags, opaque_lifting) ccspan_singleton_scaleC complex_vector.scale_eq_0_iff nonzero_imp_inverse_nonzero norm_eq_zero scaleR_scaleC scale_left_imp_eq)
   also have \<open>\<dots> = mat_of_cblinfun (selfbutter (a /\<^sub>R norm a))\<close>
     apply (subst butterfly_eq_proj)
     by (auto simp add: False)
@@ -1546,7 +1546,7 @@ proof-
     apply (subst corthogonal_vec_of_basis_enum[THEN iffD1], auto)
     by (smt carrier_dim_vec cof_vec_space.gram_schmidt0_result(1) d_def dim_vec_of_basis_enum' gram_schmidt0_result(3) gs_def imageE map_idI map_map o_apply set_map subset_code(1) basis_enum_of_vec_inverse)
   have distinct_gs: "distinct (map basis_enum_of_vec gs :: 'a list)"
-    by (metis (mono_tags, hide_lams) carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_basis_enum' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI basis_enum_of_vec_inverse)
+    by (metis (mono_tags, opaque_lifting) carrier_vec_dim_vec cof_vec_space.gram_schmidt0_result(2) d_def dim_vec_of_basis_enum' distinct_map gs_def gs_dim image_iff inj_on_inverseI set_map subsetI basis_enum_of_vec_inverse)
 
   have "mk_projector_orthog d gs 
       = mk_projector_orthog d (map vec_of_basis_enum (map basis_enum_of_vec gs :: 'a list))"

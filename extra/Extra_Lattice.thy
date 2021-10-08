@@ -107,7 +107,7 @@ proof -
   hence 2: \<open>-x \<sqinter> -y \<le> - (x \<squnion> y)\<close>
     using ortho_antimono by fastforce
   from 1 2 show ?thesis
-    by (simp add: eq_iff)
+    using dual_order.antisym by presburger
 qed
 
 text \<open>De Morgan's law\<close>

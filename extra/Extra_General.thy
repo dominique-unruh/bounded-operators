@@ -4,24 +4,19 @@ theory Extra_General
   imports
     "HOL-Library.Cardinality"
     "HOL-Analysis.Elementary_Topology"
-    Jordan_Normal_Form.Conjugate
     "HOL-Analysis.Uniform_Limit"
     "HOL-Library.Set_Algebras"
     "HOL-Types_To_Sets.Types_To_Sets"
+    "HOL-Library.Complex_Order"
 begin
 
 subsection \<open>Misc\<close>
-
-lemma reals_zero_comparable_iff:
-  "(x::complex)\<in>\<real> \<longleftrightarrow> x \<le> 0 \<or> x \<ge> 0"
-  unfolding complex_is_Real_iff less_eq_complex_def
-  by auto
 
 lemma reals_zero_comparable:
   fixes x::complex
   assumes "x\<in>\<real>"
   shows "x \<le> 0 \<or> x \<ge> 0"
-  using assms unfolding reals_zero_comparable_iff by assumption
+  using assms unfolding complex_is_real_iff_compare0 by assumption
 
 lemma unique_choice: "\<forall>x. \<exists>!y. Q x y \<Longrightarrow> \<exists>!f. \<forall>x. Q x (f x)"
   apply (auto intro!: choice ext) by metis
@@ -44,6 +39,7 @@ overloading heterogenous_identity_id \<equiv> "heterogenous_identity :: 'a \<Rig
 definition heterogenous_identity_def[simp]: \<open>heterogenous_identity_id = id\<close>
 end
 
+(* TODO: Rename (conflict with Conditionally_Complete_Lattices.bdd_above_image_mono) *)
 lemma bdd_above_image_mono:
   assumes \<open>\<And>x. x\<in>S \<Longrightarrow> f x \<le> g x\<close>
   assumes \<open>bdd_above (g ` S)\<close>
@@ -330,14 +326,8 @@ proof (cases x)
         complex_norm power2_eq_square complex_of_real_def)
 qed
 
-lemma cnj_x_x_geq0[simp]: "cnj x * x \<ge> 0"
-proof (cases x)
-  show "0 \<le> cnj x * x"
-    if "x = Complex x1 x2"
-    for x1 :: real
-      and x2 :: real
-    using that by (auto simp: complex_cnj complex_mult complex_of_real_def)
-qed
+lemma cnj_x_x_geq0[simp]: \<open>cnj x * x \<ge> 0\<close>
+  by (simp add: less_eq_complex_def)
 
 
 subsection \<open>List indices and enum\<close>

@@ -67,7 +67,7 @@ lemma cinner_scaleC_right [simp]: "cinner x (scaleC r y) = r * (cinner x y)"
 
 lemma cinner_zero_right [simp]: "cinner x 0 = 0"
   using cinner_zero_left [of x]
-  by (metis (mono_tags, hide_lams) complex_cnj_zero local.cinner_commute)
+  by (metis (mono_tags, opaque_lifting) complex_cnj_zero local.cinner_commute)
 
 lemma cinner_minus_right [simp]: "cinner x (- y) = - cinner x y"
   using cinner_minus_left [of y x]
@@ -205,7 +205,7 @@ proof
     also have "\<dots> = 2 * abs (cinner x y)"
       unfolding abs_complex_def by simp
     also have "\<dots> \<le> 2 * complex_of_real (norm x) * complex_of_real (norm y)"
-      using Cauchy_Schwarz_ineq2 unfolding abs_complex_def by auto
+      using Cauchy_Schwarz_ineq2 by (auto simp: abs_complex_def less_eq_complex_def)
     finally have xyyx: "cinner x y + cinner y x \<le> complex_of_real (2 * norm x * norm y)" 
       by auto
     have "complex_of_real ((norm (x + y))\<^sup>2) = cinner (x+y) (x+y)"
@@ -264,7 +264,7 @@ lemma cnorm_eq_1: "norm x = 1 \<longleftrightarrow> cinner x x = 1"
 lemma cinner_divide_left:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"
   shows "cinner (a / of_complex m) b = (cinner a b) / cnj m"
-  by (metis cinner_mult_left' complex_cnj_inverse divide_inverse of_complex_inverse ordered_field_class.sign_simps(33))
+  by (metis cinner_mult_left' complex_cnj_inverse divide_inverse mult.commute of_complex_inverse)
 
 lemma cinner_divide_right:
   fixes a :: "'a :: {complex_inner,complex_div_algebra}"

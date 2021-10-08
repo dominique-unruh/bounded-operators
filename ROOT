@@ -15,7 +15,7 @@ session "Complex_Bounded_Operators-Extra" in extra = "Complex_Bounded_Operators-
            document_variants = "document:outline=/proof,/ML"]
   theories Extra_General Extra_Vector_Spaces Extra_Ordered_Fields Extra_Pretty_Code_Examples
 
-session Complex_Bounded_Operators = "Complex_Bounded_Operators-Extra" +
+session Complex_Bounded_Operators2 = "Complex_Bounded_Operators-Extra" +
   options [record_proofs=1, document = pdf, document_output = "output", 
            document_variants = "document:outline=/proof,/ML"]
   theories All
