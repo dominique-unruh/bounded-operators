@@ -14,4 +14,7 @@ else
     FILES=()
 fi
 
-"$ISABELLE_DIR"/bin/isabelle jedit -l HOL-Analysis -d "$DIR" "$@" "${FILES[@]}" &
+#SESSION=Lots-Of-Stuff
+SESSION=Complex_Bounded_Operators-Prerequisites
+
+"$ISABELLE_DIR"/bin/isabelle jedit -l "$SESSION" -d "$DIR" "$@" "${FILES[@]}" &

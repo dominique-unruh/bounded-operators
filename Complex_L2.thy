@@ -25,32 +25,6 @@ notation Infinite_Sum.abs_summable_on (infixr "abs'_summable'_on" 46)
 
 subsection \<open>l2 norm of functions\<close>
 
-(* (* TODO: move to extra *)
-lemma abs_summable_iff_summable:
-  fixes f :: \<open>'a \<Rightarrow> real\<close>
-  assumes \<open>\<And>x. x \<in> A \<Longrightarrow> f x \<ge> 0\<close>
-  shows \<open>f abs_summable_on A \<longleftrightarrow> f summable_on A\<close>
-  apply (rule summable_on_cong)
-  using assms by auto *)
-
-(* TODO: move to extra *)
-lemma abs_summable_bdd_above:
-  fixes f :: \<open>'a \<Rightarrow> 'b::real_normed_vector\<close>
-  shows \<open>f abs_summable_on A \<longleftrightarrow> bdd_above (sum (\<lambda>x. norm (f x)) ` {F. F\<subseteq>A \<and> finite F})\<close>
-proof (rule iffI)
-  assume \<open>f abs_summable_on A\<close>
-  have \<open>(\<Sum>x\<in>F. norm (f x)) = (\<Sum>\<^sub>\<infinity>x\<in>F. norm (f x))\<close> if \<open>finite F\<close> for F
-    by (simp add: that)
-  also have \<open>(\<Sum>\<^sub>\<infinity>x\<in>F. norm (f x)) \<le> (\<Sum>\<^sub>\<infinity>x\<in>A. norm (f x))\<close> if \<open>F \<subseteq> A\<close> for F
-    by (smt (verit) Diff_subset \<open>f abs_summable_on A\<close> infsum_Diff infsum_nonneg norm_ge_zero summable_on_subset_banach that)
-  finally show \<open>bdd_above (sum (\<lambda>x. norm (f x)) ` {F. F \<subseteq> A \<and> finite F})\<close>
-    by (auto intro!: bdd_aboveI)
-next
-  assume \<open>bdd_above (sum (\<lambda>x. norm (f x)) ` {F. F\<subseteq>A \<and> finite F})\<close>
-  then show \<open>f abs_summable_on A\<close>
-    by (simp add: pos_summable_on)
-qed
-
 definition "has_ell2_norm (x::_\<Rightarrow>complex) \<longleftrightarrow> (\<lambda>i. (x i)\<^sup>2) abs_summable_on UNIV"
 
 lemma has_ell2_norm_bdd_above: \<open>has_ell2_norm x \<longleftrightarrow> bdd_above (sum (\<lambda>xa. norm ((x xa)\<^sup>2)) ` Collect finite)\<close>
@@ -64,7 +38,7 @@ proof (rule iffI)
   then have *: \<open>bdd_above (sum (\<lambda>xa. norm ((x xa)\<^sup>2)) ` Collect finite)\<close>
     by (subst (asm) has_ell2_norm_bdd_above)
   have \<open>bdd_above ((\<lambda>F. sqrt (sum (\<lambda>xa. norm ((x xa)\<^sup>2)) F)) ` Collect finite)\<close>
-    using Conditionally_Complete_Lattices.bdd_above_image_mono[OF \<open>mono sqrt\<close> *]
+    using bdd_above_image_mono[OF \<open>mono sqrt\<close> *]
     by (auto simp: image_image)
   then show \<open>bdd_above (L2_set (norm o x) ` Collect finite)\<close>
     by (auto simp: L2_set_def norm_power)
@@ -76,7 +50,7 @@ next
     by (smt (verit) L2_set_def L2_set_nonneg p2_def power2_less_0 real_sqrt_pow2 sum.cong sum_nonneg)
   assume *: \<open>bdd_above (L2_set (norm o x) ` Collect finite)\<close>
   have \<open>bdd_above (p2 ` L2_set (norm o x) ` Collect finite)\<close>
-    using Conditionally_Complete_Lattices.bdd_above_image_mono[OF \<open>mono p2\<close> *]
+    using bdd_above_image_mono[OF \<open>mono p2\<close> *]
     by auto
   then show \<open>has_ell2_norm x\<close>
     apply (simp add: image_image has_ell2_norm_def abs_summable_bdd_above)
@@ -145,15 +119,6 @@ proof -
     apply (subst infsum_cong_neutral[where T=\<open>{a}\<close> and g=\<open>\<lambda>x. (cmod (f x))\<^sup>2\<close>])
     by (auto simp: f_def)
 qed
-
-(* TODO replace original *)
-lemma infsum_nonneg:
-  fixes f :: "'a \<Rightarrow> 'b::{ordered_comm_monoid_add,linorder_topology}"
-  assumes "\<And>x. x \<in> M \<Longrightarrow> 0 \<le> f x"
-  shows "infsum f M \<ge> 0" (is "?lhs \<ge> _")
-  apply (cases \<open>f summable_on M\<close>)
-   apply (rule infsum_nonneg)
-  using assms by (auto simp add: infsum_not_exists)
 
 lemma ell2_norm_geq0: \<open>ell2_norm x \<ge> 0\<close>
   by (auto simp: ell2_norm_def intro!: infsum_nonneg)
@@ -440,36 +405,6 @@ proof (insert assms(2), transfer fixing: S)
     using \<open>finite S\<close> by simp
   finally show \<open>ell2_norm x = sqrt (\<Sum>i\<in>S. (cmod (x i))\<^sup>2)\<close>
     by -
-qed
-
-(* TODO move *)
-lemma abs_summable_product:
-  fixes x :: "'a \<Rightarrow> 'b::{real_normed_div_algebra,banach,second_countable_topology}"
-  assumes x2_sum: "(\<lambda>i. (x i) * (x i)) abs_summable_on A"
-    and y2_sum: "(\<lambda>i. (y i) * (y i)) abs_summable_on A"
-  shows "(\<lambda>i. x i * y i) abs_summable_on A"
-proof (rule pos_summable_on, simp, rule bdd_aboveI2, rename_tac F)
-  fix F assume \<open>F \<in> {F. F \<subseteq> A \<and> finite F}\<close>
-  then have r1: "finite F" and b4: "F \<subseteq> A"
-    by auto
-
-  have a1: "(\<Sum>\<^sub>\<infinity>i\<in>F. norm (x i * x i)) \<le> (\<Sum>\<^sub>\<infinity>i\<in>A. norm (x i * x i))"
-    apply (rule infsum_mono_neutral)
-    using b4 r1 x2_sum by auto
-
-  have "norm (x i * y i) \<le> norm (x i * x i) + norm (y i * y i)" for i
-    unfolding norm_mult
-    by (smt mult_left_mono mult_nonneg_nonneg mult_right_mono norm_ge_zero)
-  hence "(\<Sum>i\<in>F. norm (x i * y i)) \<le> (\<Sum>i\<in>F. norm (x i * x i) + norm (y i * y i))"
-    by (simp add: sum_mono)
-  also have "\<dots> = (\<Sum>i\<in>F. norm (x i * x i)) + (\<Sum>i\<in>F. norm (y i * y i))"
-    by (simp add: sum.distrib)
-  also have "\<dots> = (\<Sum>\<^sub>\<infinity>i\<in>F. norm (x i * x i)) + (\<Sum>\<^sub>\<infinity>i\<in>F. norm (y i * y i))"
-    by (simp add: \<open>finite F\<close>)
-  also have "\<dots> \<le> (\<Sum>\<^sub>\<infinity>i\<in>A. norm (x i * x i)) + (\<Sum>\<^sub>\<infinity>i\<in>A. norm (y i * y i))" 
-    by (smt (verit, del_insts) a1 Diff_iff Infinite_Sum.infsum_nonneg assms(2) b4 infsum_def infsum_mono_neutral norm_ge_zero subset_eq)
-  finally show \<open>(\<Sum>xa\<in>F. norm (x xa * y xa)) \<le> (\<Sum>\<^sub>\<infinity>i\<in>A. norm (x i * x i)) + (\<Sum>\<^sub>\<infinity>i\<in>A. norm (y i * y i))\<close>
-    by simp
 qed
 
 instantiation ell2 :: (type) complex_inner begin
