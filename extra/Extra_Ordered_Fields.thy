@@ -872,6 +872,8 @@ code_identifier
 
 subsection\<open>Ordered Complex\<close>
 
+subsection\<open>Ordered Complex\<close>
+
 subsection \<open>Ordering on complex numbers\<close>
 
 instantiation complex :: nice_ordered_field begin

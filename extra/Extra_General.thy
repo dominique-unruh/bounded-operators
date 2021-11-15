@@ -315,7 +315,8 @@ proof (cases x)
     if "x = Complex x1 x2"
     for x1 :: real
       and x2 :: real
-    using that   by (auto simp: complex_cnj complex_mult abs_complex_def 
+    using that
+    by (auto simp: complex_cnj complex_mult abs_complex_def
         complex_norm power2_eq_square complex_of_real_def)
 qed
 
