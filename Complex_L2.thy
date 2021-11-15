@@ -19,9 +19,6 @@ begin
 
 unbundle cblinfun_notation
 unbundle no_notation_blinfun_apply
-no_notation Infinite_Set_Sum.abs_summable_on (infix "abs'_summable'_on" 50)
-hide_const (open) Infinite_Set_Sum.abs_summable_on
-notation Infinite_Sum.abs_summable_on (infixr "abs'_summable'_on" 46)
 
 subsection \<open>l2 norm of functions\<close>
 
@@ -467,7 +464,7 @@ proof standard
     fix x :: "'a \<Rightarrow> complex"
     assume "has_ell2_norm x"
     hence "(\<lambda>i. cmod (cnj (x i) * x i)) abs_summable_on UNIV"
-      by (simp del: abs_summable_on_norm_iff add: norm_mult has_ell2_norm_def power2_eq_square)
+      by (simp add: norm_mult has_ell2_norm_def power2_eq_square)
     hence "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
       by auto
     hence sum: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
@@ -510,7 +507,7 @@ proof standard
     assume x: "has_ell2_norm x"
     have "(\<lambda>i::'a. cmod (x i) * cmod (x i)) abs_summable_on UNIV \<Longrightarrow>
     (\<lambda>i::'a. cmod (cnj (x i) * x i)) abs_summable_on UNIV"
-      by (simp del: abs_summable_on_norm_iff add: norm_mult has_ell2_norm_def power2_eq_square)
+      by (simp add: norm_mult has_ell2_norm_def power2_eq_square)
     hence sum: "(\<lambda>i. cnj (x i) * x i) abs_summable_on UNIV"
       by (metis (no_types, lifting) complex_mod_mult_cnj has_ell2_norm_def mult.commute norm_power summable_on_cong x)
     from x have "ell2_norm x = sqrt (\<Sum>\<^sub>\<infinity>i. (cmod (x i))\<^sup>2)"
